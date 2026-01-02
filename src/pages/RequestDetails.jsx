@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
@@ -10,16 +11,53 @@ const RequestDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadRequest = () => {
+    const loadFromLocal = () => {
       const stored = localStorage.getItem('wheelchair_lifter_requests_v1');
       if (stored) {
         const requests = JSON.parse(stored);
         const found = requests.find(r => r.id === id);
         setRequest(found || null);
       }
+    };
+
+    const loadFromSupabase = async () => {
+      if (!supabase) {
+        loadFromLocal();
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('requests')
+        .select('id,status,created_at,payload')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Supabase fetch failed, using local cache', error);
+        loadFromLocal();
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        const mapped = {
+          ...data.payload,
+          id: data.id,
+          status: data.status || data.payload?.status,
+          createdAt: data.created_at || data.payload?.createdAt,
+        };
+        setRequest(mapped);
+        const stored = JSON.parse(localStorage.getItem('wheelchair_lifter_requests_v1') || '[]').filter(r => r.id !== id);
+        localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify([...stored, mapped]));
+      } else {
+        loadFromLocal();
+      }
+
       setLoading(false);
     };
-    loadRequest();
+
+    loadFromSupabase();
   }, [id]);
 
   const handleStatusChange = (newStatus) => {
@@ -27,6 +65,18 @@ const RequestDetails = () => {
     const updated = stored.map(r => r.id === id ? { ...r, status: newStatus } : r);
     localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
     setRequest(prev => ({ ...prev, status: newStatus }));
+
+    if (supabase) {
+      supabase
+        .from('requests')
+        .update({ status: newStatus })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Failed to update status in Supabase', error);
+          }
+        });
+    }
   };
 
   const copySummary = () => {

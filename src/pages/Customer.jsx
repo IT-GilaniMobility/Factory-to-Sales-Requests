@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
+import { supabase } from '../lib/supabaseClient';
 
 // Shared initial state so hooks don't warn about missing deps
 const initialState = {
@@ -147,8 +148,11 @@ const Customer = () => {
   const [signatureData, setSignatureData] = useState(null);
   const [errors, setErrors] = useState({});
   const [showToast, setShowToast] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const [formData, setFormData] = useState(initialState);
+  const supabaseReady = Boolean(supabase);
 
   // Load draft or start fresh when ?new=true|1 is present
   useEffect(() => {
@@ -204,11 +208,16 @@ const Customer = () => {
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    const x = point.clientX - rect.left;
-    const y = point.clientY - rect.top;
+    
+    // Calculate actual position considering canvas scaling
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (point.clientX - rect.left) * scaleX;
+    const y = (point.clientY - rect.top) * scaleY;
     
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -219,11 +228,16 @@ const Customer = () => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    const x = point.clientX - rect.left;
-    const y = point.clientY - rect.top;
+    
+    // Calculate actual position considering canvas scaling
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (point.clientX - rect.left) * scaleX;
+    const y = (point.clientY - rect.top) * scaleY;
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -343,13 +357,12 @@ const Customer = () => {
         newErrors['floorAddOnOther'] = 'Please specify other floor add-on';
       }
 
-      // Section 10
-      if (!formData.trainOperate) newErrors['trainOperate'] = 'Required';
-      if (!formData.trainEmergency) newErrors['trainEmergency'] = 'Required';
-      if (!formData.trainFuse) newErrors['trainFuse'] = 'Required';
-      if (!formData.trainTieDown) newErrors['trainTieDown'] = 'Required';
-
       // Section 11
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
+    } else if (formData.jobRequest === 'The Ultimate G24') {
+      // G24 validation
       if (!signatureData) {
         newErrors['signature'] = 'Customer signature is required';
       }
@@ -359,21 +372,28 @@ const Customer = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) {
       window.scrollTo(0, 0);
       return;
     }
 
-    const generateId = () => {
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    const generateRequestCode = () => {
       const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const random = Math.random().toString(36).substring(2, 6).toUpperCase();
       return `WL-${date}-${random}`;
     };
 
-    const newRequest = {
-      id: generateId(),
-      createdAt: new Date().toISOString(),
+    const requestCode = generateRequestCode();
+    const now = new Date().toISOString();
+
+    // Full payload for jsonb
+    const payload = {
+      id: requestCode,
+      createdAt: now,
       status: "Requested to factory",
       customer: {
         name: formData.customerName,
@@ -439,6 +459,46 @@ const Customer = () => {
       }
     };
 
+    // For local storage (legacy format)
+    const newRequest = { ...payload, id: requestCode };
+
+    // Persist to Supabase first; fall back to local storage on failure
+    if (supabaseReady) {
+      console.log('Attempting Supabase insert with request_code:', requestCode);
+      const { data, error } = await supabase
+        .from('requests')
+        .insert([{
+          request_code: requestCode,
+          status: 'Requested to factory',
+          customer_name: formData.customerName,
+          customer_mobile: formData.customerMobile,
+          customer_address: formData.customerAddress,
+          quote_ref: formData.quoteRef,
+          request_type: formData.jobRequest,
+          vehicle_make: formData.vehicleMake,
+          vehicle_model: formData.vehicleModel,
+          vehicle_year: parseInt(formData.vehicleYear),
+          measure_a: formData.measureA ? parseFloat(formData.measureA) : null,
+          measure_b: formData.measureB ? parseFloat(formData.measureB) : null,
+          measure_c: formData.measureC ? parseFloat(formData.measureC) : null,
+          measure_d: formData.measureD ? parseFloat(formData.measureD) : null,
+          measure_h: formData.measureH ? parseFloat(formData.measureH) : null,
+          floor_to_ground: formData.floorToGround ? parseFloat(formData.floorToGround) : null,
+          payload
+        }]);
+
+      console.log('Supabase response:', { data, error });
+      if (error) {
+        console.error('Supabase insert failed:', error);
+        setSubmitError(`Cloud sync failed: ${error.message}. Saved locally for now.`);
+      } else {
+        console.log('Successfully inserted to Supabase');
+      }
+    } else {
+      console.log('Supabase not ready, saving to localStorage only');
+      setSubmitError('Cloud sync disabled: add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY, then restart. Saved locally for now.');
+    }
+
     // Save to localStorage
     const existing = JSON.parse(localStorage.getItem('wheelchair_lifter_requests_v1') || '[]');
     localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify([...existing, newRequest]));
@@ -450,6 +510,7 @@ const Customer = () => {
 
     // Toast and Redirect
     setShowToast(true);
+    setIsSubmitting(false);
     setTimeout(() => {
       navigate('/requests');
     }, 1500);
@@ -459,6 +520,7 @@ const Customer = () => {
   const ErrorMsg = ({ field }) => errors[field] ? <p className="text-red-500 text-xs mt-1">{errors[field]}</p> : null;
 
   const isWheelchairLifter = formData.jobRequest === 'Wheelchair Lifter Installation';
+  const isUltimateG24 = formData.jobRequest === 'The Ultimate G24';
   const section2Valid = formData.vehicleMake && formData.vehicleModel && formData.vehicleYear;
   const section3Valid = section2Valid && formData.userWeight && formData.wheelchairWeight && formData.wheelchairType;
   const section4Valid = section3Valid && formData.measureD && formData.measureH && formData.floorToGround;
@@ -473,6 +535,11 @@ const Customer = () => {
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {!supabaseReady && (
+          <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+            Cloud sync is off: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in .env.local, then restart. Requests will save locally until then.
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Wheelchair Lifter Installation Form</h1>
 
         {/* SECTION 1: Customer Details */}
@@ -496,6 +563,7 @@ const Customer = () => {
               >
                 <option value="">Select...</option>
                 <option value="Wheelchair Lifter Installation">Wheelchair Lifter Installation</option>
+                <option value="The Ultimate G24">The Ultimate G24</option>
               </select>
               <ErrorMsg field="jobRequest" />
             </div>
@@ -743,11 +811,152 @@ const Customer = () => {
             )}
           </>
         )}
+
+        {isUltimateG24 && (
+          <>
+            {/* SECTION 2: Vehicle Description - G24 */}
+            <Section title="2. Vehicle Description">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InputField label="Make" name="vehicleMake" type="text" required value={formData.vehicleMake || ''} onChange={handleChange} error={errors.vehicleMake} />
+                <InputField label="Model" name="vehicleModel" type="text" required value={formData.vehicleModel || ''} onChange={handleChange} error={errors.vehicleModel} />
+                <InputField label="Year" name="vehicleYear" type="number" required value={formData.vehicleYear || ''} onChange={handleChange} error={errors.vehicleYear} />
+              </div>
+            </Section>
+
+            {section2Valid && (
+              <>
+                {/* SECTION 3: G24 Vehicle Layout Image */}
+                <Section title="3. G24 Vehicle Layout">
+                  <div className="mb-6">
+                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                      Please review the vehicle layout below to understand the G24 modification specifications.
+                    </p>
+                    <img 
+                      src={require('../assets/g24_layout.png').default || require('../assets/g24_layout.png')} 
+                      alt="G24 Vehicle Layout" 
+                      className="w-full max-w-2xl h-auto rounded border border-gray-300"
+                    />
+                  </div>
+                </Section>
+
+                {/* SECTION 4: Product Model - Same as Wheelchair */}
+                <Section title="4. Product Model">
+                  <RadioGroup 
+                    label="Select Model" 
+                    name="productModel" 
+                    options={['1006004', '106016', 'Others']} 
+                    required
+                    value={formData.productModel}
+                    onChange={handleChange}
+                    error={errors.productModel}
+                  />
+                  {formData.productModel === 'Others' && (
+                    <TextareaField label="Comments" name="productModelOther" required value={formData.productModelOther || ''} onChange={handleChange} error={errors.productModelOther} />
+                  )}
+                </Section>
+
+                {/* SECTION 5: Second Row Seat Positions - Same as Wheelchair */}
+                <Section title="5. Second Row Seat Positions">
+                  <RadioGroup 
+                    label="Select Position" 
+                    name="secondRowSeat" 
+                    options={['Facing driver', 'Facing wheelchair user', 'Remove', 'Others']} 
+                    required 
+                    value={formData.secondRowSeat}
+                    onChange={handleChange}
+                    error={errors.secondRowSeat}
+                  />
+                  {formData.secondRowSeat === 'Others' && (
+                    <TextareaField label="Comments" name="secondRowSeatOther" required value={formData.secondRowSeatOther || ''} onChange={handleChange} error={errors.secondRowSeatOther} />
+                  )}
+                </Section>
+
+                {/* SECTION 6: Tie Down Type - Same as Wheelchair */}
+                <Section title="6. Tie Down Type">
+                  <RadioGroup 
+                    label="Select Type" 
+                    name="tieDown" 
+                    options={['Standard point', 'Electric Tie down', 'Track System', 'Others']} 
+                    required 
+                    value={formData.tieDown}
+                    onChange={handleChange}
+                    error={errors.tieDown}
+                  />
+                  {formData.tieDown === 'Others' && (
+                    <TextareaField label="Comments" name="tieDownOther" required value={formData.tieDownOther || ''} onChange={handleChange} error={errors.tieDownOther} />
+                  )}
+                </Section>
+
+                {/* SECTION 7: Floor Add-ons - Same as Wheelchair */}
+                <Section title="7. Floor Add-ons">
+                  <RadioGroup 
+                    label="Select Flooring" 
+                    name="floorAddOn" 
+                    options={['No Flooring', 'Checker Plate', 'Plywood', 'Others']} 
+                    required 
+                    value={formData.floorAddOn}
+                    onChange={handleChange}
+                    error={errors.floorAddOn}
+                  />
+                  {formData.floorAddOn === 'Others' && (
+                    <TextareaField label="Comments" name="floorAddOnOther" required value={formData.floorAddOnOther || ''} onChange={handleChange} error={errors.floorAddOnOther} />
+                  )}
+                </Section>
+
+                {/* SECTION 8: Customer Signature & Agreement with Disclaimer */}
+                <Section title="8. Signature & Agreement">
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Customer Signature</h3>
+                    <div className="border border-gray-300 rounded bg-white">
+                      <canvas
+                        ref={canvasRef}
+                        width={500}
+                        height={200}
+                        className="w-full h-48 cursor-crosshair block touch-none"
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                      />
+                    </div>
+                    <div className="mt-2 flex justify-between items-center">
+                      <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
+                      <button
+                        type="button"
+                        onClick={clearSignature}
+                        className="text-sm text-red-600 hover:text-red-800 underline"
+                      >
+                        Clear Signature
+                      </button>
+                    </div>
+                    <ErrorMsg field="signature" />
+                  </div>
+
+                  <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
+                    <p className="text-sm font-semibold text-gray-900 mb-2">Agreement & Disclaimer:</p>
+                    <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
+                      <li>By signing and/or paying the deposit towards having my vehicle modified</li>
+                      <li>I hereby declare that I understand that anything modified will not necessarily be as per unmodified</li>
+                      <li>How the modified components will differ from original depends on their original purpose</li>
+                      <li>I have taken necessary steps to understand the modification and made sure to have received satisfactory information</li>
+                    </ul>
+                  </div>
+                </Section>
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
         <div className="max-w-6xl mx-auto flex justify-end space-x-4">
+          {submitError && (
+            <span className="text-sm text-red-600 mr-auto">{submitError}</span>
+          )}
           <button
             onClick={handleReset}
             className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium"
@@ -756,9 +965,10 @@ const Customer = () => {
           </button>
           <button
             onClick={handleSubmit}
-            className="px-8 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold shadow-sm transition-colors"
+            disabled={isSubmitting}
+            className={`px-8 py-2 rounded-md font-semibold shadow-sm transition-colors ${isSubmitting ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
           >
-            Submit Request
+            {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </button>
         </div>
       </div>
