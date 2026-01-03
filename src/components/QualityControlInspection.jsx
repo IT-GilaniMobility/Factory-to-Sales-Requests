@@ -5,6 +5,7 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
   const [categories, setCategories] = useState([]);
   const [inspection, setInspection] = useState(null);
   const [inspectionItems, setInspectionItems] = useState([]);
+  const [activeJobType, setActiveJobType] = useState(jobType);
   const [inspectorName, setInspectorName] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -17,19 +18,21 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
   const loadInspectionData = async () => {
     setLoading(true);
     try {
-      // Check if inspection exists
+      // Check if inspection exists (unique by request_code per schema)
       let existingInspection = null;
+      let templateName = jobType;
       if (supabase) {
         const { data } = await supabase
           .from('qc_inspections')
           .select('*')
           .eq('request_code', requestCode)
-          .eq('job_type', jobType)
           .single();
         existingInspection = data;
       }
 
       if (existingInspection) {
+        templateName = existingInspection.job_type || jobType;
+        setActiveJobType(templateName);
         setInspection(existingInspection);
         setInspectorName(existingInspection.inspector_name || '');
 
@@ -44,15 +47,17 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
         }
       } else {
         // Create new inspection
-        await createNewInspection();
+        templateName = jobType;
+        setActiveJobType(templateName);
+        await createNewInspection(templateName);
       }
 
-      // Load categories
+      // Load categories for the active template
       if (supabase) {
         const { data: cats } = await supabase
           .from('qc_categories')
           .select('*')
-          .eq('template_name', jobType)
+          .eq('template_name', templateName)
           .order('category_name');
         setCategories(cats || []);
       }
@@ -63,29 +68,30 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
     }
   };
 
-  const createNewInspection = async () => {
+  const createNewInspection = async (templateName = jobType) => {
     try {
       if (!supabase) return;
 
       const { data: newInspection, error: inspError } = await supabase
         .from('qc_inspections')
-        .insert([{
+        .upsert([{
           request_code: requestCode,
-          job_type: jobType,
+          job_type: templateName,
           inspection_status: 'pending',
           payload: {}
-        }])
+        }], { onConflict: 'request_code' })
         .select()
         .single();
 
       if (inspError) throw inspError;
+      setActiveJobType(newInspection.job_type || templateName);
       setInspection(newInspection);
 
       // Fetch categories with items
       const { data: categoriesWithItems, error: itemsError } = await supabase
         .from('qc_checklist_items')
         .select('id, item_name, item_description, category_id, sequence_order')
-        .eq('template_name', jobType)
+        .eq('template_name', templateName)
         .order('sequence_order');
 
       if (itemsError) {
@@ -96,7 +102,7 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
       const { data: cats, error: catsError } = await supabase
         .from('qc_categories')
         .select('id, category_name')
-        .eq('template_name', jobType);
+        .eq('template_name', templateName);
 
       if (catsError) {
         console.error('Error fetching categories:', catsError);
@@ -233,7 +239,10 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Quality Control Inspection</h2>
-            <p className="text-sm text-gray-700">{jobType}</p>
+            <div className="mt-1 inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-xs font-semibold text-blue-800">
+              <span>Template:</span>
+              <span className="font-mono">{activeJobType}</span>
+            </div>
             <p className="text-sm text-gray-600 mt-1">Request: {requestCode}</p>
           </div>
           <button
@@ -284,19 +293,19 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
                     </div>
                     <div className="space-y-2">
                       <div className="flex gap-2">
-                        {['pass', 'fail'].map(status => (
+                        {[{ key: 'pass', label: 'OK', icon: '✔' }, { key: 'fail', label: 'Issue', icon: '✖' }].map(option => (
                           <button
-                            key={status}
-                            onClick={() => handleStatusChange(item.id, status)}
+                            key={option.key}
+                            onClick={() => handleStatusChange(item.id, option.key)}
                             className={`flex-1 px-3 py-2 rounded text-sm font-medium transition ${
-                              item.status === status
-                                ? status === 'pass'
+                              item.status === option.key
+                                ? option.key === 'pass'
                                   ? 'bg-green-500 text-white'
                                   : 'bg-red-500 text-white'
                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                           >
-                            {status === 'pass' ? 'PASS' : 'FAIL'}
+                            {option.icon} {option.label}
                           </button>
                         ))}
                       </div>

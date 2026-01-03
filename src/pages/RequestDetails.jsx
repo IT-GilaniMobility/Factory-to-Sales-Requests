@@ -515,7 +515,7 @@ const RequestDetails = () => {
       setQCLoading(true);
       const { data } = await supabase
         .from('qc_inspections')
-        .select('inspection_status, inspector_name, completed_at')
+        .select('inspection_status, inspector_name, completed_at, job_type')
         .eq('request_code', id)
         .single();
       setQCStatus(data);
@@ -594,7 +594,7 @@ const RequestDetails = () => {
   const qcTemplates = [
     { label: 'Hand Control (Push/Pull)', available: true, note: 'Template ready to use.' },
     { label: 'Dual Control', available: true, note: 'Template ready to use.' },
-    { label: 'Left Foot Acceleration', available: false, note: 'Not added yet.' },
+    { label: 'Left Foot Acceleration', available: true, note: 'Template ready to use.' },
     { label: 'Remote Light and Indicators', available: false, note: 'Not added yet.' },
     { label: 'G24 Conversions', available: false, note: 'Not added yet.' },
     { label: 'Turney Seat Installation', available: false, note: 'Not added yet.' },
@@ -602,10 +602,22 @@ const RequestDetails = () => {
   ];
 
   useEffect(() => {
-    if (jobType) {
+    if (qcStatus?.job_type) {
+      setSelectedQCType(qcStatus.job_type);
+    } else if (jobType) {
       setSelectedQCType(jobType === 'Diving Solution Installation' ? 'Hand Control (Push/Pull)' : jobType);
     }
-  }, [jobType]);
+  }, [jobType, qcStatus]);
+
+  const openQCModal = () => {
+    if (qcStatus?.job_type) {
+      setSelectedQCType(qcStatus.job_type);
+      setShowQCSelector(false);
+      setShowQCModal(true);
+    } else {
+      setShowQCSelector(true);
+    }
+  };
 
   const updateLocalCache = (newStatus) => {
     const stored = localStorage.getItem('wheelchair_lifter_requests_v1');
@@ -788,9 +800,9 @@ const RequestDetails = () => {
             <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
               Export PDF
             </button>
-            {request?.status === 'Completed' && (
+            {request?.status === 'Completed' && !qcStatus && (
               <button
-                onClick={() => setShowQCSelector(true)}
+                onClick={openQCModal}
                 className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-sm shadow-sm"
               >
                 🔍 Inspect
@@ -826,9 +838,9 @@ const RequestDetails = () => {
                 )}
               </div>
             </div>
-            {request?.status === 'Completed' && (
+            {request?.status === 'Completed' && qcStatus && (
               <button
-                onClick={() => setShowQCSelector(true)}
+                onClick={openQCModal}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm"
               >
                 Edit
