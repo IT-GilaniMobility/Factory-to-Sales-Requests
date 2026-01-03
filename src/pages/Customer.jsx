@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
+import manHeight from '../assets/man-height.png';
+import womenHeight from '../assets/women-height.png';
+import turneySeat from '../assets/turney-seat.png';
 import { supabase } from '../lib/supabaseClient';
 
 // Shared initial state so hooks don't warn about missing deps
@@ -67,6 +70,20 @@ const initialState = {
     installationLocation: '',
     driverSeatPosition: '',
     steeringWheelPosition: '',
+
+    // Turney Seat Installation sections
+    userHeight1: '',
+    userHeight2: '',
+    misuaA: '',
+    misuaB: '',
+    misuaC: '',
+    misuaD: '',
+    misuaE: '',
+    seatBaseMeasurement: '',
+    seatBracketMeasurement: '',
+    specialRequest: '',
+    productLocation: '',
+    optionalExtraAddOns: '',
   };
 
 // Plain input component - no memo, just simple JSX
@@ -385,6 +402,26 @@ const Customer = () => {
       if (!signatureData) {
         newErrors['signature'] = 'Customer signature is required';
       }
+    } else if (formData.jobRequest === 'Turney Seat Installation') {
+      // Turney Seat validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('userWeight', 'User Weight');
+      required('userHeight1', 'User Height 1');
+      required('userHeight2', 'User Height 2');
+      required('userSituation', 'User Situation');
+      required('misuaA', 'Misura A');
+      required('misuaB', 'Misura B');
+      required('misuaC', 'Misura C');
+      required('misuaD', 'Misura D');
+      required('misuaE', 'Misura E');
+      required('productModel', 'Product');
+      required('productLocation', 'Product Location');
+      
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
     }
 
     setErrors(newErrors);
@@ -479,6 +516,22 @@ const Customer = () => {
         driverSeatPosition: formData.driverSeatPosition,
         steeringWheelPosition: formData.steeringWheelPosition
       },
+      turneySeat: {
+        userWeight: formData.userWeight,
+        userHeight1: formData.userHeight1,
+        userHeight2: formData.userHeight2,
+        misuaA: formData.misuaA,
+        misuaB: formData.misuaB,
+        misuaC: formData.misuaC,
+        misuaD: formData.misuaD,
+        misuaE: formData.misuaE,
+        seatBaseMeasurement: formData.seatBaseMeasurement,
+        seatBracketMeasurement: formData.seatBracketMeasurement,
+        specialRequest: formData.specialRequest,
+        productLocation: formData.productLocation,
+        productModel: formData.productModel,
+        optionalExtraAddOns: formData.optionalExtraAddOns
+      },
       signature: {
         dataUrl: signatureData
       }
@@ -489,33 +542,116 @@ const Customer = () => {
 
     // Persist to Supabase first; fall back to local storage on failure
     if (supabaseReady) {
-      console.log('Attempting Supabase insert with request_code:', requestCode);
-      const { data, error } = await supabase
-        .from('requests')
-        .insert([{
-          request_code: requestCode,
-          status: 'Requested to factory',
-          customer_name: formData.customerName,
-          customer_mobile: formData.customerMobile,
-          customer_address: formData.customerAddress,
-          quote_ref: formData.quoteRef,
-          request_type: formData.jobRequest,
-          vehicle_make: formData.vehicleMake,
-          vehicle_model: formData.vehicleModel,
-          vehicle_year: parseInt(formData.vehicleYear),
-          measure_a: formData.measureA ? parseFloat(formData.measureA) : null,
-          measure_b: formData.measureB ? parseFloat(formData.measureB) : null,
-          measure_c: formData.measureC ? parseFloat(formData.measureC) : null,
-          measure_d: formData.measureD ? parseFloat(formData.measureD) : null,
-          measure_h: formData.measureH ? parseFloat(formData.measureH) : null,
-          floor_to_ground: formData.floorToGround ? parseFloat(formData.floorToGround) : null,
-          payload
-        }]);
+      console.log('Attempting Supabase insert with request_code:', requestCode, 'Type:', formData.jobRequest);
+      
+      let insertError = null;
+      
+      // Route to appropriate table based on job request type
+      if (formData.jobRequest === 'The Ultimate G24') {
+        const { error } = await supabase
+          .from('g24_requests')
+          .insert([{
+            request_code: requestCode,
+            status: 'Requested to factory',
+            customer_name: formData.customerName,
+            customer_mobile: formData.customerMobile,
+            customer_address: formData.customerAddress,
+            quote_ref: formData.quoteRef,
+            vehicle_make: formData.vehicleMake,
+            vehicle_model: formData.vehicleModel,
+            vehicle_year: parseInt(formData.vehicleYear),
+            product_model: formData.productModel,
+            product_model_other: formData.productModelOther,
+            second_row_seat: formData.secondRowSeat,
+            second_row_seat_other: formData.secondRowSeatOther,
+            tie_down: formData.tieDown,
+            tie_down_other: formData.tieDownOther,
+            floor_add_on: formData.floorAddOn,
+            floor_add_on_other: formData.floorAddOnOther,
+            payload
+          }]);
+        insertError = error;
+      } else if (formData.jobRequest === 'Diving Solution Installation') {
+        const { error } = await supabase
+          .from('diving_solution_requests')
+          .insert([{
+            request_code: requestCode,
+            status: 'Requested to factory',
+            customer_name: formData.customerName,
+            customer_mobile: formData.customerMobile,
+            customer_address: formData.customerAddress,
+            quote_ref: formData.quoteRef,
+            vehicle_make: formData.vehicleMake,
+            vehicle_model: formData.vehicleModel,
+            vehicle_year: parseInt(formData.vehicleYear),
+            device_model: formData.deviceModel,
+            installation_location: formData.installationLocation,
+            driver_seat_position: formData.driverSeatPosition,
+            steering_wheel_position: formData.steeringWheelPosition,
+            payload
+          }]);
+        insertError = error;
+      } else if (formData.jobRequest === 'Turney Seat Installation') {
+        const { error } = await supabase
+          .from('turney_seat_requests')
+          .insert([{
+            request_code: requestCode,
+            status: 'Requested to factory',
+            customer_name: formData.customerName,
+            customer_mobile: formData.customerMobile,
+            customer_address: formData.customerAddress,
+            quote_ref: formData.quoteRef,
+            vehicle_make: formData.vehicleMake,
+            vehicle_model: formData.vehicleModel,
+            vehicle_year: parseInt(formData.vehicleYear),
+            user_weight: parseFloat(formData.userWeight),
+            user_height_1: parseFloat(formData.userHeight1),
+            user_height_2: parseFloat(formData.userHeight2),
+            user_situation: formData.userSituation,
+            misua_a: parseFloat(formData.misuaA),
+            misua_b: parseFloat(formData.misuaB),
+            misua_c: parseFloat(formData.misuaC),
+            misua_d: parseFloat(formData.misuaD),
+            misua_e: parseFloat(formData.misuaE),
+            seat_base_measurement: formData.seatBaseMeasurement ? parseFloat(formData.seatBaseMeasurement) : null,
+            seat_bracket_measurement: formData.seatBracketMeasurement ? parseFloat(formData.seatBracketMeasurement) : null,
+            product_model: formData.productModel,
+            special_request: formData.specialRequest,
+            optional_extra_add_ons: formData.optionalExtraAddOns,
+            product_location: formData.productLocation,
+            payload
+          }]);
+        insertError = error;
+      } else {
+        // Default: Wheelchair Lifter Installation
+        const { error } = await supabase
+          .from('requests')
+          .insert([{
+            request_code: requestCode,
+            status: 'Requested to factory',
+            customer_name: formData.customerName,
+            customer_mobile: formData.customerMobile,
+            customer_address: formData.customerAddress,
+            quote_ref: formData.quoteRef,
+            request_type: formData.jobRequest,
+            vehicle_make: formData.vehicleMake,
+            vehicle_model: formData.vehicleModel,
+            vehicle_year: parseInt(formData.vehicleYear),
+            measure_a: formData.measureA ? parseFloat(formData.measureA) : null,
+            measure_b: formData.measureB ? parseFloat(formData.measureB) : null,
+            measure_c: formData.measureC ? parseFloat(formData.measureC) : null,
+            measure_d: formData.measureD ? parseFloat(formData.measureD) : null,
+            measure_h: formData.measureH ? parseFloat(formData.measureH) : null,
+            floor_to_ground: formData.floorToGround ? parseFloat(formData.floorToGround) : null,
+            payload
+          }]);
+        insertError = error;
+      }
 
-      console.log('Supabase response:', { data, error });
-      if (error) {
-        console.error('Supabase insert failed:', error);
-        setSubmitError(`Cloud sync failed: ${error.message}. Saved locally for now.`);
+      console.log('Supabase response:', { error: insertError });
+      if (insertError) {
+        console.error('Supabase insert failed:', insertError);
+        setSubmitError(`Cloud sync failed: ${insertError.message}. Saved locally for now.`);
       } else {
         console.log('Successfully inserted to Supabase');
       }
@@ -547,10 +683,13 @@ const Customer = () => {
   const isWheelchairLifter = formData.jobRequest === 'Wheelchair Lifter Installation';
   const isUltimateG24 = formData.jobRequest === 'The Ultimate G24';
   const isDivingSolution = formData.jobRequest === 'Diving Solution Installation';
+  const isTurneySeat = formData.jobRequest === 'Turney Seat Installation';
   const section2Valid = formData.vehicleMake && formData.vehicleModel && formData.vehicleYear;
   const section3Valid = section2Valid && formData.userWeight && formData.wheelchairWeight && formData.wheelchairType;
   const section4Valid = section3Valid && formData.measureD && formData.measureH && formData.floorToGround;
   const divingSolutionValid = section2Valid && formData.deviceModel && formData.installationLocation && formData.driverSeatPosition && formData.steeringWheelPosition;
+  const turneySeatSection3Valid = section2Valid && formData.userWeight && formData.userHeight1 && formData.userHeight2 && formData.userSituation;
+  const turneySeatSection4Valid = turneySeatSection3Valid && formData.misuaA && formData.misuaB && formData.misuaC && formData.misuaD && formData.misuaE;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -592,6 +731,7 @@ const Customer = () => {
                 <option value="Wheelchair Lifter Installation">Wheelchair Lifter Installation</option>
                 <option value="The Ultimate G24">The Ultimate G24</option>
                 <option value="Diving Solution Installation">Diving Solution Installation</option>
+                <option value="Turney Seat Installation">Turney Seat Installation</option>
               </select>
               <ErrorMsg field="jobRequest" />
             </div>
@@ -1059,6 +1199,159 @@ const Customer = () => {
                       </div>
                       <ErrorMsg field="signature" />
                     </Section>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {isTurneySeat && (
+          <>
+            {/* SECTION 2: Vehicle Description - Turney Seat */}
+            <Section title="2. Vehicle Description">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InputField label="Make" name="vehicleMake" type="text" required value={formData.vehicleMake || ''} onChange={handleChange} error={errors.vehicleMake} />
+                <InputField label="Model" name="vehicleModel" type="text" required value={formData.vehicleModel || ''} onChange={handleChange} error={errors.vehicleModel} />
+                <InputField label="Year" name="vehicleYear" type="number" required value={formData.vehicleYear || ''} onChange={handleChange} error={errors.vehicleYear} />
+              </div>
+            </Section>
+
+            {section2Valid && (
+              <>
+                {/* SECTION 3: User Information with Height Images */}
+                <Section title="3. User Information">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <InputField label="User Weight (kg)" name="userWeight" type="number" required value={formData.userWeight || ''} onChange={handleChange} error={errors.userWeight} />
+                      <InputField label="User Height 1 (cm)" name="userHeight1" type="number" required value={formData.userHeight1 || ''} onChange={handleChange} error={errors.userHeight1} />
+                      <InputField label="User Height 2 (cm)" name="userHeight2" type="number" required value={formData.userHeight2 || ''} onChange={handleChange} error={errors.userHeight2} />
+                      <TextareaField label="User Situation" name="userSituation" required value={formData.userSituation || ''} onChange={handleChange} error={errors.userSituation} />
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="relative border rounded p-2 bg-gray-50">
+                        <p className="text-xs text-gray-500 mb-1 text-center">Man Height View</p>
+                        <div className="relative inline-block w-full">
+                          <img src={manHeight} alt="Man Height" className="w-full h-auto object-contain max-h-48" />
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                            H1: {formData.userHeight1 || '—'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="relative border rounded p-2 bg-gray-50">
+                        <p className="text-xs text-gray-500 mb-1 text-center">Woman Height View</p>
+                        <div className="relative inline-block w-full">
+                          <img src={womenHeight} alt="Woman Height" className="w-full h-auto object-contain max-h-48" />
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                            H2: {formData.userHeight2 || '—'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Section>
+
+                {turneySeatSection3Valid && (
+                  <>
+                    {/* SECTION 4: Vehicle Measurements for Turney Seat */}
+                    <Section title="4. Vehicle Measurements">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <InputField label="Misura A (Min. 970mm)" name="misuaA" type="number" required value={formData.misuaA || ''} onChange={handleChange} error={errors.misuaA} />
+                          <InputField label="Misura B (Min. 950mm)" name="misuaB" type="number" required value={formData.misuaB || ''} onChange={handleChange} error={errors.misuaB} />
+                          <InputField label="Misura C (Min. 620mm)" name="misuaC" type="number" required value={formData.misuaC || ''} onChange={handleChange} error={errors.misuaC} />
+                          <InputField label="Misura D (Min. 620mm)" name="misuaD" type="number" required value={formData.misuaD || ''} onChange={handleChange} error={errors.misuaD} />
+                          <InputField label="Misura E (Min. 400mm)" name="misuaE" type="number" required value={formData.misuaE || ''} onChange={handleChange} error={errors.misuaE} />
+                          <InputField label="Measurement between seat base and roof" name="seatBaseMeasurement" type="number" value={formData.seatBaseMeasurement || ''} onChange={handleChange} error={errors.seatBaseMeasurement} />
+                          <InputField label="Measurement between highest point on seat bracket to the top roof" name="seatBracketMeasurement" type="number" value={formData.seatBracketMeasurement || ''} onChange={handleChange} error={errors.seatBracketMeasurement} />
+                        </div>
+
+                        <div className="flex justify-center items-start">
+                          <div className="relative border rounded p-2 bg-gray-50 w-full">
+                            <p className="text-xs text-gray-500 mb-2 text-center">Turney Seat Measurements</p>
+                            <div className="relative inline-block w-full">
+                              <img src={turneySeat} alt="Turney Seat" className="w-full h-auto object-contain max-h-64" />
+                              {/* Misura A - Top Left */}
+                              <div className="absolute top-8 left-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                                A: {formData.misuaA || '—'}
+                              </div>
+                              {/* Misura B - Top Middle */}
+                              <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                                B: {formData.misuaB || '—'}
+                              </div>
+                              {/* Misura C - Right Middle */}
+                              <div className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                                C: {formData.misuaC || '—'}
+                              </div>
+                              {/* Misura D - Right Bottom Middle */}
+                              <div className="absolute bottom-16 right-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                                D: {formData.misuaD || '—'}
+                              </div>
+                              {/* Misura E - Bottom Right */}
+                              <div className="absolute bottom-4 right-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
+                                E: {formData.misuaE || '—'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Section>
+
+                    {turneySeatSection4Valid && (
+                      <>
+                        {/* SECTION 5: Product & Configuration */}
+                        <Section title="5. Product & Configuration">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <InputField label="Product" name="productModel" type="text" required value={formData.productModel || ''} onChange={handleChange} error={errors.productModel} />
+                            <InputField label="Special Request (such seat colour)" name="specialRequest" type="text" value={formData.specialRequest || ''} onChange={handleChange} error={errors.specialRequest} />
+                            <InputField label="Optional Extra Add-ons" name="optionalExtraAddOns" type="text" value={formData.optionalExtraAddOns || ''} onChange={handleChange} error={errors.optionalExtraAddOns} />
+                            <InputField label="Product Location" name="productLocation" type="text" required value={formData.productLocation || ''} onChange={handleChange} error={errors.productLocation} />
+                          </div>
+                        </Section>
+
+                        {/* SECTION 6: Training Acknowledgement */}
+                        <Section title="6. Training Acknowledgement">
+                          <p className="mb-4 text-sm text-gray-600">Customer must know and have received full training which will include:</p>
+                          <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
+                            <li>Fully operate the device</li>
+                            <li>Emergency Procedure</li>
+                            <li>Locate the main fuse</li>
+                          </ul>
+                        </Section>
+
+                        {/* SECTION 7: Customer Signature */}
+                        <Section title="7. Customer Signature">
+                          <div className="border border-gray-300 rounded bg-white">
+                            <canvas
+                              ref={canvasRef}
+                              width={500}
+                              height={200}
+                              className="w-full h-48 cursor-crosshair block touch-none"
+                              onMouseDown={startDrawing}
+                              onMouseMove={draw}
+                              onMouseUp={stopDrawing}
+                              onMouseLeave={stopDrawing}
+                              onTouchStart={startDrawing}
+                              onTouchMove={draw}
+                              onTouchEnd={stopDrawing}
+                            />
+                          </div>
+                          <div className="mt-2 flex justify-between items-center">
+                            <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
+                            <button
+                              type="button"
+                              onClick={clearSignature}
+                              className="text-sm text-red-600 hover:text-red-800 underline"
+                            >
+                              Clear Signature
+                            </button>
+                          </div>
+                          <ErrorMsg field="signature" />
+                        </Section>
+                      </>
+                    )}
                   </>
                 )}
               </>

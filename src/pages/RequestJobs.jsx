@@ -18,6 +18,28 @@ const RequestJobs = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : true;
   });
+  const [qcStatuses, setQCStatuses] = useState({}); // Maps request_code to QC status
+
+  const loadQCStatuses = async (requestCodes) => {
+    try {
+      if (!supabase || !requestCodes.length) return;
+      
+      const { data } = await supabase
+        .from('qc_inspections')
+        .select('request_code, inspection_status')
+        .in('request_code', requestCodes);
+      
+      if (data) {
+        const statusMap = {};
+        data.forEach(row => {
+          statusMap[row.request_code] = row.inspection_status;
+        });
+        setQCStatuses(statusMap);
+      }
+    } catch (err) {
+      console.error('Error loading QC statuses:', err);
+    }
+  };
 
   useEffect(() => {
     const loadFromLocal = () => {
@@ -37,38 +59,130 @@ const RequestJobs = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('requests')
-        .select('request_code, status, created_at, payload');
+      try {
+        // Fetch from all four tables
+        const [wheelchairRes, g24Res, divingRes, turneyRes] = await Promise.all([
+          supabase.from('requests').select('request_code, status, created_at, payload'),
+          supabase.from('g24_requests').select('request_code, status, created_at, payload'),
+          supabase.from('diving_solution_requests').select('request_code, status, created_at, payload'),
+          supabase.from('turney_seat_requests').select('request_code, status, created_at, payload'),
+        ]);
 
-      if (error) {
-        console.error('Supabase fetch failed, using local cache', error);
-        loadFromLocal();
-        return;
-      }
+        const allData = [];
 
-      if (data && data.length > 0) {
-        const mapped = data.map(row => {
-          const payload = row.payload || {};
-          return {
-            ...payload,
-            id: row.request_code,
-            request_code: row.request_code,
-            status: row.status || payload.status || 'Requested to factory',
-            createdAt: row.created_at || payload.createdAt,
-            job: payload.job || { requestType: 'Wheelchair Lifter Installation' },
-            customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
-          };
-        });
-        setRequests(mapped);
-        localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(mapped));
-      } else {
+        // Map wheelchair lifter requests
+        if (wheelchairRes.data && wheelchairRes.data.length > 0) {
+          const mapped = wheelchairRes.data.map(row => {
+            const payload = row.payload || {};
+            return {
+              ...payload,
+              id: row.request_code,
+              request_code: row.request_code,
+              status: row.status || payload.status || 'Requested to factory',
+              createdAt: row.created_at || payload.createdAt,
+              job: payload.job || { requestType: 'Wheelchair Lifter Installation' },
+              customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+              jobRequest: 'Wheelchair Lifter Installation',
+            };
+          });
+          allData.push(...mapped);
+        }
+
+        // Map Ultimate G24 requests
+        if (g24Res.data && g24Res.data.length > 0) {
+          const mapped = g24Res.data.map(row => {
+            const payload = row.payload || {};
+            return {
+              ...payload,
+              id: row.request_code,
+              request_code: row.request_code,
+              status: row.status || payload.status || 'Requested to factory',
+              createdAt: row.created_at || payload.createdAt,
+              job: payload.job || { requestType: 'The Ultimate G24' },
+              customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+              jobRequest: 'The Ultimate G24',
+            };
+          });
+          allData.push(...mapped);
+        }
+
+        // Map Diving Solution requests
+        if (divingRes.data && divingRes.data.length > 0) {
+          const mapped = divingRes.data.map(row => {
+            const payload = row.payload || {};
+            return {
+              ...payload,
+              id: row.request_code,
+              request_code: row.request_code,
+              status: row.status || payload.status || 'Requested to factory',
+              createdAt: row.created_at || payload.createdAt,
+              job: payload.job || { requestType: 'Diving Solution Installation' },
+              customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+              jobRequest: 'Diving Solution Installation',
+            };
+          });
+          allData.push(...mapped);
+        }
+
+        // Map Turney Seat requests
+        if (turneyRes.data && turneyRes.data.length > 0) {
+          const mapped = turneyRes.data.map(row => {
+            const payload = row.payload || {};
+            return {
+              ...payload,
+              id: row.request_code,
+              request_code: row.request_code,
+              status: row.status || payload.status || 'Requested to factory',
+              createdAt: row.created_at || payload.createdAt,
+              job: payload.job || { requestType: 'Turney Seat Installation' },
+              customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+              jobRequest: 'Turney Seat Installation',
+            };
+          });
+          allData.push(...mapped);
+        }
+
+        if (allData.length > 0) {
+          // Sort by createdAt descending (newest first)
+          allData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setRequests(allData);
+          localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(allData));
+          
+          // Load QC statuses for all requests
+          loadQCStatuses(allData.map(r => r.request_code));
+        } else {
+          loadFromLocal();
+        }
+      } catch (err) {
+        console.error('Supabase fetch error:', err);
         loadFromLocal();
       }
     };
 
     loadFromSupabase();
   }, []);
+
+  // Reload QC statuses when requests change or when page becomes visible
+  useEffect(() => {
+    if (requests.length > 0) {
+      const requestCodes = requests.map(r => r.request_code).filter(Boolean);
+      if (requestCodes.length > 0) {
+        loadQCStatuses(requestCodes);
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && requests.length > 0) {
+        const requestCodes = requests.map(r => r.request_code).filter(Boolean);
+        if (requestCodes.length > 0) {
+          loadQCStatuses(requestCodes);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [requests]);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -138,11 +252,85 @@ const RequestJobs = () => {
     }
   };
 
+  const getQCBadge = (requestCode) => {
+    const qcStatus = qcStatuses[requestCode];
+    if (!qcStatus) return null;
+    
+    switch (qcStatus) {
+      case 'passed':
+        return { bg: 'bg-green-100', text: 'text-green-800', icon: '', label: 'QC Passed' };
+      case 'failed':
+        return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '', label: 'QC Failed' };
+      case 'in_progress':
+      case 'pending':
+        return { bg: 'bg-gray-100', text: 'text-gray-700', icon: '', label: 'QC Pending' };
+      default:
+        return null;
+    }
+  };
+
   const formatDate = (isoString) => {
     if (!isoString) return '—';
     return new Date(isoString).toLocaleString('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
+  };
+
+  // Helper function to render different preview details based on request type
+  const renderPreviewDetails = (req) => {
+    if (req.jobRequest === 'The Ultimate G24') {
+      return (
+        <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Product Model:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.productModel?.selection || '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Seat Position:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.secondRowSeatPosition?.selection || '—'}</span>
+          </div>
+        </>
+      );
+    } else if (req.jobRequest === 'Diving Solution Installation') {
+      return (
+        <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Device Model:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.deviceModel || '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Installation Location:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.installationLocation || '—'}</span>
+          </div>
+        </>
+      );
+    } else {
+      // Wheelchair Lifter Installation - default
+      return (
+        <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>User Weight:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.userInfo?.userWeightKg || '—'} kg</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Wheelchair Type:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.userInfo?.wheelchairType || '—'}</span>
+          </div>
+        </>
+      );
+    }
   };
 
   const stats = {
@@ -337,6 +525,13 @@ const RequestJobs = () => {
                         </div>
                       </div>
 
+                      {/* QC Status Badge for Grid */}
+                      {getQCBadge(req.request_code) && (
+                        <div className={`mb-4 px-3 py-2 rounded-lg text-xs font-semibold text-center ${getQCBadge(req.request_code).bg} ${getQCBadge(req.request_code).text}`}>
+                          {getQCBadge(req.request_code).icon} {getQCBadge(req.request_code).label}
+                        </div>
+                      )}
+
                       <div className={`mb-4 pb-4 ${darkMode ? 'border-gray-500' : 'border-gray-300'} border-b`}>
                         <h3 className={`font-bold text-lg group-hover:text-blue-600 transition-colors ${darkMode ? 'text-black' : 'text-gray-900'}`}>
                           {req.customer?.name || '—'}
@@ -346,13 +541,10 @@ const RequestJobs = () => {
                       </div>
 
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
-                          <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
-                        </div>
+                        {renderPreviewDetails(req)}
                         <div className="flex justify-between">
                           <span className={darkMode ? 'text-black' : 'text-gray-600'}>Request Type:</span>
-                          <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.requestType || '—'}</span>
+                          <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.jobRequest || req.job?.requestType || '—'}</span>
                         </div>
                       </div>
 
@@ -384,6 +576,11 @@ const RequestJobs = () => {
                         </h3>
                         <p className={`text-xs flex-shrink-0 ${darkMode ? 'text-gray-700' : 'text-gray-500'}`}>{formatDate(req.createdAt)}</p>
                       </div>
+                      {getQCBadge(req.request_code) && (
+                        <div className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full mb-3 ${getQCBadge(req.request_code).bg} ${getQCBadge(req.request_code).text}`}>
+                          {getQCBadge(req.request_code).label}
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className={darkMode ? 'text-black' : 'text-gray-600'}>Mobile:</span>
@@ -399,9 +596,41 @@ const RequestJobs = () => {
                         </div>
                         <div>
                           <span className={darkMode ? 'text-black' : 'text-gray-600'}>Type:</span>
-                          <p className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.requestType || '—'}</p>
+                          <p className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.jobRequest || req.job?.requestType || '—'}</p>
                         </div>
                       </div>
+                      {req.jobRequest === 'The Ultimate G24' && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mt-2 pt-2 border-t border-gray-300">
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Product:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.productModel?.selection || '—'}</p>
+                          </div>
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Seat:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.secondRowSeatPosition?.selection || '—'}</p>
+                          </div>
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Tie Down:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.tieDown?.selection || '—'}</p>
+                          </div>
+                        </div>
+                      )}
+                      {req.jobRequest === 'Diving Solution Installation' && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mt-2 pt-2 border-t border-gray-300">
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Device:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.deviceModel || '—'}</p>
+                          </div>
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Location:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.installationLocation || '—'}</p>
+                          </div>
+                          <div>
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Seat Pos:</span>
+                            <p className={`font-medium text-xs ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.driverSeatPosition || '—'}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2 items-center ml-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       <select
