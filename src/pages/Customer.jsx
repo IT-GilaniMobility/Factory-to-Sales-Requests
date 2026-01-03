@@ -61,6 +61,12 @@ const initialState = {
     trainEmergency: false,
     trainFuse: false,
     trainTieDown: false,
+
+    // Diving Solution Installation sections
+    deviceModel: '',
+    installationLocation: '',
+    driverSeatPosition: '',
+    steeringWheelPosition: '',
   };
 
 // Plain input component - no memo, just simple JSX
@@ -366,6 +372,19 @@ const Customer = () => {
       if (!signatureData) {
         newErrors['signature'] = 'Customer signature is required';
       }
+    } else if (formData.jobRequest === 'Diving Solution Installation') {
+      // Diving Solution validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('deviceModel', 'Device Model');
+      required('installationLocation', 'Installation Location');
+      required('driverSeatPosition', 'Driver Seat Position');
+      required('steeringWheelPosition', 'Steering Wheel Position');
+      
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
     }
 
     setErrors(newErrors);
@@ -454,6 +473,12 @@ const Customer = () => {
         locateMainFuse: formData.trainFuse,
         tieDownTraining: formData.trainTieDown
       },
+      divingSolution: {
+        deviceModel: formData.deviceModel,
+        installationLocation: formData.installationLocation,
+        driverSeatPosition: formData.driverSeatPosition,
+        steeringWheelPosition: formData.steeringWheelPosition
+      },
       signature: {
         dataUrl: signatureData
       }
@@ -521,9 +546,11 @@ const Customer = () => {
 
   const isWheelchairLifter = formData.jobRequest === 'Wheelchair Lifter Installation';
   const isUltimateG24 = formData.jobRequest === 'The Ultimate G24';
+  const isDivingSolution = formData.jobRequest === 'Diving Solution Installation';
   const section2Valid = formData.vehicleMake && formData.vehicleModel && formData.vehicleYear;
   const section3Valid = section2Valid && formData.userWeight && formData.wheelchairWeight && formData.wheelchairType;
   const section4Valid = section3Valid && formData.measureD && formData.measureH && formData.floorToGround;
+  const divingSolutionValid = section2Valid && formData.deviceModel && formData.installationLocation && formData.driverSeatPosition && formData.steeringWheelPosition;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -564,6 +591,7 @@ const Customer = () => {
                 <option value="">Select...</option>
                 <option value="Wheelchair Lifter Installation">Wheelchair Lifter Installation</option>
                 <option value="The Ultimate G24">The Ultimate G24</option>
+                <option value="Diving Solution Installation">Diving Solution Installation</option>
               </select>
               <ErrorMsg field="jobRequest" />
             </div>
@@ -945,6 +973,94 @@ const Customer = () => {
                     </ul>
                   </div>
                 </Section>
+              </>
+            )}
+          </>
+        )}
+
+        {isDivingSolution && (
+          <>
+            {/* SECTION 2: Vehicle Description - Diving Solution */}
+            <Section title="2. Vehicle Description">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InputField label="Make" name="vehicleMake" type="text" required value={formData.vehicleMake || ''} onChange={handleChange} error={errors.vehicleMake} />
+                <InputField label="Model" name="vehicleModel" type="text" required value={formData.vehicleModel || ''} onChange={handleChange} error={errors.vehicleModel} />
+                <InputField label="Year" name="vehicleYear" type="number" required value={formData.vehicleYear || ''} onChange={handleChange} error={errors.vehicleYear} />
+              </div>
+            </Section>
+
+            {section2Valid && (
+              <>
+                {/* SECTION 3: Installation Specifications */}
+                <Section title="3. Installation Specifications">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <InputField label="Device Model" name="deviceModel" type="text" required value={formData.deviceModel || ''} onChange={handleChange} error={errors.deviceModel} />
+                      <InputField label="Installation Location" name="installationLocation" type="text" required value={formData.installationLocation || ''} onChange={handleChange} error={errors.installationLocation} />
+                      <InputField label="Driver Seat Position" name="driverSeatPosition" type="text" required value={formData.driverSeatPosition || ''} onChange={handleChange} error={errors.driverSeatPosition} />
+                      <InputField label="Steering Wheel Position" name="steeringWheelPosition" type="text" required value={formData.steeringWheelPosition || ''} onChange={handleChange} error={errors.steeringWheelPosition} />
+                    </div>
+                    
+                    <div className="relative border rounded p-2 bg-gray-50">
+                      <p className="text-xs text-gray-500 mb-1 text-center">Driving Solution</p>
+                      <div className="relative inline-block w-full">
+                        <img 
+                          src={require('../assets/driving-sol.png').default || require('../assets/driving-sol.png')} 
+                          alt="Driving Solution" 
+                          className="w-full h-auto object-contain max-h-64 rounded"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Section>
+
+                {divingSolutionValid && (
+                  <>
+                    {/* SECTION 4: Notes */}
+                    <Section title="4. Important Notes">
+                      <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded space-y-4">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 mb-2">Steering Column Mounted:</p>
+                          <p className="text-sm text-gray-700">If steering column mounted, steering wheel location will be locked. Has the steering wheel and seat been adjusted to the customer's preferred driving position?</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 mb-2">Customer Training:</p>
+                          <p className="text-sm text-gray-700">Customer must know and have received full training with all questions answered on safe usage satisfactory.</p>
+                        </div>
+                      </div>
+                    </Section>
+
+                    {/* SECTION 5: Customer Signature */}
+                    <Section title="5. Customer Signature">
+                      <div className="border border-gray-300 rounded bg-white">
+                        <canvas
+                          ref={canvasRef}
+                          width={500}
+                          height={200}
+                          className="w-full h-48 cursor-crosshair block touch-none"
+                          onMouseDown={startDrawing}
+                          onMouseMove={draw}
+                          onMouseUp={stopDrawing}
+                          onMouseLeave={stopDrawing}
+                          onTouchStart={startDrawing}
+                          onTouchMove={draw}
+                          onTouchEnd={stopDrawing}
+                        />
+                      </div>
+                      <div className="mt-2 flex justify-between items-center">
+                        <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
+                        <button
+                          type="button"
+                          onClick={clearSignature}
+                          className="text-sm text-red-600 hover:text-red-800 underline"
+                        >
+                          Clear Signature
+                        </button>
+                      </div>
+                      <ErrorMsg field="signature" />
+                    </Section>
+                  </>
+                )}
               </>
             )}
           </>

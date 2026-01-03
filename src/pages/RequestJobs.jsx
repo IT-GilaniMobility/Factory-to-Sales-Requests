@@ -376,7 +376,7 @@ const RequestJobs = () => {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className={`font-mono text-xs px-2 py-1 rounded w-fit flex-shrink-0 ${darkMode ? 'text-black bg-gray-600' : 'text-gray-600 bg-gray-200'}`}>
+                        <div className={`font-mono text-xs px-2 py-1 rounded w-fit flex-shrink-0 ${darkMode ? 'text-white bg-gray-600' : 'text-gray-600 bg-gray-200'}`}>
                           {req.id}
                         </div>
                         <h3 className={`font-bold group-hover:text-blue-600 transition-colors truncate ${darkMode ? 'text-black' : 'text-gray-900'}`}>
