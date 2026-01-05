@@ -228,6 +228,291 @@ FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Left F
 
 ON CONFLICT DO NOTHING;
 
+-- =========================================================================
+-- SEED DATA: Quality Control Categories for Remote Light and Indicators
+-- =========================================================================
+INSERT INTO qc_categories (category_name, description, template_name) VALUES
+('Visual Inspection', 'Visual checks for physical condition and installation', 'Remote Light and Indicators'),
+('Functional Testing', 'Operational checks for remote control system', 'Remote Light and Indicators'),
+('Safety Checks', 'Safety and clearance verification', 'Remote Light and Indicators'),
+('Marketing', 'Branding and marketing verification', 'Remote Light and Indicators')
+ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- SEED DATA: Inspection Checklist Items for Remote Light and Indicators
+-- =========================================================================
+INSERT INTO qc_checklist_items (category_id, item_name, item_description, sequence_order, template_name)
+-- Visual Inspection (1-3)
+SELECT id, 'Inspect for scratches, dents, or visual defects', NULL, 1, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Visual Inspection' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Ensure the CL007 is securely attached to the steering wheel', NULL, 2, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Visual Inspection' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Ensure the CL007 is can be inserted or removed easily.', NULL, 3, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Visual Inspection' AND template_name = 'Remote Light and Indicators'
+
+UNION ALL
+
+-- Functional Testing (4-6)
+SELECT id, 'Test Light control button functionality (indicators,light, hazard).', NULL, 4, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Functional Testing' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Test horn for proper sound and responsiveness.', NULL, 5, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Functional Testing' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Test windshield wiper functionality (Multiple speeds, Auto mode).', NULL, 6, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Functional Testing' AND template_name = 'Remote Light and Indicators'
+
+UNION ALL
+
+-- Safety Checks (7-8)
+SELECT id, 'Verify that steering wheel and other vehicle functions are not obstructed by the installed system.', NULL, 7, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Safety Checks' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Check for any warning lights on the dashboard', NULL, 8, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Safety Checks' AND template_name = 'Remote Light and Indicators'
+
+UNION ALL
+
+-- Marketing (9-11)
+SELECT id, 'Demonstrate how to use controls properly', NULL, 9, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'Confirm all Company stickers  are  properly placed.', NULL, 10, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Remote Light and Indicators'
+UNION ALL
+SELECT id, 'check with marketing team for needed material', NULL, 11, 'Remote Light and Indicators'
+FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Remote Light and Indicators'
+
+ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- SEED DATA: Quality Control Categories for G24 Conversions
+-- =========================================================================
+INSERT INTO qc_categories (category_name, description, template_name) VALUES
+('Invoice & Vehicle Info', 'Invoice and vehicle identification details', 'G24 Conversions'),
+('Interior Check', 'Interior components and functionality verification', 'G24 Conversions'),
+('Exterior Check', 'Exterior components and bodywork verification', 'G24 Conversions'),
+('Under Body Check', 'Underbody components and safety checks', 'G24 Conversions'),
+('Personnel & Sign-off', 'Personnel information and final approval', 'G24 Conversions'),
+('Fault Rectification', 'Issues and work to be completed', 'G24 Conversions')
+ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- SEED DATA: Inspection Checklist Items for G24 Conversions
+-- =========================================================================
+INSERT INTO qc_checklist_items (category_id, item_name, item_description, sequence_order, template_name)
+-- Invoice & Vehicle Info (1-4) - TEXT FIELDS ONLY
+SELECT id, 'INVOICE NO.', 'text_field', 1, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Invoice & Vehicle Info' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'REGO', 'text_field', 2, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Invoice & Vehicle Info' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'VIN', 'text_field', 3, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Invoice & Vehicle Info' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Conversion type', 'text_field', 4, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Invoice & Vehicle Info' AND template_name = 'G24 Conversions'
+
+UNION ALL
+
+-- Interior Check (5-27)
+SELECT id, 'Check the user manual in the glove box.', NULL, 5, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Fuel in and check gauge registers fuel.', NULL, 6, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Wiring to ramp, battery terminals and proper fuses fitted.', NULL, 7, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check for errors on dashboard.', NULL, 8, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'All Electrical OE doors, windows, sensors and cameras.', NULL, 9, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Front seats installed correctly and securely. Electrical plugs connected and secure.', NULL, 10, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Second row seats installed correctly and securely. Electrical plugs connected and secure.', NULL, 11, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Side fold seat installed correctly, secure and not rubbing. Retaining strap fitted.', NULL, 12, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check the operation of all seats.', NULL, 13, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Seat belt post and seat belt fitted including stalk.', NULL, 14, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Restraints and occupant seat belt supplied.', NULL, 15, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check all seat belts including wheelchair restraints are retracting and locking.', NULL, 16, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Jack and tools fitted.', NULL, 17, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Inside trim finished, no glue and no loose carpets.', NULL, 18, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Interior plastic trims fitted and secure.', NULL, 19, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Ramp switches, electric restraints, docking station and floor lights working.', NULL, 20, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Ramp seals and proper ramp closed tension.', NULL, 21, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Rubbers on bracket tailgate to backdoor.', NULL, 22, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Back door closing properly and sealing well.', NULL, 23, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check around the tailgate seal for light and rectify with a rubber seal or brush seal.', NULL, 24, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Supply tyre repair kit and break glass hammer.', NULL, 25, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check Automatic Tailgate is working properly and suction lock is engaging as intended.', NULL, 26, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check the length of the seatbelt is correct and properly fits an occupant.', NULL, 27, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Interior Check' AND template_name = 'G24 Conversions'
+
+UNION ALL
+
+-- Exterior Check (28-35)
+SELECT id, 'GE Logo and Stickers - emergency access, conversion spec sticker, Disability sticker, Gilani 3D logo to tailgate.', NULL, 28, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Coolant bleed 10min after fans kicks in and rev 2500rpm.', NULL, 29, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Coolant level.', NULL, 30, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Centre Bumper cover fitted properly and aligned.', NULL, 31, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Back door closing properly and aligned.', NULL, 32, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check all masking has been removed.', NULL, 33, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check bodywork for damage.', NULL, 34, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Under the bonnet, all levels checked, wiring secure and fuses fitted.', NULL, 35, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Exterior Check' AND template_name = 'G24 Conversions'
+
+UNION ALL
+
+-- Under Body Check (36-59)
+SELECT id, 'Wheel sensor connectors secure.', NULL, 36, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Handbrake fitted and adjusted.', NULL, 37, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Fuel tank bolts and hoses tight.', NULL, 38, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Fuel hoses are secure, protected when touching bodywork and no leaks.', NULL, 39, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Exhaust secure and good clearance from other components.', NULL, 40, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Heat shield between fuel tank and exhaust if the gap is less than 150mm.', NULL, 41, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Touch up any scratched paint.', NULL, 42, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Spare tyre fitted.', NULL, 43, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Brake fluid level check.', NULL, 44, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Brake line clearance to tire.', NULL, 45, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Brake lines are secure and not rubbing against bodywork.', NULL, 46, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Handbrake and wheel sensor clamped securely.', NULL, 47, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Rear heater hoses are secure, protected where touching bodywork and no leaks.', NULL, 48, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Fuel hoses are secure, protected when touching bodywork and no leaks.', NULL, 49, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Suspension clearance to box, MUST BE NOT LESS THAN 40MM.', NULL, 50, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Bolt check on suspension check for tightness and mark as checked.', NULL, 51, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Suspension alignment.', NULL, 52, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Wheel alignment.', NULL, 53, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Wheel nuts torqued to required settings.', NULL, 54, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check Springs are Tight while vehicle is airborne and raised all the way up on hoist.', NULL, 55, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Test drive to check suspension and air in brakes.', NULL, 56, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Fill the fuel tank to maximum, check the fuel gauge and final check for leaks.', NULL, 57, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check G24 Actuator Mounts are Secure not touching anything during operation.', NULL, 58, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Check ground clearance at rear (approx 230mm).', NULL, 59, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Under Body Check' AND template_name = 'G24 Conversions'
+
+UNION ALL
+
+-- Personnel & Sign-off (60-63) - TEXT FIELDS ONLY
+SELECT id, 'Built by:', 'text_field', 60, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Personnel & Sign-off' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Inspected by:', 'text_field', 61, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Personnel & Sign-off' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Certifier:', 'text_field', 62, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Personnel & Sign-off' AND template_name = 'G24 Conversions'
+UNION ALL
+SELECT id, 'Checked off by:', 'text_field', 63, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Personnel & Sign-off' AND template_name = 'G24 Conversions'
+
+UNION ALL
+
+-- Fault Rectification (64) - TEXT AREA ONLY
+SELECT id, 'Fault rectification and work still to do list:', 'textarea_field', 64, 'G24 Conversions'
+FROM qc_categories WHERE category_name = 'Fault Rectification' AND template_name = 'G24 Conversions'
+
+ON CONFLICT DO NOTHING;
+
 -- ============================================================================
 -- NOTES ON IMPLEMENTATION
 -- ============================================================================

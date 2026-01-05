@@ -597,8 +597,8 @@ const RequestDetails = () => {
     { label: 'Hand Control (Push/Pull)', available: true, note: 'Template ready to use.' },
     { label: 'Dual Control', available: true, note: 'Template ready to use.' },
     { label: 'Left Foot Acceleration', available: true, note: 'Template ready to use.' },
-    { label: 'Remote Light and Indicators', available: false, note: 'Not added yet.' },
-    { label: 'G24 Conversions', available: false, note: 'Not added yet.' },
+    { label: 'Remote Light and Indicators', available: true, note: 'Template ready to use.' },
+    { label: 'G24 Conversions', available: true, note: 'Template ready to use.' },
     { label: 'Turney Seat Installation', available: false, note: 'Not added yet.' },
     { label: 'Baby Lift - Light - Lifter Model (106008 - 106008 - 106004 )', available: false, note: 'Not added yet.' }
   ];
