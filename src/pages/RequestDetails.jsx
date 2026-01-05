@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import QualityControlInspection from '../components/QualityControlInspection';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
@@ -20,7 +21,7 @@ const Field = ({ label, value }) => (
 );
 
 const Section = ({ title, children }) => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6" style={{ pageBreakInside: 'avoid' }}>
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
     <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">{title}</h3>
     {children}
   </div>
@@ -497,6 +498,7 @@ const normalizeRequest = (row, fallbackType, idHint) => {
 
 const RequestDetails = () => {
   const { id } = useParams();
+  const { isFactoryAdmin } = useAuth();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQCModal, setShowQCModal] = useState(false);
@@ -635,7 +637,7 @@ const RequestDetails = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
-    if (!request) return;
+    if (!request || !isFactoryAdmin()) return;
     setRequest(prev => ({ ...prev, status: newStatus }));
     updateLocalCache(newStatus);
 
@@ -732,13 +734,46 @@ const RequestDetails = () => {
       <style>{`
         @media print {
           .screen-only { display: none !important; }
-          body { background: white; }
-          .print-container { box-shadow: none !important; border: none !important; }
+          body { 
+            background: white; 
+            margin: 0;
+            padding: 0;
+          }
+          .min-h-screen {
+            min-height: auto !important;
+          }
+          .print-container { 
+            box-shadow: none !important; 
+            border: 1px solid #e5e7eb !important;
+            page-break-inside: avoid;
+          }
+          .print-header {
+            display: none !important;
+          }
+          .print-footer {
+            display: none !important;
+          }
+          @page {
+            size: A4;
+            margin: 1cm;
+          }
         }
         @media screen {
           .print-only { display: none !important; }
+          .print-header, .print-footer { display: none !important; }
         }
       `}</style>
+
+      {/* Print Header - Hidden */}
+      <div className="print-header max-w-6xl mx-auto px-4 py-2 border-b border-gray-200" style={{ display: 'none' }}>
+        <div className="flex items-center gap-4">
+          <img src={gmHeader} alt="Gilani Mobility" className="h-12 w-auto object-contain" />
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-bold text-gray-900 tracking-wide">GILANI MOBILITY TRADING CO. LLC</h2>
+            <p className="text-xs text-gray-600">Mobility solution specialist</p>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30 screen-only">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -757,23 +792,29 @@ const RequestDetails = () => {
               <p className="text-sm text-gray-500">{jobType}</p>
             </div>
             <div className="flex items-center gap-3">
-              <select
-                value={request.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Requested to factory">Requested to factory</option>
-                <option value="In review">In review</option>
-                <option value="Approved">Approved</option>
-                <option value="Completed">Completed</option>
-              </select>
+              {isFactoryAdmin() ? (
+                <select
+                  value={request.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Requested to factory">Requested to factory</option>
+                  <option value="In review">In review</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              ) : (
+                <span className="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700">
+                  {request.status}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 print-container" style={{ pageBreakInside: 'avoid' }}>
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 print-container screen-only" style={{ pageBreakInside: 'avoid' }}>
           <div className="flex items-center gap-4">
             <img src={gmHeader} alt="Gilani Mobility" className="h-16 w-auto object-contain" />
             <div className="flex-1 text-center">
@@ -785,31 +826,33 @@ const RequestDetails = () => {
           <hr className="mt-4 border-gray-300" />
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8 flex flex-wrap gap-4 items-center justify-between screen-only">
-          <div>
-            <h3 className="text-blue-900 font-semibold">Factory Actions</h3>
-            <p className="text-blue-700 text-sm">Tools for processing this request.</p>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <button onClick={copySummary} className="px-4 py-2 bg-white text-blue-700 border border-blue-200 rounded hover:bg-blue-50 font-medium text-sm shadow-sm">
-              Copy Factory Summary
-            </button>
-            <button onClick={downloadJson} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm shadow-sm">
-              Download JSON
-            </button>
-            <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
-              Export PDF
-            </button>
-            {request?.status === 'Completed' && !qcStatus && (
-              <button
-                onClick={openQCModal}
-                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-sm shadow-sm"
-              >
-                🔍 Inspect
+        {isFactoryAdmin() && (
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8 flex flex-wrap gap-4 items-center justify-between screen-only">
+            <div>
+              <h3 className="text-blue-900 font-semibold">Factory Actions</h3>
+              <p className="text-blue-700 text-sm">Tools for processing this request.</p>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={copySummary} className="px-4 py-2 bg-white text-blue-700 border border-blue-200 rounded hover:bg-blue-50 font-medium text-sm shadow-sm">
+                Copy Factory Summary
               </button>
-            )}
+              <button onClick={downloadJson} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm shadow-sm">
+                Download JSON
+              </button>
+              <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
+                Export PDF
+              </button>
+              {request?.status === 'Completed' && !qcStatus && (
+                <button
+                  onClick={openQCModal}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-sm shadow-sm"
+                >
+                  Inspect
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Quality Control Status */}
         {qcStatus && (
@@ -821,10 +864,6 @@ const RequestDetails = () => {
               : 'bg-gray-100 border border-gray-300'
           }`}>
             <div className="flex items-center gap-3">
-              <span className={`text-2xl ${
-                qcStatus.inspection_status === 'passed' ? '✅' : 
-                qcStatus.inspection_status === 'failed' ? '⚠️' : '⏳'
-              }`}></span>
               <div>
                 <p className={`font-semibold ${
                   qcStatus.inspection_status === 'passed' ? 'text-green-800' :
@@ -838,7 +877,7 @@ const RequestDetails = () => {
                 )}
               </div>
             </div>
-            {request?.status === 'Completed' && qcStatus && (
+            {isFactoryAdmin() && request?.status === 'Completed' && qcStatus && (
               <button
                 onClick={openQCModal}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm"
@@ -855,7 +894,15 @@ const RequestDetails = () => {
         {isTurney && <TurneyLayout request={request} />}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 pb-10">
+      {/* Print Footer - Hidden */}
+      <div className="print-footer max-w-6xl mx-auto px-4 py-2 border-t border-gray-200" style={{ display: 'none' }}>
+        <div className="text-center text-xs text-gray-700 leading-relaxed">
+          <p>Warehouse #5-17th St., 917th St. Umm Ramool, Dubai, United Arab Emirates</p>
+          <p className="mt-1">Tel. No. +97148818426 | Mob. +97154320067 | sales@gilanimobility.ae | www.gilanimobility.ae</p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 pb-10 screen-only">
         <hr className="border-gray-300 mb-4" />
         <div className="text-center text-sm text-gray-700 leading-relaxed">
           <p>Warehouse #5-17th St., 917th St. Umm Ramool, Dubai, United Arab Emirates</p>

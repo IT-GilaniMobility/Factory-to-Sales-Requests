@@ -332,9 +332,9 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
             hasPending ? 'bg-gray-100 text-gray-800' :
             'bg-green-100 text-green-800'
           }`}>
-            {hasFailures ? '🚫 INSPECTION FAILED' : 
-             hasPending ? '⏳ INSPECTION IN PROGRESS' :
-             '✅ INSPECTION PASSED'}
+            {hasFailures ? 'INSPECTION FAILED' : 
+             hasPending ? 'INSPECTION IN PROGRESS' :
+             'INSPECTION PASSED'}
           </div>
         </div>
 

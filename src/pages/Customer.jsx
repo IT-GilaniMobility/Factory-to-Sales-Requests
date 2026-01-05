@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
@@ -166,6 +167,7 @@ const RadioGroup = ({ label, name, options, required = false, value, onChange, e
 const Customer = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userEmail } = useAuth();
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
@@ -553,6 +555,7 @@ const Customer = () => {
           .insert([{
             request_code: requestCode,
             status: 'Requested to factory',
+            created_by_email: userEmail,
             customer_name: formData.customerName,
             customer_mobile: formData.customerMobile,
             customer_address: formData.customerAddress,
@@ -577,6 +580,7 @@ const Customer = () => {
           .insert([{
             request_code: requestCode,
             status: 'Requested to factory',
+            created_by_email: userEmail,
             customer_name: formData.customerName,
             customer_mobile: formData.customerMobile,
             customer_address: formData.customerAddress,
@@ -597,6 +601,7 @@ const Customer = () => {
           .insert([{
             request_code: requestCode,
             status: 'Requested to factory',
+            created_by_email: userEmail,
             customer_name: formData.customerName,
             customer_mobile: formData.customerMobile,
             customer_address: formData.customerAddress,
@@ -629,6 +634,7 @@ const Customer = () => {
           .insert([{
             request_code: requestCode,
             status: 'Requested to factory',
+            created_by_email: userEmail,
             customer_name: formData.customerName,
             customer_mobile: formData.customerMobile,
             customer_address: formData.customerAddress,

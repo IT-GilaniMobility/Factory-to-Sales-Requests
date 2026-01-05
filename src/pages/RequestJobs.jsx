@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
+  const { logout, isFactoryAdmin, userEmail } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -60,12 +62,26 @@ const RequestJobs = () => {
       }
 
       try {
+        // Build query based on role
+        let wheelchairQuery = supabase.from('requests').select('request_code, status, created_at, created_by_email, payload');
+        let g24Query = supabase.from('g24_requests').select('request_code, status, created_at, created_by_email, payload');
+        let divingQuery = supabase.from('diving_solution_requests').select('request_code, status, created_at, created_by_email, payload');
+        let turneyQuery = supabase.from('turney_seat_requests').select('request_code, status, created_at, created_by_email, payload');
+
+        // Filter by created_by_email for sales person
+        if (!isFactoryAdmin() && userEmail) {
+          wheelchairQuery = wheelchairQuery.eq('created_by_email', userEmail);
+          g24Query = g24Query.eq('created_by_email', userEmail);
+          divingQuery = divingQuery.eq('created_by_email', userEmail);
+          turneyQuery = turneyQuery.eq('created_by_email', userEmail);
+        }
+
         // Fetch from all four tables
         const [wheelchairRes, g24Res, divingRes, turneyRes] = await Promise.all([
-          supabase.from('requests').select('request_code, status, created_at, payload'),
-          supabase.from('g24_requests').select('request_code, status, created_at, payload'),
-          supabase.from('diving_solution_requests').select('request_code, status, created_at, payload'),
-          supabase.from('turney_seat_requests').select('request_code, status, created_at, payload'),
+          wheelchairQuery,
+          g24Query,
+          divingQuery,
+          turneyQuery,
         ]);
 
         const allData = [];
@@ -80,6 +96,7 @@ const RequestJobs = () => {
               request_code: row.request_code,
               status: row.status || payload.status || 'Requested to factory',
               createdAt: row.created_at || payload.createdAt,
+              createdBy: row.created_by_email,
               job: payload.job || { requestType: 'Wheelchair Lifter Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'Wheelchair Lifter Installation',
@@ -98,6 +115,7 @@ const RequestJobs = () => {
               request_code: row.request_code,
               status: row.status || payload.status || 'Requested to factory',
               createdAt: row.created_at || payload.createdAt,
+              createdBy: row.created_by_email,
               job: payload.job || { requestType: 'The Ultimate G24' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'The Ultimate G24',
@@ -116,6 +134,7 @@ const RequestJobs = () => {
               request_code: row.request_code,
               status: row.status || payload.status || 'Requested to factory',
               createdAt: row.created_at || payload.createdAt,
+              createdBy: row.created_by_email,
               job: payload.job || { requestType: 'Diving Solution Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'Diving Solution Installation',
@@ -134,6 +153,7 @@ const RequestJobs = () => {
               request_code: row.request_code,
               status: row.status || payload.status || 'Requested to factory',
               createdAt: row.created_at || payload.createdAt,
+              createdBy: row.created_by_email,
               job: payload.job || { requestType: 'Turney Seat Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'Turney Seat Installation',
@@ -160,20 +180,29 @@ const RequestJobs = () => {
     };
 
     loadFromSupabase();
-  }, []);
+  }, [isFactoryAdmin]);
+
+  // Filter requests based on user role
+  const getVisibleRequests = () => {
+    // Both factory admin and sales see their respective requests
+    // Sales already filtered at query level, factory admin sees all
+    return requests;
+  };
+
+  const visibleRequests = getVisibleRequests();
 
   // Reload QC statuses when requests change or when page becomes visible
   useEffect(() => {
-    if (requests.length > 0) {
-      const requestCodes = requests.map(r => r.request_code).filter(Boolean);
+    if (visibleRequests.length > 0) {
+      const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
       if (requestCodes.length > 0) {
         loadQCStatuses(requestCodes);
       }
     }
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && requests.length > 0) {
-        const requestCodes = requests.map(r => r.request_code).filter(Boolean);
+      if (!document.hidden && visibleRequests.length > 0) {
+        const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
         if (requestCodes.length > 0) {
           loadQCStatuses(requestCodes);
         }
@@ -182,7 +211,7 @@ const RequestJobs = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [requests]);
+  }, [visibleRequests]);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -190,6 +219,12 @@ const RequestJobs = () => {
 
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
+    
+    // Prevent sales users from changing status
+    if (!isFactoryAdmin()) {
+      return;
+    }
+    
     const updated = requests.map(req => 
       (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req
     );
@@ -208,7 +243,7 @@ const RequestJobs = () => {
     }
   };
 
-  const filteredRequests = requests
+  const filteredRequests = visibleRequests
     .filter(req => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch = 
@@ -244,11 +279,11 @@ const RequestJobs = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Requested to factory': return { bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', icon: '📋' };
-      case 'In review': return { bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', icon: '🔍' };
-      case 'Approved': return { bg: 'bg-green-50', badge: 'bg-green-100 text-green-800', icon: '✓' };
-      case 'Completed': return { bg: 'bg-gray-50', badge: 'bg-gray-200 text-gray-700', icon: '✓✓' };
-      default: return { bg: 'bg-gray-50', badge: 'bg-gray-100 text-gray-700', icon: '◎' };
+      case 'Requested to factory': return { bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' };
+      case 'In review': return { bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' };
+      case 'Approved': return { bg: 'bg-green-50', badge: 'bg-green-100 text-green-800' };
+      case 'Completed': return { bg: 'bg-gray-50', badge: 'bg-gray-200 text-gray-800' };
+      default: return { bg: 'bg-white', badge: 'bg-gray-100 text-gray-600' };
     }
   };
 
@@ -383,13 +418,31 @@ const RequestJobs = () => {
         </nav>
 
         <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          {isFactoryAdmin() && (
+            <button
+              onClick={() => setShowNewRequestModal(true)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3"
+            >
+              <FiPlus size={18} />
+              {sidebarOpen && <span>New Request</span>}
+            </button>
+          )}
           <button
-            onClick={() => setShowNewRequestModal(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2"
+            onClick={logout}
+            className={`w-full font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 ${
+              darkMode
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-red-200 hover:bg-red-300 text-red-900'
+            }`}
           >
-            <FiPlus size={18} />
-            {sidebarOpen && <span>New Request</span>}
+            <FiLogOut size={18} />
+            {sidebarOpen && <span>Logout</span>}
           </button>
+          {sidebarOpen && (
+            <p className={`text-xs mt-3 text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {userEmail}
+            </p>
+          )}
         </div>
       </div>
 
@@ -399,8 +452,12 @@ const RequestJobs = () => {
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm p-6`}>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>WHEELCHAIR LIFTER FACTORY</p>
-              <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Request Management Dashboard</h1>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>
+                {isFactoryAdmin() ? 'FACTORY ADMIN' : 'SALES PERSON'}
+              </p>
+              <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {isFactoryAdmin() ? 'Request Management Dashboard' : 'New Work Request'}
+              </h1>
             </div>
             <div className="flex gap-2 items-center">
               <button 
@@ -485,12 +542,14 @@ const RequestJobs = () => {
         <div className="flex-1 overflow-auto p-6">
           {filteredRequests.length === 0 ? (
             <div className={`flex flex-col items-center justify-center h-full ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              <p className="text-lg font-medium mb-2">No requests found</p>
+              <p className="text-lg font-medium mb-2">
+                {!isFactoryAdmin() ? 'No requests created yet' : 'No requests found'}
+              </p>
               <button
                 onClick={() => setShowNewRequestModal(true)}
                 className="text-blue-600 hover:underline text-sm font-medium"
               >
-                Create your first request
+                {!isFactoryAdmin() ? 'Create your first request' : 'Create a new request'}
               </button>
             </div>
           ) : viewMode === 'grid' ? (
@@ -512,16 +571,22 @@ const RequestJobs = () => {
                           <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(req.createdAt)}</p>
                         </div>
                         <div onClick={e => e.stopPropagation()}>
-                          <select
-                            value={req.status}
-                            onChange={(e) => handleStatusChange(req.id, e.target.value, e)}
-                            className={`text-xs font-bold px-3 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${colors.badge}`}
-                          >
-                            <option value="Requested to factory">Requested</option>
-                            <option value="In review">In Review</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Completed">Completed</option>
-                          </select>
+                          {isFactoryAdmin() ? (
+                            <select
+                              value={req.status}
+                              onChange={(e) => handleStatusChange(req.id, e.target.value, e)}
+                              className={`text-xs font-bold px-3 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${colors.badge}`}
+                            >
+                              <option value="Requested to factory">Requested</option>
+                              <option value="In review">In Review</option>
+                              <option value="Approved">Approved</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          ) : (
+                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${colors.badge}`}>
+                              {req.status === 'Requested to factory' ? 'Requested' : req.status}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -633,16 +698,22 @@ const RequestJobs = () => {
                       )}
                     </div>
                     <div className="flex gap-2 items-center ml-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                      <select
-                        value={req.status}
-                        onChange={(e) => handleStatusChange(req.id, e.target.value, e)}
-                        className={`text-xs font-bold px-3 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${colors.badge}`}
-                      >
-                        <option value="Requested to factory">Requested</option>
-                        <option value="In review">In Review</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Completed">Completed</option>
-                      </select>
+                      {isFactoryAdmin() ? (
+                        <select
+                          value={req.status}
+                          onChange={(e) => handleStatusChange(req.id, e.target.value, e)}
+                          className={`text-xs font-bold px-3 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${colors.badge}`}
+                        >
+                          <option value="Requested to factory">Requested</option>
+                          <option value="In review">In Review</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+                      ) : (
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${colors.badge}`}>
+                          {req.status === 'Requested to factory' ? 'Requested' : req.status}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
