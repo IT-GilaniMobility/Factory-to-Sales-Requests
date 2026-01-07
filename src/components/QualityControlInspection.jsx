@@ -44,6 +44,11 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
             .eq('inspection_id', existingInspection.id)
             .order('category_name, id');
           setInspectionItems(items || []);
+
+          // If inspection exists but has no items (likely seeded after creation), backfill now
+          if (!items || items.length === 0) {
+            await backfillInspectionItems(existingInspection.id, templateName);
+          }
         }
       } else {
         // Create new inspection
@@ -65,6 +70,56 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
       console.error('Failed to load inspection data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Backfill inspection items for an existing inspection when DB was seeded later
+  const backfillInspectionItems = async (inspectionId, templateName) => {
+    try {
+      if (!supabase || !inspectionId || !templateName) return;
+
+      // Fetch checklist items for template
+      const { data: checklistItems, error: checklistErr } = await supabase
+        .from('qc_checklist_items')
+        .select('id, item_name, item_description, category_id, sequence_order')
+        .eq('template_name', templateName)
+        .order('sequence_order');
+      if (checklistErr) throw checklistErr;
+
+      if (!checklistItems || checklistItems.length === 0) {
+        console.warn('No checklist items available to backfill for template:', templateName);
+        return;
+      }
+
+      // Fetch category names for mapping
+      const { data: cats, error: catsErr } = await supabase
+        .from('qc_categories')
+        .select('id, category_name')
+        .eq('template_name', templateName);
+      if (catsErr) throw catsErr;
+
+      const categoryMap = {};
+      (cats || []).forEach(cat => { categoryMap[cat.id] = cat.category_name; });
+
+      const itemsToInsert = checklistItems.map(item => ({
+        inspection_id: inspectionId,
+        checklist_item_id: item.id,
+        category_id: item.category_id,
+        item_name: item.item_name,
+        category_name: categoryMap[item.category_id] || 'Other',
+        status: 'pending',
+        comments: ''
+      }));
+
+      const { data: newItems, error: insertErr } = await supabase
+        .from('qc_inspection_items')
+        .insert(itemsToInsert)
+        .select();
+      if (insertErr) throw insertErr;
+
+      setInspectionItems(newItems || []);
+    } catch (err) {
+      console.error('Failed to backfill inspection items:', err);
     }
   };
 

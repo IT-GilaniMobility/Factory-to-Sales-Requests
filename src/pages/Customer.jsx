@@ -869,7 +869,8 @@ const Customer = () => {
                           )}
                         </Section>
 
-                        {/* SECTION 7: Optional Extra Seats Add-ons */}
+                        {/* SECTION 7: Optional Extra Seats Add-ons - Only show when "Remove" is selected */}
+                        {formData.secondRowSeat === 'Remove' && (
                         <Section title="7. Optional Extra Seats Add-ons">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -904,6 +905,7 @@ const Customer = () => {
                             </div>
                           </div>
                         </Section>
+                        )}
 
                         {/* SECTION 8: Tie Down Type */}
                         <Section title="8. Tie Down Type">

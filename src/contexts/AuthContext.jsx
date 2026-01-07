@@ -12,37 +12,62 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if user email is in localStorage (simple auth for demo)
     const storedEmail = localStorage.getItem('user_email');
-    if (storedEmail && supabase) {
+    if (storedEmail) {
       loadUserRole(storedEmail);
     } else {
       setLoading(false);
+    }
+
+    // Listen for Supabase auth state changes (for Google login)
+    if (supabase) {
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          const user = session.user;
+          
+          // Map Google user to your system (default to sales role)
+          const userData = {
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email,
+            role: 'sales', // Default role for Google users
+            is_active: true
+          };
+          
+          localStorage.setItem('user_email', user.email);
+          setUser(userData);
+          setUserRole(userData.role);
+          setUserEmail(userData.email);
+          setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          logout();
+        }
+      });
+
+      return () => {
+        authListener?.subscription?.unsubscribe();
+      };
     }
   }, []);
 
   const loadUserRole = async (email) => {
     try {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
+      // Map email back to hardcoded user data
+      const userMap = {
+        'factory@gilanimobility.ae': { email: 'factory@gilanimobility.ae', full_name: 'Factory Admin', role: 'factory_admin', is_active: true },
+        'sales@gilanimobility.ae': { email: 'sales@gilanimobility.ae', full_name: 'Sales Team', role: 'sales', is_active: true }
+      };
 
-      const { data, error } = await supabase
-        .from('app_users')
-        .select('email, full_name, role, is_active')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
+      const userData = userMap[email];
 
-      if (error || !data) {
-        console.warn('User not found or inactive:', error);
+      if (!userData) {
+        console.warn('User not found');
         setUser(null);
         setUserRole(null);
         setUserEmail(null);
         localStorage.removeItem('user_email');
       } else {
-        setUser(data);
-        setUserRole(data.role);
-        setUserEmail(data.email);
+        setUser(userData);
+        setUserRole(userData.role);
+        setUserEmail(userData.email);
       }
     } catch (err) {
       console.error('Failed to load user role:', err);
@@ -53,39 +78,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email) => {
+  const login = async (username, password) => {
     setLoading(true);
     try {
-      // Verify user exists in app_users table
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
+      // Hardcoded credentials for factory and sales
+      const credentials = {
+        factory: { password: 'gilanifactory@2026', role: 'factory_admin', email: 'factory@gilanimobility.ae', full_name: 'Factory Admin' },
+        sales: { password: 'gilanisales@2026', role: 'sales', email: 'sales@gilanimobility.ae', full_name: 'Sales Team' }
+      };
 
-      const { data, error } = await supabase
-        .from('app_users')
-        .select('email, full_name, role, is_active')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
-
-      if (error || !data) {
-        alert('User not found or inactive. Please contact administrator.');
+      const user = credentials[username.toLowerCase()];
+      
+      if (!user || user.password !== password) {
+        alert('Invalid username or password.');
         setLoading(false);
         return false;
       }
 
       // Store email in localStorage
-      localStorage.setItem('user_email', email);
-      setUser(data);
-      setUserRole(data.role);
-      setUserEmail(data.email);
+      localStorage.setItem('user_email', user.email);
+      setUser({ email: user.email, full_name: user.full_name, role: user.role, is_active: true });
+      setUserRole(user.role);
+      setUserEmail(user.email);
       setLoading(false);
       return true;
     } catch (err) {
       console.error('Login failed:', err);
       alert('Login failed: ' + err.message);
       setLoading(false);
+      return false;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    if (!supabase) {
+      alert('Supabase is not configured');
+      return false;
+    }
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/requests`
+        }
+      });
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Google login failed:', err);
+      alert('Google login failed: ' + err.message);
       return false;
     }
   };
@@ -109,6 +151,7 @@ export const AuthProvider = ({ children }) => {
         userEmail,
         loading,
         login,
+        loginWithGoogle,
         logout,
         isFactoryAdmin,
         isSales,

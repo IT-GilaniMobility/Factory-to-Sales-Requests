@@ -538,3 +538,107 @@ ON CONFLICT DO NOTHING;
 --    - Light green with ✓ icon if inspection_status = 'passed'
 --    - Light yellow if inspection_status = 'failed'
 --    - Gray if inspection_status = 'pending' or 'in_progress'
+
+-- =========================================================================
+-- SEED DATA: Quality Control Categories for Turney Seat Installation
+-- =========================================================================
+INSERT INTO qc_categories (category_name, description, template_name) VALUES
+('Installation Verification', 'Verify physical installation and alignment of components', 'Turney Seat Installation'),
+('Functional Testing', 'Test seat rotation, extension, and powered functions', 'Turney Seat Installation'),
+('Safety Features', 'Verify seat belt integration and capacity warnings', 'Turney Seat Installation'),
+('Electrical Check', 'Confirm wiring and remote positioning', 'Turney Seat Installation'),
+('Aesthetic Inspection', 'Cleanliness and cosmetic condition checks', 'Turney Seat Installation'),
+('Client Demonstration', 'Demonstrate operation to client', 'Turney Seat Installation'),
+('Documentation', 'Provide manuals, warranty, and media', 'Turney Seat Installation'),
+('Final Client Confirmation', 'Walk-through and client satisfaction sign-off', 'Turney Seat Installation'),
+('Post-Delivery Support', 'Provide support contact information', 'Turney Seat Installation'),
+('Marketing', 'Branding and marketing materials verification', 'Turney Seat Installation')
+ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- SEED DATA: Inspection Checklist Items for Turney Seat Installation
+-- =========================================================================
+INSERT INTO qc_checklist_items (category_id, item_name, item_description, sequence_order, template_name)
+-- Installation Verification (1-3)
+SELECT id, 'Ensure the Turney Seat is securely installed according to specifications.', NULL, 1, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Installation Verification' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Verify bolts, brackets, and components are tightened and aligned properly.', NULL, 2, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Installation Verification' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Ensure the sensor mounted to the door is in a good position.', NULL, 3, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Installation Verification' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Functional Testing (4-5)
+SELECT id, 'Test rotation and extension for smooth operation with doors closed/open, with and without weight.', NULL, 4, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Functional Testing' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Verify motorized functions (rotation, height adjustment, etc.) work properly.', NULL, 5, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Functional Testing' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Safety Features (6-7)
+SELECT id, 'Inspect seat belt integration for alignment and functionality.', NULL, 6, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Safety Features' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Check weight capacity limits and provide warnings for overloading.', NULL, 7, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Safety Features' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Electrical Check (8-9)
+SELECT id, 'Ensure all wiring is correctly installed and secure.', NULL, 8, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Electrical Check' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Position the remote mount correctly in the car.', NULL, 9, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Electrical Check' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Aesthetic Inspection (10-11)
+SELECT id, 'Clean the seat and surrounding vehicle area.', NULL, 10, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Aesthetic Inspection' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Check for scratches, dents, or damages on the seat.', NULL, 11, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Aesthetic Inspection' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Client Demonstration (12)
+SELECT id, 'Demonstrate operating the seat (manual or electric controls).', NULL, 12, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Client Demonstration' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Documentation (13,16)
+SELECT id, 'Provide all user manuals and warranty documents.', NULL, 13, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Documentation' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Take video after installing the product.', NULL, 16, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Documentation' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Final Client Confirmation (14)
+SELECT id, 'Walk through the checklist with the client for confirmation and satisfaction.', NULL, 14, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Final Client Confirmation' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Post-Delivery Support (15)
+SELECT id, 'Provide contact information for customer service or technical support.', NULL, 15, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Post-Delivery Support' AND template_name = 'Turney Seat Installation'
+
+UNION ALL
+
+-- Marketing (17-18)
+SELECT id, 'Confirm all Company stickers are properly placed.', NULL, 17, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Turney Seat Installation'
+UNION ALL
+SELECT id, 'Check with marketing team for needed material.', NULL, 18, 'Turney Seat Installation'
+FROM qc_categories WHERE category_name = 'Marketing' AND template_name = 'Turney Seat Installation'
+
+ON CONFLICT DO NOTHING;

@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Customer from './pages/Customer';
 import RequestJobs from './pages/RequestJobs';
 import RequestDetails from './pages/RequestDetails';
+import Logs from './pages/Logs';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -72,6 +73,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <RequestDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/logs"
+          element={
+            <ProtectedRoute>
+              <Logs />
             </ProtectedRoute>
           }
         />

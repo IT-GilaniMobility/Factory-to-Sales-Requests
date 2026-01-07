@@ -599,7 +599,7 @@ const RequestDetails = () => {
     { label: 'Left Foot Acceleration', available: true, note: 'Template ready to use.' },
     { label: 'Remote Light and Indicators', available: true, note: 'Template ready to use.' },
     { label: 'G24 Conversions', available: true, note: 'Template ready to use.' },
-    { label: 'Turney Seat Installation', available: false, note: 'Not added yet.' },
+    { label: 'Turney Seat Installation', available: true, note: 'Template ready to use.' },
     { label: 'Baby Lift - Light - Lifter Model (106008 - 106008 - 106004 )', available: false, note: 'Not added yet.' }
   ];
 

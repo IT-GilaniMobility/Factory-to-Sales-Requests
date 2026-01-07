@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity } from 'react-icons/fi';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -417,16 +417,27 @@ const RequestJobs = () => {
           </div>
         </nav>
 
+        {/* Activity Logs Link */}
+        <div className="px-4 pb-4">
+          <a
+            href="/logs"
+            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
+              darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+            }`}
+          >
+            <FiActivity size={18} />
+            {sidebarOpen && <span className="text-sm">Activity Logs</span>}
+          </a>
+        </div>
+
         <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          {isFactoryAdmin() && (
-            <button
-              onClick={() => setShowNewRequestModal(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3"
-            >
-              <FiPlus size={18} />
-              {sidebarOpen && <span>New Request</span>}
-            </button>
-          )}
+          <button
+            onClick={() => setShowNewRequestModal(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3"
+          >
+            <FiPlus size={18} />
+            {sidebarOpen && <span>New Request</span>}
+          </button>
           <button
             onClick={logout}
             className={`w-full font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 ${
