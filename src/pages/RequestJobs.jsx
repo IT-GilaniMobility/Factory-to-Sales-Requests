@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck } from 'react-icons/fi';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -418,7 +418,7 @@ const RequestJobs = () => {
         </nav>
 
         {/* Activity Logs Link */}
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-2">
           <a
             href="/logs"
             className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
@@ -427,6 +427,19 @@ const RequestJobs = () => {
           >
             <FiActivity size={18} />
             {sidebarOpen && <span className="text-sm">Activity Logs</span>}
+          </a>
+        </div>
+
+        {/* Deliveries Link */}
+        <div className="px-4 pb-4">
+          <a
+            href="/deliveries"
+            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
+              darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+            }`}
+          >
+            <FiTruck size={18} />
+            {sidebarOpen && <span className="text-sm">Deliveries</span>}
           </a>
         </div>
 

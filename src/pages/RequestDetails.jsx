@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import QualityControlInspection from '../components/QualityControlInspection';
+import DeliveryWorkSection from '../components/DeliveryWorkSection';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
@@ -892,6 +893,17 @@ const RequestDetails = () => {
         {isG24 && <G24Layout request={request} />}
         {isDiving && <DivingLayout request={request} />}
         {isTurney && <TurneyLayout request={request} />}
+
+        {/* Delivery Notes and Work Hours Tracking */}
+        <DeliveryWorkSection 
+          requestId={request.id} 
+          requestType={
+            isWheelchair ? 'wheelchair' : 
+            isG24 ? 'g24' : 
+            isDiving ? 'diving_solution' : 
+            'turney_seat'
+          }
+        />
       </div>
 
       {/* Print Footer - Hidden */}

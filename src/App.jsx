@@ -6,6 +6,7 @@ import Customer from './pages/Customer';
 import RequestJobs from './pages/RequestJobs';
 import RequestDetails from './pages/RequestDetails';
 import Logs from './pages/Logs';
+import Deliveries from './pages/Deliveries';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -81,6 +82,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Logs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/deliveries"
+          element={
+            <ProtectedRoute>
+              <Deliveries />
             </ProtectedRoute>
           }
         />
