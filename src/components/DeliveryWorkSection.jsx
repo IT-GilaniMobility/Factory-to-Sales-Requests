@@ -16,7 +16,6 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
   const [deliveryForm, setDeliveryForm] = useState({
     delivery_date: '',
     delivery_status: 'pending',
-    tracking_number: '',
     notes: '',
     recipient_name: '',
     recipient_contact: '',
@@ -220,7 +219,6 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
     setDeliveryForm({
       delivery_date: delivery.delivery_date ? new Date(delivery.delivery_date).toISOString().slice(0, 16) : '',
       delivery_status: delivery.delivery_status,
-      tracking_number: delivery.tracking_number || '',
       notes: delivery.notes || '',
       recipient_name: delivery.recipient_name || '',
       recipient_contact: delivery.recipient_contact || '',
@@ -245,7 +243,6 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
     setDeliveryForm({
       delivery_date: '',
       delivery_status: 'pending',
-      tracking_number: '',
       notes: '',
       recipient_name: '',
       recipient_contact: '',
@@ -315,9 +312,6 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(delivery.delivery_status)}`}>
                         {delivery.delivery_status.replace('_', ' ')}
                       </span>
-                      {delivery.tracking_number && (
-                        <span className="text-sm font-mono text-gray-600">#{delivery.tracking_number}</span>
-                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {delivery.recipient_name && (
@@ -460,17 +454,6 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tracking Number</label>
-                <input
-                  type="text"
-                  value={deliveryForm.tracking_number}
-                  onChange={(e) => setDeliveryForm({ ...deliveryForm, tracking_number: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., TRK123456789"
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

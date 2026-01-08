@@ -1,12 +1,9 @@
--- Delivery Notes Table
--- Stores delivery information for each request/job card
 CREATE TABLE IF NOT EXISTS delivery_notes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id UUID NOT NULL,
+  request_id TEXT NOT NULL, -- stores request_code (e.g., WL-20260108-T1EL)
   request_type VARCHAR(50) NOT NULL, -- 'wheelchair', 'g24', 'diving_solution', 'turney_seat'
   delivery_date TIMESTAMP,
   delivery_status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'in_transit', 'delivered', 'cancelled'
-  tracking_number VARCHAR(100),
   notes TEXT,
   recipient_name VARCHAR(255),
   recipient_contact VARCHAR(100),
@@ -17,11 +14,9 @@ CREATE TABLE IF NOT EXISTS delivery_notes (
   CONSTRAINT delivery_notes_request_check CHECK (request_type IN ('wheelchair', 'g24', 'diving_solution', 'turney_seat'))
 );
 
--- Work Hours Log Table
--- Tracks employee hours worked on each job card
 CREATE TABLE IF NOT EXISTS work_hours_log (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id UUID NOT NULL,
+  request_id TEXT NOT NULL, -- stores request_code (e.g., WL-20260108-T1EL)
   request_type VARCHAR(50) NOT NULL, -- 'wheelchair', 'g24', 'diving_solution', 'turney_seat'
   employee_name VARCHAR(255) NOT NULL,
   hours_worked DECIMAL(5,2) NOT NULL, -- e.g., 8.5 hours

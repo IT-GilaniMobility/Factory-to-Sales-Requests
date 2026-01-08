@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { FiTruck, FiPackage, FiClock, FiCheck, FiX, FiPlus, FiEdit2, FiEye } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +17,6 @@ const Deliveries = () => {
     request_type: 'wheelchair',
     delivery_date: '',
     delivery_status: 'pending',
-    tracking_number: '',
     notes: '',
     recipient_name: '',
     recipient_contact: '',
@@ -106,7 +106,6 @@ const Deliveries = () => {
       request_type: 'wheelchair',
       delivery_date: '',
       delivery_status: 'pending',
-      tracking_number: '',
       notes: '',
       recipient_name: '',
       recipient_contact: '',
@@ -121,7 +120,6 @@ const Deliveries = () => {
       request_type: delivery.request_type,
       delivery_date: delivery.delivery_date ? new Date(delivery.delivery_date).toISOString().slice(0, 16) : '',
       delivery_status: delivery.delivery_status,
-      tracking_number: delivery.tracking_number || '',
       notes: delivery.notes || '',
       recipient_name: delivery.recipient_name || '',
       recipient_contact: delivery.recipient_contact || '',
@@ -178,24 +176,30 @@ const Deliveries = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <FiTruck className="text-blue-600" />
-              Delivery Management
-            </h1>
-            <p className="text-gray-600 mt-2">Track and manage all deliveries</p>
-          </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-          >
+          <div className="flex items-center gap-4">
+            <Link
+              to="/requests"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition"
+            >
+              <span className="text-lg">←</span>
+              <span className="text-sm font-semibold">Back to Requests</span>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <FiTruck className="text-blue-600" />
+                Delivery Management
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(delivery.delivery_status)}`}>
+                        {delivery.delivery_status.replace('_', ' ')}
+                      </span>
+                    </div>
             <FiPlus />
             Add Delivery
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -272,7 +276,6 @@ const Deliveries = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Request ID</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Recipient</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tracking #</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Delivery Date</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -280,7 +283,7 @@ const Deliveries = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredDeliveries.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                             <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                       <FiPackage className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                       <p>No deliveries found</p>
                     </td>
@@ -303,9 +306,6 @@ const Deliveries = () => {
                       <td className="px-6 py-4 text-sm text-gray-700">
                         <div>{delivery.recipient_name || 'N/A'}</div>
                         <div className="text-xs text-gray-500">{delivery.recipient_contact || ''}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-                        {delivery.tracking_number || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {delivery.delivery_date 
@@ -399,17 +399,6 @@ const Deliveries = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tracking Number</label>
-                <input
-                  type="text"
-                  value={formData.tracking_number}
-                  onChange={(e) => setFormData({ ...formData, tracking_number: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., TRK123456789"
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -540,17 +529,6 @@ const Deliveries = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tracking Number</label>
-                <input
-                  type="text"
-                  value={formData.tracking_number}
-                  onChange={(e) => setFormData({ ...formData, tracking_number: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., TRK123456789"
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
