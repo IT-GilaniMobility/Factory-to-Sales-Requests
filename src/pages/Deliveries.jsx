@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { FiTruck, FiPackage, FiClock, FiCheck, FiX, FiPlus, FiEdit2, FiEye } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiClock, FiCheck, FiX, FiPlus, FiEdit2 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 
 const Deliveries = () => {
-  const { userEmail, isFactoryAdmin } = useAuth();
+  const { userEmail } = useAuth();
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, pending, in_transit, delivered, cancelled
@@ -23,11 +23,7 @@ const Deliveries = () => {
     delivery_address: ''
   });
 
-  useEffect(() => {
-    loadDeliveries();
-  }, []);
-
-  const loadDeliveries = async () => {
+  const loadDeliveries = useCallback(async () => {
     if (!supabase) {
       console.warn('Supabase not configured');
       setLoading(false);
@@ -48,7 +44,11 @@ const Deliveries = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDeliveries();
+  }, [loadDeliveries]);
 
   const handleAddDelivery = async (e) => {
     e.preventDefault();
@@ -188,11 +188,14 @@ const Deliveries = () => {
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <FiTruck className="text-blue-600" />
                 Delivery Management
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(delivery.delivery_status)}`}>
-                        {delivery.delivery_status.replace('_', ' ')}
-                      </span>
-                    </div>
+              </h1>
+              <p className="text-gray-600 mt-2">Track and manage all deliveries</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+          >
             <FiPlus />
             Add Delivery
           </button>
