@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { FiTruck, FiPackage, FiClock, FiCheck, FiX, FiPlus, FiEdit2 } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiClock, FiCheck, FiX, FiPlus, FiEdit2, FiBarChart2 } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Deliveries = () => {
   const { userEmail } = useAuth();
@@ -12,6 +13,9 @@ const Deliveries = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [showStats, setShowStats] = useState(false);
+  const [monthlyStats, setMonthlyStats] = useState({ pending: 0, in_transit: 0, delivered: 0, cancelled: 0 });
+  const [deliveryChartData, setDeliveryChartData] = useState([]);
   const [formData, setFormData] = useState({
     request_id: '',
     request_type: 'wheelchair',
@@ -38,6 +42,34 @@ const Deliveries = () => {
 
       if (error) throw error;
       setDeliveries(data || []);
+
+      // Calculate monthly stats
+      const now = new Date();
+      const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      const thisMonthDeliveries = (data || []).filter(d => new Date(d.created_at) >= monthAgo);
+
+      const stats = {
+        pending: thisMonthDeliveries.filter(d => d.delivery_status === 'pending').length,
+        in_transit: thisMonthDeliveries.filter(d => d.delivery_status === 'in_transit').length,
+        delivered: thisMonthDeliveries.filter(d => d.delivery_status === 'delivered').length,
+        cancelled: thisMonthDeliveries.filter(d => d.delivery_status === 'cancelled').length
+      };
+      setMonthlyStats(stats);
+
+      // Generate daily chart data
+      const dayMap = {};
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+        dayMap[dateStr] = 0;
+      }
+      thisMonthDeliveries.forEach(d => {
+        const date = new Date(d.created_at);
+        const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+        if (dateStr in dayMap) dayMap[dateStr]++;
+      });
+      const chartData = Object.entries(dayMap).map(([date, count]) => ({ date, count })).reverse();
+      setDeliveryChartData(chartData);
     } catch (err) {
       console.error('Error loading deliveries:', err);
       alert('Failed to load deliveries: ' + err.message);
@@ -248,6 +280,92 @@ const Deliveries = () => {
               <FiX className="text-3xl text-red-400" />
             </div>
           </div>
+        </div>
+
+        {/* Monthly Stats Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <FiBarChart2 className="text-blue-600" /> Monthly Delivery Stats
+            </h2>
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              {showStats ? 'Hide Charts' : 'Show Charts'}
+            </button>
+          </div>
+
+          {showStats && (
+            <div className="space-y-6">
+              {/* Stats List */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+                  <p className="text-sm font-medium text-yellow-600">Pending</p>
+                  <p className="text-3xl font-bold text-yellow-900 mt-1">{monthlyStats.pending}</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                  <p className="text-sm font-medium text-blue-600">In Transit</p>
+                  <p className="text-3xl font-bold text-blue-900 mt-1">{monthlyStats.in_transit}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                  <p className="text-sm font-medium text-green-600">Delivered</p>
+                  <p className="text-3xl font-bold text-green-900 mt-1">{monthlyStats.delivered}</p>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
+                  <p className="text-sm font-medium text-red-600">Cancelled</p>
+                  <p className="text-3xl font-bold text-red-900 mt-1">{monthlyStats.cancelled}</p>
+                </div>
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Bar Chart */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Daily Deliveries Trend</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={deliveryChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#10b981" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Pie Chart */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Delivery Status Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Pending', value: monthlyStats.pending },
+                          { name: 'In Transit', value: monthlyStats.in_transit },
+                          { name: 'Delivered', value: monthlyStats.delivered },
+                          { name: 'Cancelled', value: monthlyStats.cancelled }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        <Cell fill="#eab308" />
+                        <Cell fill="#3b82f6" />
+                        <Cell fill="#10b981" />
+                        <Cell fill="#ef4444" />
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filter Buttons */}

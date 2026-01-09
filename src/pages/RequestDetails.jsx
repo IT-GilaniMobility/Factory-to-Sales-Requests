@@ -516,14 +516,20 @@ const RequestDetails = () => {
     if (!supabase || !id) return;
     try {
       setQCLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('qc_inspections')
         .select('inspection_status, inspector_name, completed_at, job_type')
         .eq('request_code', id)
-        .single();
-      setQCStatus(data);
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 means no rows found, which is normal; ignore it
+        console.warn('QC load warning:', error.code);
+      }
+      setQCStatus(data || null);
     } catch (err) {
-      // No QC inspection yet
+      // No QC inspection yet or table doesn't exist
+      console.debug('QC not available:', err?.message);
       setQCStatus(null);
     } finally {
       setQCLoading(false);

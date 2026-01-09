@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
-import { FiActivity, FiClock, FiUser, FiFileText, FiLogOut, FiMenu } from 'react-icons/fi';
+import { FiActivity, FiClock, FiUser, FiFileText, FiLogOut, FiMenu, FiBarChart2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Logs = () => {
   const { userEmail, isFactoryAdmin, logout } = useAuth();
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ total: 0, today: 0, thisWeek: 0, thisMonth: 0 });
+  const [monthlyStats, setMonthlyStats] = useState({ added: 0, completed: 0, rejected: 0 });
+  const [monthlyChartData, setMonthlyChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterPeriod, setFilterPeriod] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     loadLogs();
@@ -20,6 +24,7 @@ const Logs = () => {
     setLoading(true);
     try {
       const allLogs = [];
+      const allRequests = [];
 
       if (supabase) {
         // Fetch from all request tables
@@ -33,7 +38,7 @@ const Logs = () => {
         for (const table of tables) {
           const { data, error } = await supabase
             .from(table.name)
-            .select('request_code, created_at, created_by_email, payload')
+            .select('request_code, created_at, created_by_email, status, payload')
             .order('created_at', { ascending: false });
 
           if (!error && data) {
@@ -42,9 +47,11 @@ const Logs = () => {
               createdAt: row.created_at,
               createdBy: row.created_by_email || 'Unknown',
               type: table.type,
-              customerName: row.payload?.customer?.name || 'N/A'
+              customerName: row.payload?.customer?.name || 'N/A',
+              status: row.status || 'Requested to factory'
             }));
             allLogs.push(...mapped);
+            allRequests.push(...mapped);
           }
         }
       }
@@ -65,8 +72,32 @@ const Logs = () => {
         thisMonth: allLogs.filter(log => new Date(log.createdAt) >= monthAgo).length
       };
 
+      // Calculate monthly stats
+      const thisMonthLogs = allRequests.filter(log => new Date(log.createdAt) >= monthAgo);
+      const monthlyStats = {
+        added: thisMonthLogs.length,
+        completed: thisMonthLogs.filter(log => log.status === 'Completed').length,
+        rejected: thisMonthLogs.filter(log => log.status === 'In review').length
+      };
+
+      // Generate daily chart data for the month
+      const dayMap = {};
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+        dayMap[dateStr] = 0;
+      }
+      thisMonthLogs.forEach(log => {
+        const date = new Date(log.createdAt);
+        const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+        if (dateStr in dayMap) dayMap[dateStr]++;
+      });
+      const chartData = Object.entries(dayMap).map(([date, count]) => ({ date, count })).reverse();
+
       setLogs(allLogs);
       setStats(stats);
+      setMonthlyStats(monthlyStats);
+      setMonthlyChartData(chartData);
     } catch (err) {
       console.error('Failed to load logs:', err);
     } finally {
@@ -208,7 +239,86 @@ const Logs = () => {
               </div>
             </div>
 
-            {/* Filters */}
+            {/* Monthly Stats Section */}
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <FiBarChart2 className="text-blue-600" /> Monthly Stats
+                </h2>
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  {showStats ? 'Hide Charts' : 'Show Charts'}
+                </button>
+              </div>
+
+              {showStats && (
+                <div className="space-y-6">
+                  {/* Stats List */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                      <p className="text-sm font-medium text-blue-600">Orders Added</p>
+                      <p className="text-3xl font-bold text-blue-900 mt-1">{monthlyStats.added}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                      <p className="text-sm font-medium text-green-600">Completed</p>
+                      <p className="text-3xl font-bold text-green-900 mt-1">{monthlyStats.completed}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                      <p className="text-sm font-medium text-orange-600">In Review</p>
+                      <p className="text-3xl font-bold text-orange-900 mt-1">{monthlyStats.rejected}</p>
+                    </div>
+                  </div>
+
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Bar Chart */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Daily Orders Trend</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={monthlyChartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Pie Chart */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Status Distribution</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Added', value: monthlyStats.added },
+                              { name: 'Completed', value: monthlyStats.completed },
+                              { name: 'In Review', value: monthlyStats.rejected }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            <Cell fill="#3b82f6" />
+                            <Cell fill="#10b981" />
+                            <Cell fill="#f97316" />
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-white rounded-lg shadow border border-gray-200 p-4 mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700">Filter:</span>

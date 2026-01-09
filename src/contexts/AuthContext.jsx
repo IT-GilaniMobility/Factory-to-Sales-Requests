@@ -10,6 +10,40 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadSession = async () => {
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
+      const { data: sessionData } = await supabase.auth.getSession();
+      const sessionUser = sessionData?.session?.user;
+      if (sessionUser?.email) {
+        const factoryEmails = new Set([
+          'it@gilanimobility.ae',
+          'eng@gilanimobility.ae',
+          'eng1@gilanimobility.ae',
+          'eng2@gilanimobility.ae',
+          'factory@gilanimobility.ae',
+        ]);
+
+        const userData = {
+          email: sessionUser.email,
+          full_name: sessionUser.user_metadata?.full_name || sessionUser.email,
+          role: factoryEmails.has(sessionUser.email) ? 'factory_admin' : 'sales',
+          is_active: true,
+        };
+        localStorage.setItem('user_email', sessionUser.email);
+        setUser(userData);
+        setUserRole(userData.role);
+        setUserEmail(userData.email);
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    };
+
+    loadSession();
+
     // Check if user email is in localStorage (simple auth for demo)
     const storedEmail = localStorage.getItem('user_email');
     if (storedEmail) {
@@ -23,12 +57,18 @@ export const AuthProvider = ({ children }) => {
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           const user = session.user;
-          
-          // Map Google user to your system (default to sales role)
+          const factoryEmails = new Set([
+            'it@gilanimobility.ae',
+            'eng@gilanimobility.ae',
+            'eng1@gilanimobility.ae',
+            'eng2@gilanimobility.ae',
+            'factory@gilanimobility.ae',
+          ]);
+
           const userData = {
             email: user.email,
             full_name: user.user_metadata?.full_name || user.email,
-            role: 'sales', // Default role for Google users
+            role: factoryEmails.has(user.email) ? 'factory_admin' : 'sales',
             is_active: true
           };
           
@@ -120,7 +160,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/requests`
+          redirectTo: `${window.location.origin}/signing-in`
         }
       });
       if (error) throw error;

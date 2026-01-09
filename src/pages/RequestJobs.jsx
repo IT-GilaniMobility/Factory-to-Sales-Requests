@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell } from 'react-icons/fi';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -21,6 +21,23 @@ const RequestJobs = () => {
     return saved ? JSON.parse(saved) : true;
   });
   const [qcStatuses, setQCStatuses] = useState({}); // Maps request_code to QC status
+  const [newJobNotification, setNewJobNotification] = useState(null); // { requestCode, label }
+  const requestCodesRef = useRef(new Set());
+
+  const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
+    const payload = row?.payload || {};
+    return {
+      ...payload,
+      id: row?.request_code,
+      request_code: row?.request_code,
+      status: row?.status || payload.status || 'Requested to factory',
+      createdAt: row?.created_at || payload.createdAt || new Date().toISOString(),
+      createdBy: row?.created_by_email,
+      job: payload.job || { requestType: jobRequestLabel },
+      customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+      jobRequest: jobRequestLabel,
+    };
+  };
 
   const loadQCStatuses = async (requestCodes) => {
     try {
@@ -180,7 +197,42 @@ const RequestJobs = () => {
     };
 
     loadFromSupabase();
-  }, [isFactoryAdmin]);
+  }, [isFactoryAdmin, supabase, userEmail]);
+
+  useEffect(() => {
+    if (!supabase || !isFactoryAdmin()) return;
+
+    const handlers = [
+      { table: 'requests', label: 'Wheelchair Lifter Installation' },
+      { table: 'g24_requests', label: 'The Ultimate G24' },
+      { table: 'diving_solution_requests', label: 'Diving Solution Installation' },
+      { table: 'turney_seat_requests', label: 'Turney Seat Installation' },
+    ];
+
+    const channel = supabase.channel('factory-new-jobs');
+
+    handlers.forEach(({ table, label }) => {
+      channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload) => {
+        const mapped = mapSupabaseRowToRequest(payload.new, label);
+
+        setRequests((prev) => {
+          const exists = prev.some((req) => req.request_code === mapped.request_code);
+          if (exists) return prev;
+          const next = [mapped, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(next));
+          return next;
+        });
+
+        setNewJobNotification({ requestCode: mapped.request_code, label });
+      });
+    });
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isFactoryAdmin, supabase]);
 
   // Filter requests based on user role
   const getVisibleRequests = () => {
@@ -216,6 +268,63 @@ const RequestJobs = () => {
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  // Track known request codes for polling-based detection
+  useEffect(() => {
+    requestCodesRef.current = new Set(requests.map((r) => r.request_code));
+  }, [requests]);
+
+  // Polling fallback to detect new jobs in case realtime is not available
+  useEffect(() => {
+    if (!supabase || !isFactoryAdmin()) return;
+
+    const handlers = [
+      { table: 'requests', label: 'Wheelchair Lifter Installation' },
+      { table: 'g24_requests', label: 'The Ultimate G24' },
+      { table: 'diving_solution_requests', label: 'Diving Solution Installation' },
+      { table: 'turney_seat_requests', label: 'Turney Seat Installation' },
+    ];
+
+    const checkLatest = async () => {
+      try {
+        for (const { table, label } of handlers) {
+          const { data, error } = await supabase
+            .from(table)
+            .select('request_code, status, created_at, created_by_email, payload')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (error) {
+            console.error('Poll error', table, error);
+            continue;
+          }
+
+          const row = data?.[0];
+          if (!row || !row.request_code) continue;
+
+          if (!requestCodesRef.current.has(row.request_code)) {
+            const mapped = mapSupabaseRowToRequest(row, label);
+            setRequests((prev) => {
+              const exists = prev.some((req) => req.request_code === mapped.request_code);
+              if (exists) return prev;
+              const next = [mapped, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+              localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(next));
+              return next;
+            });
+            setNewJobNotification({ requestCode: row.request_code, label });
+            requestCodesRef.current.add(row.request_code);
+          }
+        }
+      } catch (err) {
+        console.error('Polling failed', err);
+      }
+    };
+
+    const interval = setInterval(checkLatest, 10000);
+    checkLatest();
+
+    return () => clearInterval(interval);
+  }, [isFactoryAdmin, supabase]);
 
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
@@ -377,7 +486,24 @@ const RequestJobs = () => {
   };
 
   return (
-    <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <>
+      {isFactoryAdmin() && newJobNotification && (
+        <div
+          className="fixed top-4 right-4 z-50 cursor-pointer"
+          onClick={() => setNewJobNotification(null)}
+        >
+          <div className="bg-blue-600 text-white rounded-lg shadow-xl px-4 py-3 flex items-start gap-3 max-w-sm">
+            <FiBell size={20} className="mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold">New job added</p>
+              <p className="text-xs text-blue-100">{newJobNotification.label}</p>
+              <p className="text-[11px] text-blue-100">ID: {newJobNotification.requestCode} · Click to dismiss</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-20'} ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} transition-all duration-300 flex flex-col ${darkMode ? 'border-r border-gray-700' : 'border-r border-gray-200'}`}>
         <div className="p-4 border-b border-gray-700 flex items-center justify-center">
@@ -419,28 +545,28 @@ const RequestJobs = () => {
 
         {/* Activity Logs Link */}
         <div className="px-4 pb-2">
-          <a
-            href="/logs"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
+          <Link
+            to="/logs"
+            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
               darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
             }`}
           >
             <FiActivity size={18} />
             {sidebarOpen && <span className="text-sm">Activity Logs</span>}
-          </a>
+          </Link>
         </div>
 
         {/* Deliveries Link */}
         <div className="px-4 pb-4">
-          <a
-            href="/deliveries"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
+          <Link
+            to="/deliveries"
+            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
               darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
             }`}
           >
             <FiTruck size={18} />
             {sidebarOpen && <span className="text-sm">Deliveries</span>}
-          </a>
+          </Link>
         </div>
 
         <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -621,6 +747,7 @@ const RequestJobs = () => {
                         </div>
                       )}
 
+
                       <div className={`mb-4 pb-4 ${darkMode ? 'border-gray-500' : 'border-gray-300'} border-b`}>
                         <h3 className={`font-bold text-lg group-hover:text-blue-600 transition-colors ${darkMode ? 'text-black' : 'text-gray-900'}`}>
                           {req.customer?.name || '—'}
@@ -775,7 +902,8 @@ const RequestJobs = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

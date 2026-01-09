@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
+import SigningIn from './pages/SigningIn';
 import Customer from './pages/Customer';
 import RequestJobs from './pages/RequestJobs';
 import RequestDetails from './pages/RequestDetails';
@@ -39,9 +40,10 @@ function AppContent() {
 
   if (!isLoggedIn()) {
     return (
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signing-in" element={<SigningIn />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
@@ -49,10 +51,18 @@ function AppContent() {
   }
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<Navigate to="/requests" replace />} />
         <Route path="/login" element={<Navigate to="/requests" replace />} />
+        <Route
+          path="/signing-in"
+          element={
+            <ProtectedRoute>
+              <SigningIn />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/customer"
           element={

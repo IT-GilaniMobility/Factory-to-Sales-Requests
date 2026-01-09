@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import machineImg from '../assets/machine.png';
+import carImg from '../assets/car.jpg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(false);
 
     if (success) {
-      navigate('/requests');
+      navigate('/signing-in');
     }
   };
 
@@ -33,22 +33,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen flex overflow-hidden">
-      {/* Left Side - Machine Image (50%) */}
-      <div className="w-1/2 relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950">
-        <div className="absolute inset-0 flex items-center justify-center p-12">
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <img 
-              src={machineImg} 
-              alt="Gilani Mobility Machine" 
-              className="w-full h-auto max-h-[70vh] object-contain drop-shadow-2xl"
-            />
-            <div className="mt-8 text-center">
-              <h1 className="text-4xl font-bold text-white mb-3">Gilani Mobility</h1>
-              <p className="text-xl text-blue-200">Work Request Management System</p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen h-screen flex overflow-hidden relative">
+      {/* Left Side - Background Image Only (50%) */}
+      <div
+        className="w-1/2 relative bg-black"
+        style={{ backgroundImage: `url(${carImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      >
+        <div className="absolute inset-0 bg-black/25" />
       </div>
 
       {/* Right Side - Login Form (50%) */}
