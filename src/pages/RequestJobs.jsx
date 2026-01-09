@@ -22,6 +22,7 @@ const RequestJobs = () => {
   });
   const [qcStatuses, setQCStatuses] = useState({}); // Maps request_code to QC status
   const [newJobNotification, setNewJobNotification] = useState(null); // { requestCode, label }
+  const [workHours, setWorkHours] = useState({}); // Maps request_code to total hours
   const requestCodesRef = useRef(new Set());
 
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
@@ -57,6 +58,35 @@ const RequestJobs = () => {
       }
     } catch (err) {
       console.error('Error loading QC statuses:', err);
+    }
+  };
+
+  const loadWorkHours = async (requestCodes) => {
+    try {
+      if (!supabase || !requestCodes.length) return;
+      
+      const { data } = await supabase
+        .from('work_hours')
+        .select('request_code, hours_logged, status')
+        .in('request_code', requestCodes)
+        .not('request_code', 'is', null);
+      
+      if (data) {
+        const hoursMap = {};
+        data.forEach(row => {
+          if (!hoursMap[row.request_code]) {
+            hoursMap[row.request_code] = { total: 0, completed: 0 };
+          }
+          const hours = parseFloat(row.hours_logged) || 0;
+          hoursMap[row.request_code].total += hours;
+          if (row.status === 'completed') {
+            hoursMap[row.request_code].completed += hours;
+          }
+        });
+        setWorkHours(hoursMap);
+      }
+    } catch (err) {
+      console.error('Error loading work hours:', err);
     }
   };
 
@@ -185,8 +215,10 @@ const RequestJobs = () => {
           setRequests(allData);
           localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(allData));
           
-          // Load QC statuses for all requests
-          loadQCStatuses(allData.map(r => r.request_code));
+          // Load QC statuses and work hours for all requests
+          const requestCodes = allData.map(r => r.request_code);
+          loadQCStatuses(requestCodes);
+          loadWorkHours(requestCodes);
         } else {
           loadFromLocal();
         }
@@ -243,7 +275,7 @@ const RequestJobs = () => {
 
   const visibleRequests = getVisibleRequests();
 
-  // Reload QC statuses when requests change or when page becomes visible
+  // Reload QC statuses and work hours when requests change or when page becomes visible
   useEffect(() => {
     if (visibleRequests.length > 0) {
       const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
@@ -828,6 +860,22 @@ const RequestJobs = () => {
                           <p className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.jobRequest || req.job?.requestType || '—'}</p>
                         </div>
                       </div>
+                      {workHours[req.request_code] && (
+                        <div className="mt-3 pt-3 border-t border-gray-300">
+                          <div className="flex items-center gap-2 text-sm">
+                            <FiClock className={darkMode ? 'text-blue-600' : 'text-blue-600'} size={16} />
+                            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Work Hours:</span>
+                            <span className={`font-semibold ${darkMode ? 'text-black' : 'text-gray-900'}`}>
+                              {workHours[req.request_code].completed.toFixed(1)}h completed
+                            </span>
+                            {workHours[req.request_code].total > workHours[req.request_code].completed && (
+                              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-500'}`}>
+                                ({workHours[req.request_code].total.toFixed(1)}h total)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {req.jobRequest === 'The Ultimate G24' && (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mt-2 pt-2 border-t border-gray-300">
                           <div>
