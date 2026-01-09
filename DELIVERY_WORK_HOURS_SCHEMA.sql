@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS delivery_notes (
 
 CREATE TABLE IF NOT EXISTS work_hours_log (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id TEXT NOT NULL, -- stores request_code (e.g., WL-20260108-T1EL)
-  request_type VARCHAR(50) NOT NULL, -- 'wheelchair', 'g24', 'diving_solution', 'turney_seat'
+  request_id TEXT, -- stores request_code (e.g., WL-20260108-T1EL) - OPTIONAL
+  request_type VARCHAR(50) DEFAULT 'general', -- 'wheelchair', 'g24', 'diving_solution', 'turney_seat', or 'general'
   employee_name VARCHAR(255) NOT NULL,
   hours_worked DECIMAL(5,2) NOT NULL, -- e.g., 8.5 hours
   work_date DATE NOT NULL,
@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS work_hours_log (
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT work_hours_log_request_check CHECK (request_type IN ('wheelchair', 'g24', 'diving_solution', 'turney_seat')),
   CONSTRAINT work_hours_log_hours_check CHECK (hours_worked > 0 AND hours_worked <= 24)
 );
 
@@ -43,6 +42,17 @@ ALTER TABLE delivery_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE work_hours_log ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (allow authenticated users to read/write)
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON delivery_notes;
+DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON delivery_notes;
+DROP POLICY IF EXISTS "Enable update access for authenticated users" ON delivery_notes;
+DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON delivery_notes;
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON work_hours_log;
+DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON work_hours_log;
+DROP POLICY IF EXISTS "Enable update access for authenticated users" ON work_hours_log;
+DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON work_hours_log;
+
+-- Create new policies
 CREATE POLICY "Enable read access for authenticated users" ON delivery_notes
   FOR SELECT USING (true);
 

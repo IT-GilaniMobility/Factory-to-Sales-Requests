@@ -37,9 +37,9 @@ const WorkHours = () => {
 
     try {
       const { data, error } = await supabase
-        .from('work_hours')
+        .from('work_hours_log')
         .select('*')
-        .order('date', { ascending: false });
+        .order('work_date', { ascending: false });
 
       if (error) {
         console.error('Error loading work hours:', error);
@@ -101,19 +101,20 @@ const WorkHours = () => {
 
     try {
       const payload = {
-        worker_name: formData.worker_name,
+        employee_name: formData.worker_name,
         task_description: formData.task_description,
-        hours_logged: parseFloat(formData.hours_logged),
-        date: formData.date,
-        request_code: formData.request_code || null,
-        status: formData.status,
+        hours_worked: parseFloat(formData.hours_logged),
+        work_date: formData.date,
+        request_id: formData.request_code || null,
+        request_type: 'general', // or determine from request_code
+        notes: formData.task_description,
         created_at: new Date().toISOString(),
         created_by: userEmail
       };
 
       if (editingId) {
         const { error } = await supabase
-          .from('work_hours')
+          .from('work_hours_log')
           .update(payload)
           .eq('id', editingId);
 
@@ -121,7 +122,7 @@ const WorkHours = () => {
         setEditingId(null);
       } else {
         const { error } = await supabase
-          .from('work_hours')
+          .from('work_hours_log')
           .insert([payload]);
 
         if (error) throw error;
@@ -140,7 +141,7 @@ const WorkHours = () => {
       loadWorkHours();
     } catch (err) {
       console.error('Error saving work hour:', err);
-      alert('Failed to save work hour');
+      alert('Failed to save work hour: ' + err.message);
     }
   };
 
@@ -149,7 +150,7 @@ const WorkHours = () => {
 
     try {
       const { error } = await supabase
-        .from('work_hours')
+        .from('work_hours_log')
         .delete()
         .eq('id', id);
 
@@ -163,24 +164,24 @@ const WorkHours = () => {
 
   const handleEditWorkHour = (entry) => {
     setFormData({
-      worker_name: entry.worker_name,
+      worker_name: entry.employee_name,
       task_description: entry.task_description,
-      hours_logged: entry.hours_logged,
-      date: entry.date,
-      request_code: entry.request_code || '',
-      status: entry.status
+      hours_logged: entry.hours_worked,
+      date: entry.work_date,
+      request_code: entry.request_id || '',
+      status: 'in_progress'
     });
     setEditingId(entry.id);
     setShowAddModal(true);
   };
 
   const filteredWorkHours = workHours.filter(entry => {
-    const matchesWorker = filterWorker === 'all' || entry.worker_name === filterWorker;
-    const matchesStatus = filterStatus === 'all' || entry.status === filterStatus;
+    const matchesWorker = filterWorker === 'all' || entry.employee_name === filterWorker;
+    const matchesStatus = filterStatus === 'all'; // No status filtering since work_hours_log doesn't have status
 
     let matchesDateRange = true;
     if (dateRangeStart || dateRangeEnd) {
-      const entryDate = new Date(entry.date);
+      const entryDate = new Date(entry.work_date);
       if (dateRangeStart) {
         const startDate = new Date(dateRangeStart);
         matchesDateRange = matchesDateRange && entryDate >= startDate;
@@ -195,8 +196,8 @@ const WorkHours = () => {
     return matchesWorker && matchesStatus && matchesDateRange;
   });
 
-  const uniqueWorkers = [...new Set(workHours.map(w => w.worker_name))];
-  const totalHours = filteredWorkHours.reduce((sum, w) => sum + (parseFloat(w.hours_logged) || 0), 0);
+  const uniqueWorkers = [...new Set(workHours.map(w => w.employee_name))];
+  const totalHours = filteredWorkHours.reduce((sum, w) => sum + (parseFloat(w.hours_worked) || 0), 0);
 
   const getLinkedRequest = (requestCode) => {
     return requests.find(r => r.request_code === requestCode);
@@ -384,7 +385,7 @@ const WorkHours = () => {
           ) : (
             <div className="space-y-3">
               {filteredWorkHours.map(entry => {
-                const linkedRequest = entry.request_code ? getLinkedRequest(entry.request_code) : null;
+                const linkedRequest = entry.request_id ? getLinkedRequest(entry.request_id) : null;
                 return (
                   <div
                     key={entry.id}
@@ -398,22 +399,22 @@ const WorkHours = () => {
                               {entry.task_description}
                             </h3>
                             <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {entry.worker_name} • {new Date(entry.date).toLocaleDateString('en-GB')}
+                              {entry.employee_name} • {new Date(entry.work_date).toLocaleDateString('en-GB')}
                             </p>
                           </div>
                           <span className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                            {entry.hours_logged}h
+                            {entry.hours_worked}h
                           </span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 mt-3">
-                          <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${STATUS_COLORS[entry.status] || 'bg-gray-100 text-gray-800'}`}>
-                            {entry.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                          <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                            Hours Logged
                           </span>
 
                           {linkedRequest && (
                             <div className={`text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} px-3 py-1 rounded-full`}>
-                              <span className="font-mono">{entry.request_code}</span>
+                              <span className="font-mono">{entry.request_id}</span>
                               {linkedRequest.customer?.name && (
                                 <span className="ml-2">{linkedRequest.customer.name}</span>
                               )}

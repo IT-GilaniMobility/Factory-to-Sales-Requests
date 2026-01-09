@@ -66,22 +66,20 @@ const RequestJobs = () => {
       if (!supabase || !requestCodes.length) return;
       
       const { data } = await supabase
-        .from('work_hours')
-        .select('request_code, hours_logged, status')
-        .in('request_code', requestCodes)
-        .not('request_code', 'is', null);
+        .from('work_hours_log')
+        .select('request_id, hours_worked')
+        .in('request_id', requestCodes)
+        .not('request_id', 'is', null);
       
       if (data) {
         const hoursMap = {};
         data.forEach(row => {
-          if (!hoursMap[row.request_code]) {
-            hoursMap[row.request_code] = { total: 0, completed: 0 };
+          if (!hoursMap[row.request_id]) {
+            hoursMap[row.request_id] = { total: 0, completed: 0 };
           }
-          const hours = parseFloat(row.hours_logged) || 0;
-          hoursMap[row.request_code].total += hours;
-          if (row.status === 'completed') {
-            hoursMap[row.request_code].completed += hours;
-          }
+          const hours = parseFloat(row.hours_worked) || 0;
+          hoursMap[row.request_id].total += hours;
+          hoursMap[row.request_id].completed += hours; // All logged hours are considered completed
         });
         setWorkHours(hoursMap);
       }
