@@ -93,6 +93,7 @@ const RequestJobs = () => {
       const stored = localStorage.getItem('wheelchair_lifter_requests_v1');
       if (stored) {
         try {
+          console.log('⚠️ Loading from localStorage (temporary fallback)');
           setRequests(JSON.parse(stored));
         } catch (e) {
           console.error('Failed to parse requests', e);
@@ -102,10 +103,13 @@ const RequestJobs = () => {
 
     const loadFromSupabase = async () => {
       if (!supabase) {
+        console.warn('Supabase not available, loading from localStorage');
         loadFromLocal();
         return;
       }
 
+      console.log('📡 Loading requests from Supabase...');
+      
       try {
         // Build query based on role
         let wheelchairQuery = supabase.from('requests').select('request_code, status, created_at, created_by_email, payload');
@@ -210,7 +214,13 @@ const RequestJobs = () => {
         if (allData.length > 0) {
           // Sort by createdAt descending (newest first)
           allData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          
+          console.log(`✅ Loaded ${allData.length} requests from Supabase`);
+          console.log('Sample status:', allData.slice(0, 3).map(r => ({ code: r.request_code, status: r.status })));
+          
           setRequests(allData);
+          
+          // Update localStorage as a backup only
           localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(allData));
           
           // Load QC statuses and work hours for all requests
@@ -218,14 +228,17 @@ const RequestJobs = () => {
           loadQCStatuses(requestCodes);
           loadWorkHours(requestCodes);
         } else {
+          console.log('⚠️ No data from Supabase, trying localStorage');
           loadFromLocal();
         }
       } catch (err) {
-        console.error('Supabase fetch error:', err);
+        console.error('❌ Supabase fetch error:', err);
         loadFromLocal();
       }
     };
 
+    // Clear any stale cache and load fresh data
+    console.log('🔄 Starting fresh data load...');
     loadFromSupabase();
   }, [isFactoryAdmin, supabase, userEmail]);
 
@@ -300,21 +313,35 @@ const RequestJobs = () => {
       const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
       if (requestCodes.length > 0) {
         loadQCStatuses(requestCodes);
+        loadWorkHours(requestCodes);
       }
     }
 
-    const handleVisibilityChange = () => {
-      if (!document.hidden && visibleRequests.length > 0) {
-        const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
-        if (requestCodes.length > 0) {
-          loadQCStatuses(requestCodes);
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log('🔄 Page became visible - reloading fresh data from Supabase...');
+        
+        // Force reload from Supabase when page becomes visible
+        if (supabase && visibleRequests.length > 0) {
+          try {
+            const requestCodes = visibleRequests.map(r => r.request_code).filter(Boolean);
+            if (requestCodes.length > 0) {
+              loadQCStatuses(requestCodes);
+              loadWorkHours(requestCodes);
+              
+              // Reload all requests to get latest status
+              window.location.reload();
+            }
+          } catch (err) {
+            console.error('Error reloading on visibility change:', err);
+          }
         }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [visibleRequests]);
+  }, [visibleRequests, supabase]);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
