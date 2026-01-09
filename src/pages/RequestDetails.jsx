@@ -593,7 +593,39 @@ const RequestDetails = () => {
     };
 
     loadRequest();
-  }, [id]);
+  }, [id, supabase]);
+
+  // Subscribe to realtime updates for this specific request
+  useEffect(() => {
+    if (!supabase || !request) return;
+
+    const jobType = request?.job?.requestType || request?.jobRequest || 'Wheelchair Lifter Installation';
+    const isWheelchair = jobType === 'Wheelchair Lifter Installation';
+    const isG24 = jobType === 'The Ultimate G24';
+    const isDiving = jobType === 'Diving Solution Installation';
+    
+    const table = isWheelchair ? 'requests' : isG24 ? 'g24_requests' : isDiving ? 'diving_solution_requests' : 'turney_seat_requests';
+    
+    console.log(`Setting up realtime listener for ${table}:${request.id}`);
+
+    const channel = supabase.channel(`request-${request.id}`);
+
+    channel.on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table, filter: `request_code=eq.${request.id}` },
+      (payload) => {
+        console.log(`Request ${request.id} updated in database:`, payload.new);
+        const updated = normalizeRequest(payload.new, jobType, request.id);
+        setRequest(updated);
+      }
+    );
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [request?.id, supabase]);
 
   const jobType = request?.job?.requestType || request?.jobRequest || 'Wheelchair Lifter Installation';
   const isWheelchair = jobType === 'Wheelchair Lifter Installation';
@@ -637,10 +669,14 @@ const RequestDetails = () => {
     }
 
     try {
+      console.log(`Updating status from "${request.status}" to "${newStatus}" for request ${request.id}`);
+      
       const table = isWheelchair ? 'requests' : isG24 ? 'g24_requests' : isDiving ? 'diving_solution_requests' : 'turney_seat_requests';
       const { error } = await supabase.from(table).update({ status: newStatus }).eq('request_code', request.id);
       
       if (error) throw error;
+      
+      console.log('Status successfully updated in Supabase');
       
       // Only update local state AFTER successful Supabase update
       setRequest(prev => ({ ...prev, status: newStatus }));
@@ -655,6 +691,7 @@ const RequestDetails = () => {
             : r
           );
           localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+          console.log('Local cache updated');
         } catch (err) {
           console.error('Failed to update local cache', err);
         }

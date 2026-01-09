@@ -244,6 +244,7 @@ const RequestJobs = () => {
     const channel = supabase.channel('factory-new-jobs');
 
     handlers.forEach(({ table, label }) => {
+      // Listen for new inserts
       channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload) => {
         const mapped = mapSupabaseRowToRequest(payload.new, label);
 
@@ -256,6 +257,26 @@ const RequestJobs = () => {
         });
 
         setNewJobNotification({ requestCode: mapped.request_code, label });
+      });
+
+      // Listen for updates (status changes)
+      channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table }, (payload) => {
+        setRequests((prev) => {
+          const updated = prev.map((req) => {
+            if (req.request_code === payload.new.request_code) {
+              const newPayload = payload.new.payload || {};
+              return {
+                ...req,
+                ...newPayload,
+                status: payload.new.status || newPayload.status || 'Requested to factory',
+                createdAt: payload.new.created_at || req.createdAt,
+              };
+            }
+            return req;
+          });
+          localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+          return updated;
+        });
       });
     });
 
