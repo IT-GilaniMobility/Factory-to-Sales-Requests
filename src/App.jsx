@@ -9,6 +9,7 @@ import RequestJobs from './pages/RequestJobs';
 import RequestDetails from './pages/RequestDetails';
 import Logs from './pages/Logs';
 import Deliveries from './pages/Deliveries';
+import WorkHours from './pages/WorkHours';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -101,6 +102,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Deliveries />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/work-hours"
+          element={
+            <ProtectedRoute>
+              <WorkHours />
             </ProtectedRoute>
           }
         />
