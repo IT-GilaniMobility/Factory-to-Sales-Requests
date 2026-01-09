@@ -24,6 +24,8 @@ const WorkHours = () => {
     task_description: '',
     hours_logged: '',
     date: new Date().toISOString().split('T')[0],
+    start_time: '',
+    end_time: '',
     request_code: '',
     status: 'in_progress'
   });
@@ -105,6 +107,8 @@ const WorkHours = () => {
         task_description: formData.task_description,
         hours_worked: parseFloat(formData.hours_logged),
         work_date: formData.date,
+        start_time: formData.start_time || null,
+        end_time: formData.end_time || null,
         request_id: formData.request_code || null,
         request_type: 'general', // or determine from request_code
         notes: formData.task_description,
@@ -133,6 +137,8 @@ const WorkHours = () => {
         task_description: '',
         hours_logged: '',
         date: new Date().toISOString().split('T')[0],
+        start_time: '',
+        end_time: '',
         request_code: '',
         status: 'in_progress'
       });
@@ -168,6 +174,8 @@ const WorkHours = () => {
       task_description: entry.task_description,
       hours_logged: entry.hours_worked,
       date: entry.work_date,
+      start_time: entry.start_time || '',
+      end_time: entry.end_time || '',
       request_code: entry.request_id || '',
       status: 'in_progress'
     });
@@ -400,6 +408,11 @@ const WorkHours = () => {
                             </h3>
                             <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               {entry.employee_name} • {new Date(entry.work_date).toLocaleDateString('en-GB')}
+                              {entry.start_time && entry.end_time && (
+                                <span className="ml-2">
+                                  • {entry.start_time} - {entry.end_time}
+                                </span>
+                              )}
                             </p>
                           </div>
                           <span className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
@@ -518,6 +531,32 @@ const WorkHours = () => {
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </div>
               </div>
 
               <div>

@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS work_hours_log (
   employee_name VARCHAR(255) NOT NULL,
   hours_worked DECIMAL(5,2) NOT NULL, -- e.g., 8.5 hours
   work_date DATE NOT NULL,
+  start_time TIME, -- Start time of work (e.g., 09:00:00)
+  end_time TIME, -- End time of work (e.g., 17:30:00)
   task_description TEXT,
   notes TEXT,
   created_by VARCHAR(255),
