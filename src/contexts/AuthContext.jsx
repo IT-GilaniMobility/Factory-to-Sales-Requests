@@ -9,52 +9,96 @@ export const AuthProvider = ({ children }) => {
   const [userEmail, setUserEmail] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const loadUserRole = async (email) => {
+    try {
+      // Map email back to hardcoded user data
+      const userMap = {
+        'factory@gilanimobility.ae': { email: 'factory@gilanimobility.ae', full_name: 'Factory Admin', role: 'factory_admin', is_active: true },
+        'sales@gilanimobility.ae': { email: 'sales@gilanimobility.ae', full_name: 'Sales Team', role: 'sales', is_active: true }
+      };
+
+      const userData = userMap[email];
+
+      if (!userData) {
+        console.warn('User not found');
+        setUser(null);
+        setUserRole(null);
+        setUserEmail(null);
+        localStorage.removeItem('user_email');
+      } else {
+        setUser(userData);
+        setUserRole(userData.role);
+        setUserEmail(userData.email);
+      }
+    } catch (err) {
+      console.error('Failed to load user role:', err);
+      setUser(null);
+      setUserRole(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadSession = async () => {
       if (!supabase) {
         setLoading(false);
         return;
       }
-      const { data: sessionData } = await supabase.auth.getSession();
-      const sessionUser = sessionData?.session?.user;
-      if (sessionUser?.email) {
-        const factoryEmails = new Set([
-          'it@gilanimobility.ae',
-          'eng@gilanimobility.ae',
-          'eng1@gilanimobility.ae',
-          'eng2@gilanimobility.ae',
-          'factory@gilanimobility.ae',
-        ]);
 
-        const userData = {
-          email: sessionUser.email,
-          full_name: sessionUser.user_metadata?.full_name || sessionUser.email,
-          role: factoryEmails.has(sessionUser.email) ? 'factory_admin' : 'sales',
-          is_active: true,
-        };
-        localStorage.setItem('user_email', sessionUser.email);
-        setUser(userData);
-        setUserRole(userData.role);
-        setUserEmail(userData.email);
+      try {
+        // First try to get existing session from Supabase
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setLoading(false);
+          return;
+        }
+
+        const sessionUser = sessionData?.session?.user;
+        if (sessionUser?.email) {
+          const factoryEmails = new Set([
+            'it@gilanimobility.ae',
+            'eng@gilanimobility.ae',
+            'eng1@gilanimobility.ae',
+            'eng2@gilanimobility.ae',
+            'factory@gilanimobility.ae',
+          ]);
+
+          const userData = {
+            email: sessionUser.email,
+            full_name: sessionUser.user_metadata?.full_name || sessionUser.email,
+            role: factoryEmails.has(sessionUser.email) ? 'factory_admin' : 'sales',
+            is_active: true,
+          };
+          localStorage.setItem('user_email', sessionUser.email);
+          setUser(userData);
+          setUserRole(userData.role);
+          setUserEmail(userData.email);
+          setLoading(false);
+          return;
+        }
+
+        // Fall back to localStorage for demo users
+        const storedEmail = localStorage.getItem('user_email');
+        if (storedEmail) {
+          await loadUserRole(storedEmail);
+        }
+      } catch (err) {
+        console.error('Error loading session:', err);
+      } finally {
         setLoading(false);
-        return;
       }
-      setLoading(false);
     };
 
     loadSession();
 
-    // Check if user email is in localStorage (simple auth for demo)
-    const storedEmail = localStorage.getItem('user_email');
-    if (storedEmail) {
-      loadUserRole(storedEmail);
-    } else {
-      setLoading(false);
-    }
-
     // Listen for Supabase auth state changes (for Google login)
     if (supabase) {
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state changed:', event);
+        
         if (event === 'SIGNED_IN' && session) {
           const user = session.user;
           const factoryEmails = new Set([
@@ -87,36 +131,6 @@ export const AuthProvider = ({ children }) => {
       };
     }
   }, []);
-
-  const loadUserRole = async (email) => {
-    try {
-      // Map email back to hardcoded user data
-      const userMap = {
-        'factory@gilanimobility.ae': { email: 'factory@gilanimobility.ae', full_name: 'Factory Admin', role: 'factory_admin', is_active: true },
-        'sales@gilanimobility.ae': { email: 'sales@gilanimobility.ae', full_name: 'Sales Team', role: 'sales', is_active: true }
-      };
-
-      const userData = userMap[email];
-
-      if (!userData) {
-        console.warn('User not found');
-        setUser(null);
-        setUserRole(null);
-        setUserEmail(null);
-        localStorage.removeItem('user_email');
-      } else {
-        setUser(userData);
-        setUserRole(userData.role);
-        setUserEmail(userData.email);
-      }
-    } catch (err) {
-      console.error('Failed to load user role:', err);
-      setUser(null);
-      setUserRole(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (username, password) => {
     setLoading(true);
