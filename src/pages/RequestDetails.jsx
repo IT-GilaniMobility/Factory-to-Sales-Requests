@@ -661,10 +661,14 @@ const RequestDetails = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
-    if (!request || !isFactoryAdmin()) return;
+    if (!request || !isFactoryAdmin()) {
+      console.warn('Cannot change status:', { hasRequest: !!request, isAdmin: isFactoryAdmin() });
+      return;
+    }
     
     if (!supabase) {
       console.error('Supabase not available');
+      alert('Database connection not available');
       return;
     }
 
@@ -672,11 +676,20 @@ const RequestDetails = () => {
       console.log(`Updating status from "${request.status}" to "${newStatus}" for request ${request.id}`);
       
       const table = isWheelchair ? 'requests' : isG24 ? 'g24_requests' : isDiving ? 'diving_solution_requests' : 'turney_seat_requests';
-      const { error } = await supabase.from(table).update({ status: newStatus }).eq('request_code', request.id);
+      console.log(`Using table: ${table}`);
       
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from(table)
+        .update({ status: newStatus })
+        .eq('request_code', request.id)
+        .select();
       
-      console.log('Status successfully updated in Supabase');
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+      
+      console.log('Status successfully updated in Supabase:', data);
       
       // Only update local state AFTER successful Supabase update
       setRequest(prev => ({ ...prev, status: newStatus }));
@@ -696,9 +709,33 @@ const RequestDetails = () => {
           console.error('Failed to update local cache', err);
         }
       }
+      
+      // Show success message
+      console.log(`✅ Status changed to "${newStatus}" - refresh the page to verify it persists`);
+      
+      // Force reload the request from database after a short delay
+      setTimeout(async () => {
+        try {
+          const { data: refreshedData } = await supabase
+            .from(table)
+            .select('request_code, status, created_at, payload')
+            .eq('request_code', request.id)
+            .single();
+          
+          if (refreshedData) {
+            console.log('Verified status in database:', refreshedData.status);
+            if (refreshedData.status !== newStatus) {
+              console.error('⚠️ Status mismatch! Database has:', refreshedData.status, 'Expected:', newStatus);
+              alert('Status update may have failed. Please check your permissions.');
+            }
+          }
+        } catch (verifyErr) {
+          console.error('Could not verify status update:', verifyErr);
+        }
+      }, 1000);
     } catch (err) {
       console.error('Failed to update status in Supabase:', err);
-      alert('Failed to update status. Please try again.');
+      alert(`Failed to update status: ${err.message}`);
     }
   };
 
