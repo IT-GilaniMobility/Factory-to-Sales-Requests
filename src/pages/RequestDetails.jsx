@@ -628,33 +628,40 @@ const RequestDetails = () => {
     }
   };
 
-  const updateLocalCache = (newStatus) => {
-    const stored = localStorage.getItem('wheelchair_lifter_requests_v1');
-    if (!stored) return;
-    try {
-      const parsed = JSON.parse(stored);
-      const updated = parsed.map(r => (r.id === request.id || r.request_code === request.id)
-        ? { ...r, status: newStatus }
-        : r
-      );
-      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
-    } catch (err) {
-      console.error('Failed to update local cache', err);
-    }
-  };
-
   const handleStatusChange = async (newStatus) => {
     if (!request || !isFactoryAdmin()) return;
-    setRequest(prev => ({ ...prev, status: newStatus }));
-    updateLocalCache(newStatus);
+    
+    if (!supabase) {
+      console.error('Supabase not available');
+      return;
+    }
 
-    if (supabase) {
-      try {
-        const table = isWheelchair ? 'requests' : isG24 ? 'g24_requests' : isDiving ? 'diving_solution_requests' : 'turney_seat_requests';
-        await supabase.from(table).update({ status: newStatus }).eq('request_code', request.id);
-      } catch (err) {
-        console.error('Failed to update status in Supabase', err);
+    try {
+      const table = isWheelchair ? 'requests' : isG24 ? 'g24_requests' : isDiving ? 'diving_solution_requests' : 'turney_seat_requests';
+      const { error } = await supabase.from(table).update({ status: newStatus }).eq('request_code', request.id);
+      
+      if (error) throw error;
+      
+      // Only update local state AFTER successful Supabase update
+      setRequest(prev => ({ ...prev, status: newStatus }));
+      
+      // Update the cached list in RequestJobs
+      const stored = localStorage.getItem('wheelchair_lifter_requests_v1');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const updated = parsed.map(r => (r.id === request.id || r.request_code === request.id)
+            ? { ...r, status: newStatus }
+            : r
+          );
+          localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+        } catch (err) {
+          console.error('Failed to update local cache', err);
+        }
       }
+    } catch (err) {
+      console.error('Failed to update status in Supabase:', err);
+      alert('Failed to update status. Please try again.');
     }
   };
 

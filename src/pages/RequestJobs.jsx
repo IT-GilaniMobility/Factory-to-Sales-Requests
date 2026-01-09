@@ -575,6 +575,21 @@ const RequestJobs = () => {
           </div>
         </nav>
 
+        {/* Work Hours Link - PROMINENT */}
+        <div className="px-4 pb-2">
+          <Link
+            to="/work-hours"
+            className={`w-full text-left px-3 py-3 rounded-md transition-all flex items-center gap-2 block font-semibold border-2 ${
+              darkMode 
+                ? 'bg-blue-900 border-blue-500 text-blue-100 hover:bg-blue-800' 
+                : 'bg-blue-50 border-blue-400 text-blue-900 hover:bg-blue-100'
+            }`}
+          >
+            <FiClock size={20} />
+            {sidebarOpen && <span className="text-sm">Work Hours</span>}
+          </Link>
+        </div>
+
         {/* Activity Logs Link */}
         <div className="px-4 pb-2">
           <Link
@@ -598,19 +613,6 @@ const RequestJobs = () => {
           >
             <FiTruck size={18} />
             {sidebarOpen && <span className="text-sm">Deliveries</span>}
-          </Link>
-        </div>
-
-        {/* Work Hours Link */}
-        <div className="px-4 pb-4">
-          <Link
-            to="/work-hours"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
-              darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-          >
-            <FiClock size={18} />
-            {sidebarOpen && <span className="text-sm">Work Hours</span>}
           </Link>
         </div>
 
