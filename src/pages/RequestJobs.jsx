@@ -274,11 +274,6 @@ const RequestJobs = () => {
           });
           allData.push(...mapped);
         }
-              jobRequest: 'Turney Seat Installation',
-            };
-          });
-          allData.push(...mapped);
-        }
 
         if (allData.length > 0) {
           // Sort by createdAt descending (newest first)

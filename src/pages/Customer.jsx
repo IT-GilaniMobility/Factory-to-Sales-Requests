@@ -520,6 +520,85 @@ const Customer = () => {
     }
   };
 
+  const validate = () => {
+    const newErrors = {};
+
+    const required = (fieldName, displayName) => {
+      if (!formData[fieldName]) {
+        newErrors[fieldName] = `${displayName} is required`;
+      }
+    };
+
+    // Common validations
+    required('salespersonName', 'Salesperson Name');
+    required('customerName', 'Customer Name');
+    required('customerMobile', 'Customer Mobile');
+    required('jobRequest', 'Job Request Type');
+
+    if (formData.jobRequest === 'Wheelchair Lifter Installation') {
+      // Wheelchair Lifter validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('userWeight', 'User Weight');
+      required('wheelchairWeight', 'Wheelchair Weight');
+      required('wheelchairType', 'Wheelchair Type');
+      required('userSituation', 'User Situation');
+      required('measureA', 'Measure A');
+      required('measureB', 'Measure B');
+      required('measureC', 'Measure C');
+      required('measureD', 'Measure D');
+      required('measureH', 'Measure H');
+      required('floorToGround', 'Floor to Ground');
+
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
+    } else if (formData.jobRequest === 'The Ultimate G24') {
+      // G24 validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('productModel', 'Product Model');
+
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
+    } else if (formData.jobRequest === 'Diving Solution Installation') {
+      // Diving Solution validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('deviceModel', 'Device Model');
+      required('installationLocation', 'Installation Location');
+      required('driverSeatPosition', 'Driver Seat Position');
+      required('steeringWheelPosition', 'Steering Wheel Position');
+
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
+    } else if (formData.jobRequest === 'Turney Seat Installation') {
+      // Turney Seat validation
+      required('vehicleMake', 'Make');
+      required('vehicleModel', 'Model');
+      required('vehicleYear', 'Year');
+      required('userWeight', 'User Weight');
+      required('userHeight1', 'User Height 1');
+      required('userHeight2', 'User Height 2');
+      required('userSituation', 'User Situation');
+      required('misuaA', 'Misura A');
+      required('misuaB', 'Misura B');
+      required('misuaC', 'Misura C');
+      required('misuaD', 'Misura D');
+      required('misuaE', 'Misura E');
+      required('productModel', 'Product');
+      required('productLocation', 'Product Location');
+      
+      if (!signatureData) {
+        newErrors['signature'] = 'Customer signature is required';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
