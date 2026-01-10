@@ -571,6 +571,7 @@ const RequestJobs = () => {
 
   // Helper function to render different preview details based on request type
   const renderPreviewDetails = (req) => {
+    console.log('DEBUG: Request object:', req);
     if (req.jobRequest === 'The Ultimate G24') {
       return (
         <>
