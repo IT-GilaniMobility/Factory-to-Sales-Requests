@@ -24,6 +24,12 @@ const RequestJobs = () => {
   const [newJobNotification, setNewJobNotification] = useState(null); // { requestCode, label }
   const [workHours, setWorkHours] = useState({}); // Maps request_code to total hours
   const [statusError, setStatusError] = useState(''); // Surface Supabase sync issues
+  const [dismissedNotifications, setDismissedNotifications] = useState(() => {
+    // Load dismissed notifications for current user from localStorage
+    if (!userEmail) return new Set();
+    const stored = localStorage.getItem(`dismissed_notifications_${userEmail}`);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
   const requestCodesRef = useRef(new Set());
 
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
@@ -630,10 +636,17 @@ const RequestJobs = () => {
 
   return (
     <>
-      {isFactoryAdmin() && newJobNotification && (
+      {isFactoryAdmin() && newJobNotification && !dismissedNotifications.has(newJobNotification.requestCode) && (
         <div
           className="fixed top-4 right-4 z-50 cursor-pointer"
-          onClick={() => setNewJobNotification(null)}
+          onClick={() => {
+            // Add to dismissed set and persist
+            const updated = new Set(dismissedNotifications);
+            updated.add(newJobNotification.requestCode);
+            setDismissedNotifications(updated);
+            localStorage.setItem(`dismissed_notifications_${userEmail}`, JSON.stringify(Array.from(updated)));
+            setNewJobNotification(null);
+          }}
         >
           <div className="bg-blue-600 text-white rounded-lg shadow-xl px-4 py-3 flex items-start gap-3 max-w-sm">
             <FiBell size={20} className="mt-0.5" />
