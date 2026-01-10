@@ -461,6 +461,7 @@ const Customer = () => {
         mobile: formData.customerMobile,
         quoteRef: formData.quoteRef
       },
+      salespersonName: formData.salespersonName,
       job: {
         requestType: formData.jobRequest,
         vehicle: {
