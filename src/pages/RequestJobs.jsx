@@ -465,8 +465,13 @@ const RequestJobs = () => {
       .eq('request_code', requestCode);
 
     if (error) {
-      console.error(`Failed to update status in Supabase for ${requestCode} (${targetTable})`, error);
-      setStatusError('Supabase update failed. Status kept locally; please retry.');
+      console.error(`❌ Supabase UPDATE FAILED for ${requestCode} (table: ${targetTable})`, { 
+        code: error.code, 
+        message: error.message, 
+        details: error.details,
+        hint: error.hint,
+      });
+      setStatusError(`Supabase error: ${error.message || 'Unknown error'}. Check console.`);
       // Revert to previous status
       const reverted = requests;
       setRequests(reverted);
@@ -474,14 +479,19 @@ const RequestJobs = () => {
       return;
     }
 
+    console.log(`✅ Supabase UPDATE SUCCESS for ${requestCode} (table: ${targetTable}). Status set to: ${newStatus}`);
+
     // Confirm with a fresh read to avoid stale cache
     const refreshed = await refetchRequest(requestCode, jobRequestLabel);
     if (refreshed) {
+      console.log(`📡 Refetch confirmed - status in DB is now: ${refreshed.status}`);
       setRequests(prev => {
         const merged = prev.map(req => (req.id === id || req.request_code === id) ? { ...req, ...refreshed } : req);
         localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(merged));
         return merged;
       });
+    } else {
+      console.warn('⚠️ Refetch returned null - could not verify status in DB');
     }
   };
 

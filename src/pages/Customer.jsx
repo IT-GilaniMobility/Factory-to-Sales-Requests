@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabaseClient';
 // Shared initial state so hooks don't warn about missing deps
 const initialState = {
     // Section 1
+    salespersonName: '',
     customerName: '',
     customerAddress: '',
     customerMobile: '', // Will prepend +971 visually or logic
@@ -314,7 +315,8 @@ const Customer = () => {
     };
 
     // Section 1
-    required('customerName', 'Name');
+    required('salespersonName', 'Salesperson Name');
+    required('customerName', 'Customer Name');
     required('customerAddress', 'Address');
     required('customerMobile', 'Mobile');
     required('quoteRef', 'Quote Ref');
@@ -723,7 +725,8 @@ const Customer = () => {
         {/* SECTION 1: Customer Details */}
         <Section title="1. Customer Details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Name" name="customerName" type="text" required value={formData.customerName || ''} onChange={handleChange} error={errors.customerName} />
+            <InputField label="Salesperson Name" name="salespersonName" type="text" required value={formData.salespersonName || ''} onChange={handleChange} error={errors.salespersonName} />
+            <InputField label="Customer Name" name="customerName" type="text" required value={formData.customerName || ''} onChange={handleChange} error={errors.customerName} />
             <InputField label="Mobile" name="customerMobile" type="text" placeholder="+971 50 123 4567" required value={formData.customerMobile || ''} onChange={handleChange} error={errors.customerMobile} />
             <div className="md:col-span-2">
               <TextareaField label="Address" name="customerAddress" required value={formData.customerAddress || ''} onChange={handleChange} error={errors.customerAddress} />

@@ -46,6 +46,7 @@ const Logs = () => {
               requestCode: row.request_code,
               createdAt: row.created_at,
               createdBy: row.created_by_email || 'Unknown',
+              salespersonName: row.payload?.salespersonName || 'N/A',
               type: table.type,
               customerName: row.payload?.customer?.name || 'N/A',
               status: row.status || 'Requested to factory'
@@ -180,9 +181,15 @@ const Logs = () => {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm p-6">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Activity Logs</h1>
-            <p className="text-gray-600">Track all request creation activity</p>
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Activity Logs</h1>
+              <p className="text-gray-600">Track all request creation activity</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+              <p className="text-xs text-blue-600 font-medium uppercase">Logged in as</p>
+              <p className="text-sm font-mono text-blue-900">{userEmail}</p>
+            </div>
           </div>
         </div>
 
@@ -357,7 +364,8 @@ const Logs = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request Code</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salesperson</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                       </tr>
                     </thead>
@@ -381,8 +389,11 @@ const Logs = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <FiUser className="mr-2 text-gray-400" size={16} />
-                              <span className="text-sm text-gray-900">{log.createdBy}</span>
+                              <span className="text-sm text-gray-900">{log.salespersonName}</span>
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-600 font-mono">{log.createdBy}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
