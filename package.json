@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "lucide-react": "^0.562.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
