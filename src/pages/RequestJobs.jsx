@@ -662,7 +662,7 @@ const RequestJobs = () => {
           </button>
         </div>
 
-        <nav className="flex-1 py-6 space-y-2 px-2">
+        <nav className="flex-1 py-6 space-y-4 px-2 overflow-y-auto">
           <div className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-4 ${sidebarOpen ? '' : 'hidden'}`}>
             Dashboard
           </div>
@@ -690,6 +690,30 @@ const RequestJobs = () => {
               </button>
             ))}
           </div>
+
+          {/* Recent Jobs */}
+          {sidebarOpen && requests.length > 0 && (
+            <div className="pt-4 border-t border-gray-600">
+              <h3 className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-3`}>Recent Jobs</h3>
+              <div className="space-y-1">
+                {requests.slice(0, 5).map((req, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => navigate(`/requests/${req.request_code}`)}
+                    className={`w-full text-left px-3 py-2 rounded-md text-xs transition-all truncate ${
+                      darkMode
+                        ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    }`}
+                    title={`${req.customer?.name || 'N/A'} - ${req.request_code}`}
+                  >
+                    <div className={`font-medium truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{req.request_code}</div>
+                    <div className={`text-xs truncate ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{req.customer?.name || 'N/A'}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Work Hours Link - PROMINENT */}
