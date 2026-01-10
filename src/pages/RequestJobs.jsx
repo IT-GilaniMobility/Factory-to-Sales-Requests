@@ -40,6 +40,19 @@ const RequestJobs = () => {
     };
   };
 
+  const getTableForJobRequest = (jobRequest) => {
+    switch (jobRequest) {
+      case 'The Ultimate G24':
+        return 'g24_requests';
+      case 'Diving Solution Installation':
+        return 'diving_solution_requests';
+      case 'Turney Seat Installation':
+        return 'turney_seat_requests';
+      default:
+        return 'requests';
+    }
+  };
+
   const loadQCStatuses = async (requestCodes) => {
     try {
       if (!supabase || !requestCodes.length) return;
@@ -406,28 +419,39 @@ const RequestJobs = () => {
 
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
-    
-    // Prevent sales users from changing status
-    if (!isFactoryAdmin()) {
+    if (!isFactoryAdmin()) return;
+
+    const target = requests.find(req => req.id === id || req.request_code === id);
+    if (!target) {
+      console.warn('Status change requested for missing job', id);
       return;
     }
-    
-    const updated = requests.map(req => 
-      (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req
-    );
+
+    const targetTable = getTableForJobRequest(target.jobRequest || target.job?.requestType);
+    const requestCode = target.request_code || id;
+
+    if (!supabase) {
+      console.warn('Supabase unavailable, applying status only locally');
+      const updated = requests.map(req => (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req);
+      setRequests(updated);
+      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+      return;
+    }
+
+    const { error } = await supabase
+      .from(targetTable)
+      .update({ status: newStatus })
+      .eq('request_code', requestCode);
+
+    if (error) {
+      console.error(`Failed to update status in Supabase for ${requestCode} (${targetTable})`, error);
+      alert('Could not save status to the cloud. Please try again.');
+      return;
+    }
+
+    const updated = requests.map(req => (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req);
     setRequests(updated);
     localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
-
-    if (supabase) {
-      const { error } = await supabase
-        .from('requests')
-        .update({ status: newStatus })
-        .eq('request_code', id);
-
-      if (error) {
-        console.error('Failed to update status in Supabase', error);
-      }
-    }
   };
 
   const filteredRequests = visibleRequests

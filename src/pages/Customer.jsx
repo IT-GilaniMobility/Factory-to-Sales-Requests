@@ -686,6 +686,11 @@ const Customer = () => {
   // Render Helpers
   const ErrorMsg = ({ field }) => errors[field] ? <p className="text-red-500 text-xs mt-1">{errors[field]}</p> : null;
 
+  const formatMm = (value) => {
+    if (value === null || value === undefined || value === '') return '—';
+    return `${value} mm`;
+  };
+
   const isWheelchairLifter = formData.jobRequest === 'Wheelchair Lifter Installation';
   const isUltimateG24 = formData.jobRequest === 'The Ultimate G24';
   const isDivingSolution = formData.jobRequest === 'Diving Solution Installation';
@@ -696,6 +701,7 @@ const Customer = () => {
   const divingSolutionValid = section2Valid && formData.deviceModel && formData.installationLocation && formData.driverSeatPosition && formData.steeringWheelPosition;
   const turneySeatSection3Valid = section2Valid && formData.userWeight && formData.userHeight1 && formData.userHeight2 && formData.userSituation;
   const turneySeatSection4Valid = turneySeatSection3Valid && formData.misuaA && formData.misuaB && formData.misuaC && formData.misuaD && formData.misuaE;
+  const formTitle = `${formData.jobRequest || 'Wheelchair Lifter Installation'} Form`;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -712,7 +718,7 @@ const Customer = () => {
             Cloud sync is off: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in .env.local, then restart. Requests will save locally until then.
           </div>
         )}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Wheelchair Lifter Installation Form</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">{formTitle}</h1>
 
         {/* SECTION 1: Customer Details */}
         <Section title="1. Customer Details">
@@ -782,7 +788,7 @@ const Customer = () => {
                         <div className="relative inline-block w-full">
                           <img src={wheelchairSide} alt="Wheelchair Side" className="w-full h-auto object-contain max-h-48" />
                           <div className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 px-1 text-xs font-bold border border-gray-300 rounded">
-                            A: {formData.measureA || '—'}
+                            A: {formatMm(formData.measureA)}
                           </div>
                         </div>
                         <div className="mt-2">
@@ -795,10 +801,10 @@ const Customer = () => {
                         <div className="relative inline-block w-full">
                           <img src={wheelchairFront} alt="Wheelchair Front" className="w-full h-auto object-contain max-h-48" />
                           <div className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 px-1 text-xs font-bold border border-gray-300 rounded">
-                            B: {formData.measureB || '—'}
+                            B: {formatMm(formData.measureB)}
                           </div>
                           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white/80 px-1 text-xs font-bold border border-gray-300 rounded">
-                            C: {formData.measureC || '—'}
+                            C: {formatMm(formData.measureC)}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mt-2">
@@ -816,19 +822,19 @@ const Customer = () => {
                     <Section title="4. Vehicle Measurements">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                          <InputField label="Measure D" name="measureD" type="number" required value={formData.measureD || ''} onChange={handleChange} error={errors.measureD} />
-                          <InputField label="Measure H" name="measureH" type="number" required value={formData.measureH || ''} onChange={handleChange} error={errors.measureH} />
-                          <InputField label="Measure from floor of vehicle to ground" name="floorToGround" type="number" required value={formData.floorToGround || ''} onChange={handleChange} error={errors.floorToGround} />
+                          <InputField label="Measure D (mm)" name="measureD" type="number" required value={formData.measureD || ''} onChange={handleChange} error={errors.measureD} />
+                          <InputField label="Measure H (mm)" name="measureH" type="number" required value={formData.measureH || ''} onChange={handleChange} error={errors.measureH} />
+                          <InputField label="Measure from floor of vehicle to ground (mm)" name="floorToGround" type="number" required value={formData.floorToGround || ''} onChange={handleChange} error={errors.floorToGround} />
                         </div>
                         <div className="relative border rounded p-2 bg-gray-50">
                           <p className="text-xs text-gray-500 mb-1 text-center">Vehicle Rear View</p>
                           <div className="relative inline-block w-full">
                             <img src={vehicleMeasurements} alt="Vehicle Measurements" className="w-full h-auto object-contain max-h-48" />
                             <div className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 px-1 text-xs font-bold border border-gray-300 rounded">
-                              D: {formData.measureD || '—'}
+                              D: {formatMm(formData.measureD)}
                             </div>
                             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white/80 px-1 text-xs font-bold border border-gray-300 rounded">
-                              H: {formData.measureH || '—'}
+                              H: {formatMm(formData.measureH)}
                             </div>
                           </div>
                         </div>
@@ -1283,23 +1289,23 @@ const Customer = () => {
                               <img src={turneySeat} alt="Turney Seat" className="w-full h-auto object-contain max-h-64" />
                               {/* Misura A - Top Left */}
                               <div className="absolute top-8 left-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
-                                A: {formData.misuaA || '—'}
+                                A: {formatMm(formData.misuaA)}
                               </div>
                               {/* Misura B - Top Middle */}
                               <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
-                                B: {formData.misuaB || '—'}
+                                B: {formatMm(formData.misuaB)}
                               </div>
                               {/* Misura C - Right Middle */}
                               <div className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
-                                C: {formData.misuaC || '—'}
+                                C: {formatMm(formData.misuaC)}
                               </div>
                               {/* Misura D - Right Bottom Middle */}
                               <div className="absolute bottom-16 right-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
-                                D: {formData.misuaD || '—'}
+                                D: {formatMm(formData.misuaD)}
                               </div>
                               {/* Misura E - Bottom Right */}
                               <div className="absolute bottom-4 right-4 bg-white/90 px-1.5 py-0.5 text-xs font-bold border border-gray-300 rounded shadow-sm">
-                                E: {formData.misuaE || '—'}
+                                E: {formatMm(formData.misuaE)}
                               </div>
                             </div>
                           </div>
