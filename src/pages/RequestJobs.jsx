@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck } from 'react-icons/fi';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -185,6 +185,13 @@ const RequestJobs = () => {
               job: payload.job || { requestType: 'Wheelchair Lifter Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'Wheelchair Lifter Installation',
+              pdf_url: row.pdf_url,
+              pdf_generated_at: row.pdf_generated_at,
+              customer_form_token: row.customer_form_token,
+              customer_submitted: row.customer_submitted,
+              customer_submitted_at: row.customer_submitted_at,
+              customer_vehicle_photos: row.customer_vehicle_photos,
+              customer_notes: row.customer_notes,
             };
           });
           allData.push(...mapped);
@@ -204,6 +211,13 @@ const RequestJobs = () => {
               job: payload.job || { requestType: 'The Ultimate G24' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'The Ultimate G24',
+              pdf_url: row.pdf_url,
+              pdf_generated_at: row.pdf_generated_at,
+              customer_form_token: row.customer_form_token,
+              customer_submitted: row.customer_submitted,
+              customer_submitted_at: row.customer_submitted_at,
+              customer_vehicle_photos: row.customer_vehicle_photos,
+              customer_notes: row.customer_notes,
             };
           });
           allData.push(...mapped);
@@ -223,6 +237,13 @@ const RequestJobs = () => {
               job: payload.job || { requestType: 'Diving Solution Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
               jobRequest: 'Diving Solution Installation',
+              pdf_url: row.pdf_url,
+              pdf_generated_at: row.pdf_generated_at,
+              customer_form_token: row.customer_form_token,
+              customer_submitted: row.customer_submitted,
+              customer_submitted_at: row.customer_submitted_at,
+              customer_vehicle_photos: row.customer_vehicle_photos,
+              customer_notes: row.customer_notes,
             };
           });
           allData.push(...mapped);
@@ -241,6 +262,18 @@ const RequestJobs = () => {
               createdBy: row.created_by_email,
               job: payload.job || { requestType: 'Turney Seat Installation' },
               customer: payload.customer || { name: '', mobile: '', quoteRef: '' },
+              jobRequest: 'Turney Seat Installation',
+              pdf_url: row.pdf_url,
+              pdf_generated_at: row.pdf_generated_at,
+              customer_form_token: row.customer_form_token,
+              customer_submitted: row.customer_submitted,
+              customer_submitted_at: row.customer_submitted_at,
+              customer_vehicle_photos: row.customer_vehicle_photos,
+              customer_notes: row.customer_notes,
+            };
+          });
+          allData.push(...mapped);
+        }
               jobRequest: 'Turney Seat Installation',
             };
           });
@@ -571,7 +604,6 @@ const RequestJobs = () => {
 
   // Helper function to render different preview details based on request type
   const renderPreviewDetails = (req) => {
-    console.log('DEBUG: Request object:', req);
     if (req.jobRequest === 'The Ultimate G24') {
       return (
         <>
@@ -611,6 +643,23 @@ const RequestJobs = () => {
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Installation Location:</span>
             <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.divingSolution?.installationLocation || '—'}</span>
+          </div>
+        </>
+      );
+    } else if (req.jobRequest === 'Turney Seat Installation') {
+      return (
+        <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Seat Type:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.turneySeats?.seatType || '—'}</span>
           </div>
         </>
       );
@@ -960,6 +1009,22 @@ const RequestJobs = () => {
                           {getQCBadge(req.request_code).icon} {getQCBadge(req.request_code).label}
                         </div>
                       )}
+
+                      {/* PDF & Customer Submission Badges */}
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        {req.pdf_url && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">
+                            <FiFileText className="w-3 h-3" />
+                            PDF
+                          </div>
+                        )}
+                        {req.customer_submitted && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                            <FiCheck className="w-3 h-3" />
+                            Customer Submitted
+                          </div>
+                        )}
+                      </div>
 
 
                       <div className={`mb-4 pb-4 ${darkMode ? 'border-gray-500' : 'border-gray-300'} border-b`}>

@@ -9,6 +9,7 @@ import RequestDetails from './pages/RequestDetails';
 import Logs from './pages/Logs';
 import Deliveries from './pages/Deliveries';
 import WorkHours from './pages/WorkHours';
+import CustomerForm from './pages/CustomerForm';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -45,6 +46,8 @@ function AppContent() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signing-in" element={<SigningIn />} />
+          {/* Public route for customer form - no auth required */}
+          <Route path="/customer-form/:token" element={<CustomerForm />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
@@ -56,6 +59,8 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Navigate to="/requests" replace />} />
         <Route path="/login" element={<Navigate to="/requests" replace />} />
+        {/* Public route for customer form - no auth required */}
+        <Route path="/customer-form/:token" element={<CustomerForm />} />
         <Route
           path="/signing-in"
           element={

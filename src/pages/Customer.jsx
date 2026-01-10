@@ -8,6 +8,9 @@ import manHeight from '../assets/man-height.png';
 import womenHeight from '../assets/women-height.png';
 import turneySeat from '../assets/turney-seat.png';
 import { supabase } from '../lib/supabaseClient';
+import PDFGenerator from '../components/PDFGenerator';
+import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL } from '../utils/pdfService';
+import { FiDownload, FiShare2, FiFileText, FiCopy, FiCheck } from 'react-icons/fi';
 
 // Shared initial state so hooks don't warn about missing deps
 const initialState = {
@@ -179,6 +182,14 @@ const Customer = () => {
 
   const [formData, setFormData] = useState(initialState);
   const supabaseReady = Boolean(supabase);
+
+  // PDF Generation State
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [customerToken, setCustomerToken] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const pdfRef = useRef(null);
 
   // Load draft or start fresh when ?new=true|1 is present
   useEffect(() => {
@@ -432,8 +443,96 @@ const Customer = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // PDF Generation Handler
+  const handleGeneratePDF = async () => {
+    if (!validate()) {
+      window.scrollTo(0, 0);
+      setSubmitError('Please fill all required fields before generating PDF');
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    setSubmitError(null);
+
+    try {
+      const tempRequestCode = `DRAFT-${Date.now()}`;
+      const pdfData = {
+        ...formData,
+        requestCode: tempRequestCode,
+        customer: {
+          name: formData.customerName,
+          address: formData.customerAddress,
+          mobile: formData.customerMobile,
+          email: formData.customerEmail,
+          quoteRef: formData.quoteRef
+        },
+        job: {
+          requestType: formData.jobRequest,
+          vehicle: {
+            make: formData.vehicleMake,
+            model: formData.vehicleModel,
+            year: formData.vehicleYear
+          }
+        },
+        userInfo: {
+          userWeightKg: formData.userWeight,
+          wheelchairWeightKg: formData.wheelchairWeight,
+          wheelchairType: formData.wheelchairType
+        },
+        productModel: {
+          selection: formData.productModel
+        },
+        secondRowSeatPosition: {
+          selection: formData.secondRowSeat
+        },
+        divingSolution: {
+          deviceModel: formData.deviceModel,
+          installationLocation: formData.installationLocation
+        },
+        turneySeats: {
+          seatType: formData.seatType
+        }
+      };
+
+      // Wait for PDF element to render
+      setTimeout(async () => {
+        if (pdfRef.current) {
+          const url = await generateAndUploadPDF(pdfRef.current, tempRequestCode);
+          setPdfUrl(url);
+          console.log('✅ PDF generated successfully:', url);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('❌ Error generating PDF:', error);
+      setSubmitError('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  // Copy customer form link
+  const handleCopyLink = () => {
+    if (customerToken) {
+      const url = getCustomerFormURL(customerToken);
+      navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
     if (!validate()) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    // Require PDF before submission
+    if (!pdfUrl) {
+      setSubmitError('Please generate PDF before submitting the request');
       window.scrollTo(0, 0);
       return;
     }
@@ -574,6 +673,8 @@ const Customer = () => {
             tie_down_other: formData.tieDownOther,
             floor_add_on: formData.floorAddOn,
             floor_add_on_other: formData.floorAddOnOther,
+            pdf_url: pdfUrl,
+            pdf_generated_at: new Date().toISOString(),
             payload
           }]);
         insertError = error;
@@ -595,6 +696,8 @@ const Customer = () => {
             installation_location: formData.installationLocation,
             driver_seat_position: formData.driverSeatPosition,
             steering_wheel_position: formData.steeringWheelPosition,
+            pdf_url: pdfUrl,
+            pdf_generated_at: new Date().toISOString(),
             payload
           }]);
         insertError = error;
@@ -627,6 +730,8 @@ const Customer = () => {
             special_request: formData.specialRequest,
             optional_extra_add_ons: formData.optionalExtraAddOns,
             product_location: formData.productLocation,
+            pdf_url: pdfUrl,
+            pdf_generated_at: new Date().toISOString(),
             payload
           }]);
         insertError = error;
@@ -652,6 +757,8 @@ const Customer = () => {
             measure_d: formData.measureD ? parseFloat(formData.measureD) : null,
             measure_h: formData.measureH ? parseFloat(formData.measureH) : null,
             floor_to_ground: formData.floorToGround ? parseFloat(formData.floorToGround) : null,
+            pdf_url: pdfUrl,
+            pdf_generated_at: new Date().toISOString(),
             payload
           }]);
         insertError = error;
@@ -663,6 +770,20 @@ const Customer = () => {
         setSubmitError(`Cloud sync failed: ${insertError.message}. Saved locally for now.`);
       } else {
         console.log('Successfully inserted to Supabase');
+        
+        // Generate customer token and update request
+        try {
+          const tableName = formData.jobRequest === 'The Ultimate G24' ? 'g24_requests' :
+                            formData.jobRequest === 'Diving Solution Installation' ? 'diving_solution_requests' :
+                            formData.jobRequest === 'Turney Seat Installation' ? 'turney_seat_requests' : 'requests';
+          
+          const token = await updateRequestWithPDF(tableName, requestCode, pdfUrl);
+          setCustomerToken(token);
+          setShowShareModal(true);
+          console.log('✅ Customer token generated:', token);
+        } catch (error) {
+          console.error('❌ Failed to generate customer token:', error);
+        }
       }
     } else {
       console.log('Supabase not ready, saving to localStorage only');
@@ -1380,25 +1501,136 @@ const Customer = () => {
 
       {/* Sticky Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
-        <div className="max-w-6xl mx-auto flex justify-end space-x-4">
+        <div className="max-w-6xl mx-auto flex justify-end space-x-4 items-center">
           {submitError && (
             <span className="text-sm text-red-600 mr-auto">{submitError}</span>
           )}
+          
+          {/* PDF Status Display */}
+          {pdfUrl && (
+            <div className="flex items-center gap-2 text-sm text-green-600 mr-auto">
+              <FiCheck className="w-5 h-5" />
+              <span className="font-medium">PDF Generated</span>
+            </div>
+          )}
+          
           <button
             onClick={handleReset}
             className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium"
           >
             Reset
           </button>
+          
+          {/* Generate PDF Button */}
+          <button
+            onClick={handleGeneratePDF}
+            disabled={isGeneratingPDF}
+            className={`px-6 py-2 rounded-md font-semibold shadow-sm transition-colors flex items-center gap-2 ${
+              pdfUrl 
+                ? 'bg-green-100 text-green-700 border border-green-300'
+                : isGeneratingPDF 
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+            }`}
+          >
+            {isGeneratingPDF ? (
+              <>Generating...</>
+            ) : pdfUrl ? (
+              <><FiCheck className="w-4 h-4" /> PDF Ready</>
+            ) : (
+              <><FiFileText className="w-4 h-4" /> Generate PDF</>
+            )}
+          </button>
+          
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
-            className={`px-8 py-2 rounded-md font-semibold shadow-sm transition-colors ${isSubmitting ? 'bg-blue-300 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            disabled={isSubmitting || !pdfUrl}
+            className={`px-8 py-2 rounded-md font-semibold shadow-sm transition-colors ${
+              isSubmitting || !pdfUrl
+                ? 'bg-blue-300 text-white cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </button>
         </div>
       </div>
+
+      {/* Hidden PDF Generator */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <PDFGenerator ref={pdfRef} formData={{
+          ...formData,
+          requestCode: `DRAFT-${Date.now()}`,
+          customer: {
+            name: formData.customerName,
+            address: formData.customerAddress,
+            mobile: formData.customerMobile,
+            quoteRef: formData.quoteRef
+          },
+          job: {
+            requestType: formData.jobRequest,
+            vehicle: {
+              make: formData.vehicleMake,
+              model: formData.vehicleModel,
+              year: formData.vehicleYear
+            }
+          },
+          userInfo: {
+            userWeightKg: formData.userWeight,
+            wheelchairWeightKg: formData.wheelchairWeight,
+            wheelchairType: formData.wheelchairType
+          },
+          productModel: {
+            selection: formData.productModel
+          },
+          secondRowSeatPosition: {
+            selection: formData.secondRowSeat
+          },
+          divingSolution: {
+            deviceModel: formData.deviceModel,
+            installationLocation: formData.installationLocation
+          },
+          turneySeats: {
+            seatType: formData.seatType
+          }
+        }} />
+      </div>
+
+      {/* Share Modal */}
+      {showShareModal && customerToken && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FiShare2 className="text-blue-600" />
+              Share with Customer
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Send this link to your customer to upload vehicle photos and complete the form:
+            </p>
+            <div className="bg-gray-100 p-3 rounded-md mb-4 font-mono text-sm break-all">
+              {getCustomerFormURL(customerToken)}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyLink}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                {linkCopied ? (
+                  <><FiCheck /> Copied!</>
+                ) : (
+                  <><FiCopy /> Copy Link</>
+                )}
+              </button>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
