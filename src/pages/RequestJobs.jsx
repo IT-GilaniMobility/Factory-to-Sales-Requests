@@ -23,6 +23,7 @@ const RequestJobs = () => {
   const [qcStatuses, setQCStatuses] = useState({}); // Maps request_code to QC status
   const [newJobNotification, setNewJobNotification] = useState(null); // { requestCode, label }
   const [workHours, setWorkHours] = useState({}); // Maps request_code to total hours
+  const [statusError, setStatusError] = useState(''); // Surface Supabase sync issues
   const requestCodesRef = useRef(new Set());
 
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
@@ -51,6 +52,22 @@ const RequestJobs = () => {
       default:
         return 'requests';
     }
+  };
+
+  const refetchRequest = async (requestCode, jobRequestLabel) => {
+    if (!supabase) return null;
+    const table = getTableForJobRequest(jobRequestLabel);
+    const { data, error } = await supabase
+      .from(table)
+      .select('request_code, status, created_at, created_by_email, payload')
+      .eq('request_code', requestCode)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Refetch failed', { table, requestCode, error });
+      return null;
+    }
+    return data ? mapSupabaseRowToRequest(data, jobRequestLabel) : null;
   };
 
   const loadQCStatuses = async (requestCodes) => {
@@ -419,6 +436,7 @@ const RequestJobs = () => {
 
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
+    setStatusError('');
     if (!isFactoryAdmin()) return;
 
     const target = requests.find(req => req.id === id || req.request_code === id);
@@ -427,14 +445,17 @@ const RequestJobs = () => {
       return;
     }
 
-    const targetTable = getTableForJobRequest(target.jobRequest || target.job?.requestType);
     const requestCode = target.request_code || id;
+    const jobRequestLabel = target.jobRequest || target.job?.requestType || 'Wheelchair Lifter Installation';
+    const targetTable = getTableForJobRequest(jobRequestLabel);
+
+    // Optimistic UI update
+    const optimistic = requests.map(req => (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req);
+    setRequests(optimistic);
+    localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(optimistic));
 
     if (!supabase) {
-      console.warn('Supabase unavailable, applying status only locally');
-      const updated = requests.map(req => (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req);
-      setRequests(updated);
-      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+      setStatusError('Cloud sync is offline. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to persist.');
       return;
     }
 
@@ -445,13 +466,23 @@ const RequestJobs = () => {
 
     if (error) {
       console.error(`Failed to update status in Supabase for ${requestCode} (${targetTable})`, error);
-      alert('Could not save status to the cloud. Please try again.');
+      setStatusError('Supabase update failed. Status kept locally; please retry.');
+      // Revert to previous status
+      const reverted = requests;
+      setRequests(reverted);
+      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(reverted));
       return;
     }
 
-    const updated = requests.map(req => (req.id === id || req.request_code === id) ? { ...req, status: newStatus } : req);
-    setRequests(updated);
-    localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+    // Confirm with a fresh read to avoid stale cache
+    const refreshed = await refetchRequest(requestCode, jobRequestLabel);
+    if (refreshed) {
+      setRequests(prev => {
+        const merged = prev.map(req => (req.id === id || req.request_code === id) ? { ...req, ...refreshed } : req);
+        localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(merged));
+        return merged;
+      });
+    }
   };
 
   const filteredRequests = visibleRequests
@@ -606,6 +637,12 @@ const RequestJobs = () => {
       )}
 
       <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      {/* Status sync warning */}
+      {statusError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded shadow">
+          {statusError}
+        </div>
+      )}
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-20'} ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} transition-all duration-300 flex flex-col ${darkMode ? 'border-r border-gray-700' : 'border-r border-gray-200'}`}>
         <div className="p-4 border-b border-gray-700 flex items-center justify-center">
