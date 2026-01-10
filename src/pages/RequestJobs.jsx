@@ -575,6 +575,10 @@ const RequestJobs = () => {
       return (
         <>
           <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
+          </div>
+          <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
             <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
           </div>
@@ -591,6 +595,10 @@ const RequestJobs = () => {
     } else if (req.jobRequest === 'Diving Solution Installation') {
       return (
         <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
+          </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
             <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
@@ -609,6 +617,10 @@ const RequestJobs = () => {
       // Wheelchair Lifter Installation - default
       return (
         <>
+          <div className="flex justify-between">
+            <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
+          </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
             <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.job?.vehicle?.make} {req.job?.vehicle?.model}</span>
