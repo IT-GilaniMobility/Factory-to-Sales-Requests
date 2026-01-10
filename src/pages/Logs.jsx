@@ -146,21 +146,73 @@ const Logs = () => {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link
-            to="/requests"
-            className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all flex items-center gap-2"
-          >
-            <FiFileText size={18} />
-            {sidebarOpen && <span className="text-sm">Requests</span>}
-          </Link>
-          <Link
-            to="/logs"
-            className="w-full text-left px-3 py-2 rounded-md bg-blue-600 text-white transition-all flex items-center gap-2"
-          >
-            <FiActivity size={18} />
-            {sidebarOpen && <span className="text-sm">Activity Logs</span>}
-          </Link>
+        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {/* Primary Navigation */}
+          <div className="space-y-2">
+            <Link
+              to="/requests"
+              className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-all flex items-center gap-2"
+            >
+              <FiFileText size={18} />
+              {sidebarOpen && <span className="text-sm">Requests</span>}
+            </Link>
+            <Link
+              to="/logs"
+              className="w-full text-left px-3 py-2 rounded-md bg-blue-600 text-white transition-all flex items-center gap-2"
+            >
+              <FiActivity size={18} />
+              {sidebarOpen && <span className="text-sm">Activity Logs</span>}
+            </Link>
+          </div>
+
+          {/* Dashboard Stats */}
+          {sidebarOpen && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 mb-3">Dashboard</h3>
+              <div className="space-y-2">
+                <button className="w-full text-left px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-medium transition-all flex items-center justify-between">
+                  <span>All Requests</span>
+                  <span className="bg-blue-800 px-2 py-0.5 rounded text-xs">{stats.total}</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
+                  <span>Requested</span>
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Requested to factory').length}</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
+                  <span>In Review</span>
+                  <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'In review').length}</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
+                  <span>Approved</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Approved').length}</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
+                  <span>Completed</span>
+                  <span className="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Completed').length}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Jobs */}
+          {sidebarOpen && logs.length > 0 && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-2 mb-3">Recent Jobs</h3>
+              <div className="space-y-1">
+                {logs.slice(0, 5).map((log, idx) => (
+                  <Link
+                    key={idx}
+                    to={`/requests/${log.requestCode}`}
+                    className="block px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 text-xs transition-all truncate"
+                    title={`${log.customerName} - ${log.requestCode}`}
+                  >
+                    <div className="font-medium truncate">{log.requestCode}</div>
+                    <div className="text-gray-500 text-xs truncate">{log.customerName}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-200">
