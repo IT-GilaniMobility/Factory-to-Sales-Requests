@@ -9,7 +9,7 @@ import womenHeight from '../assets/women-height.png';
 import turneySeat from '../assets/turney-seat.png';
 import { supabase } from '../lib/supabaseClient';
 import PDFGenerator from '../components/PDFGenerator';
-import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL } from '../utils/pdfService';
+import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL, createCustomerMeasurementsForm, getCustomerMeasurementsURL, fetchCustomerMeasurements } from '../utils/pdfService';
 import { FiDownload, FiShare2, FiFileText, FiCopy, FiCheck } from 'react-icons/fi';
 
 // Shared initial state so hooks don't warn about missing deps
@@ -191,6 +191,13 @@ const Customer = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const pdfRef = useRef(null);
 
+  // Measurements Form State
+  const [measurementsUrl, setMeasurementsUrl] = useState(null);
+  const [showMeasurementsModal, setShowMeasurementsModal] = useState(false);
+  const [measurementsLinkCopied, setMeasurementsLinkCopied] = useState(false);
+  const [isGeneratingMeasurements, setIsGeneratingMeasurements] = useState(false);
+  const [hasCheckedMeasurements, setHasCheckedMeasurements] = useState(false);
+
   // Load draft or start fresh when ?new=true|1 is present
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -241,6 +248,38 @@ const Customer = () => {
       // If the user wants to edit, they clear and redraw.
     }
   }, []);
+
+  // Fetch customer measurements when customer name is filled
+  useEffect(() => {
+    if (!hasCheckedMeasurements && formData.customerName && formData.customerName.trim()) {
+      const fetchMeasurements = async () => {
+        try {
+          const measurements = await fetchCustomerMeasurements(formData.customerName);
+          if (measurements) {
+            // Pre-fill the measurements
+            setFormData(prev => ({
+              ...prev,
+              vehicleMake: measurements.vehicle_make || prev.vehicleMake,
+              vehicleModel: measurements.vehicle_model || prev.vehicleModel,
+              vehicleYear: measurements.vehicle_year?.toString() || prev.vehicleYear,
+              measureA: measurements.measure_a?.toString() || prev.measureA,
+              measureB: measurements.measure_b?.toString() || prev.measureB,
+              measureC: measurements.measure_c?.toString() || prev.measureC,
+              measureD: measurements.measure_d?.toString() || prev.measureD,
+              measureH: measurements.measure_h?.toString() || prev.measureH,
+              floorToGround: measurements.floor_to_ground?.toString() || prev.floorToGround
+            }));
+            console.log('✅ Customer measurements pre-filled');
+          }
+        } catch (error) {
+          console.error('Error fetching customer measurements:', error);
+        }
+        setHasCheckedMeasurements(true);
+      };
+
+      fetchMeasurements();
+    }
+  }, [formData.customerName, hasCheckedMeasurements]);
 
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
@@ -517,6 +556,30 @@ const Customer = () => {
       navigator.clipboard.writeText(url);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+  // Generate measurements form for customer
+  const handleGenerateMeasurementsForm = async () => {
+    setIsGeneratingMeasurements(true);
+    try {
+      const url = await createCustomerMeasurementsForm(formData.customerName || '');
+      setMeasurementsUrl(url);
+      setShowMeasurementsModal(true);
+    } catch (error) {
+      console.error('Error generating measurements form:', error);
+      setSubmitError('Failed to generate measurements form. Please try again.');
+    } finally {
+      setIsGeneratingMeasurements(false);
+    }
+  };
+
+  // Copy measurements form link
+  const handleCopyMeasurementsLink = () => {
+    if (measurementsUrl) {
+      navigator.clipboard.writeText(measurementsUrl);
+      setMeasurementsLinkCopied(true);
+      setTimeout(() => setMeasurementsLinkCopied(false), 2000);
     }
   };
 
@@ -1537,6 +1600,23 @@ const Customer = () => {
               <><FiFileText className="w-4 h-4" /> Generate PDF</>
             )}
           </button>
+
+          {/* Generate Measurements Form Button */}
+          <button
+            onClick={handleGenerateMeasurementsForm}
+            disabled={isGeneratingMeasurements}
+            className={`px-6 py-2 rounded-md font-semibold shadow-sm transition-colors flex items-center gap-2 ${
+              isGeneratingMeasurements 
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            {isGeneratingMeasurements ? (
+              <>Generating...</>
+            ) : (
+              <><FiShare2 className="w-4 h-4" /> Get Customer Measurements</>
+            )}
+          </button>
           
           <button
             onClick={handleSubmit}
@@ -1619,6 +1699,42 @@ const Customer = () => {
               </button>
               <button
                 onClick={() => setShowShareModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Measurements Form Modal */}
+      {showMeasurementsModal && measurementsUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FiShare2 className="text-green-600" />
+              Vehicle Measurements Form
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Send this link to your customer to fill in their name and vehicle measurements:
+            </p>
+            <div className="bg-gray-100 p-3 rounded-md mb-4 font-mono text-sm break-all">
+              {measurementsUrl}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyMeasurementsLink}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              >
+                {measurementsLinkCopied ? (
+                  <><FiCheck /> Copied!</>
+                ) : (
+                  <><FiCopy /> Copy Link</>
+                )}
+              </button>
+              <button
+                onClick={() => setShowMeasurementsModal(false)}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
               >
                 Close

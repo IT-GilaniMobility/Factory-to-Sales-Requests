@@ -10,6 +10,7 @@ import Logs from './pages/Logs';
 import Deliveries from './pages/Deliveries';
 import WorkHours from './pages/WorkHours';
 import CustomerForm from './pages/CustomerForm';
+import CustomerMeasurementsForm from './pages/CustomerMeasurementsForm';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -44,10 +45,11 @@ function AppContent() {
     return (
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signing-in" element={<SigningIn />} />
-          {/* Public route for customer form - no auth required */}
-          <Route path="/customer-form/:token" element={<CustomerForm />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signing-in" element={<SigningIn />} />
+        {/* Public routes for customer forms - no auth required */}
+        <Route path="/customer-form/:token" element={<CustomerForm />} />
+        <Route path="/customer-measurements/:token" element={<CustomerMeasurementsForm />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
@@ -59,8 +61,9 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Navigate to="/requests" replace />} />
         <Route path="/login" element={<Navigate to="/requests" replace />} />
-        {/* Public route for customer form - no auth required */}
+        {/* Public routes for customer forms - no auth required */}
         <Route path="/customer-form/:token" element={<CustomerForm />} />
+        <Route path="/customer-measurements/:token" element={<CustomerMeasurementsForm />} />
         <Route
           path="/signing-in"
           element={

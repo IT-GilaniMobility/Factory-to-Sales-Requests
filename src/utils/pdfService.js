@@ -199,3 +199,81 @@ export const getCustomerFormURL = (token) => {
   const baseUrl = window.location.origin;
   return `${baseUrl}/customer-form/${token}`;
 };
+
+/**
+ * Create new customer measurements form and return the token URL
+ * @param {string} customerName - Optional customer name (optional)
+ * @returns {Promise<string>} - Customer measurements form URL
+ */
+export const createCustomerMeasurementsForm = async (customerName = '') => {
+  try {
+    const token = generateToken();
+    
+    const { error } = await supabase
+      .from('customer_measurements')
+      .insert([{
+        measurements_token: token,
+        customer_name: customerName,
+        is_submitted: false,
+        payload: {
+          createdAt: new Date().toISOString()
+        }
+      }]);
+    
+    if (error) {
+      console.error('Error creating measurements form:', error);
+      throw error;
+    }
+    
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/customer-measurements/${token}`;
+    
+    console.log('✅ Customer measurements form created:', url);
+    return url;
+  } catch (error) {
+    console.error('❌ Error creating measurements form:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get customer measurements form URL
+ * @param {string} token - Measurements form token
+ * @returns {string} - Full measurements form URL
+ */
+export const getCustomerMeasurementsURL = (token) => {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/customer-measurements/${token}`;
+};
+
+/**
+ * Fetch submitted customer measurements by customer name
+ * @param {string} customerName - Customer name to search for
+ * @returns {Promise<Object|null>} - Measurements data or null if not found
+ */
+export const fetchCustomerMeasurements = async (customerName) => {
+  try {
+    if (!customerName || !customerName.trim()) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('customer_measurements')
+      .select('*')
+      .eq('customer_name', customerName.trim())
+      .eq('is_submitted', true)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error fetching customer measurements:', error);
+      return null;
+    }
+
+    return data || null;
+  } catch (error) {
+    console.error('Error in fetchCustomerMeasurements:', error);
+    return null;
+  }
+};
