@@ -901,7 +901,21 @@ const Customer = () => {
             Cloud sync is off: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in .env.local, then restart. Requests will save locally until then.
           </div>
         )}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">{formTitle}</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">{formTitle}</h1>
+          <button
+            onClick={handleGenerateMeasurementsForm}
+            disabled={isGeneratingMeasurements}
+            className={`px-4 py-2 rounded-md font-semibold shadow-sm transition-colors flex items-center gap-2 ${
+              isGeneratingMeasurements
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            <FiShare2 className="w-4 h-4" />
+            Get Measurements
+          </button>
+        </div>
 
         {/* SECTION 1: Customer Details */}
         <Section title="1. Customer Details">
