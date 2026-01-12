@@ -199,9 +199,23 @@ const Customer = () => {
   const [hasCheckedMeasurements, setHasCheckedMeasurements] = useState(false);
 
   // Load draft or start fresh when ?new=true|1 is present
+  // OR prefill from customer form submission
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const isNew = params.get('new') === 'true' || params.get('new') === '1';
+
+    // Check if we have prefill data from customer form submission
+    if (location.state?.prefillData) {
+      const prefill = location.state.prefillData;
+      setFormData({
+        ...initialState,
+        ...prefill,
+        salespersonName: userEmail || ''
+      });
+      // Clear the location state so refresh doesn't re-prefill
+      window.history.replaceState({}, document.title);
+      return;
+    }
 
     if (isNew) {
       localStorage.removeItem('wheelchair_lifter_form_v1');
@@ -222,7 +236,7 @@ const Customer = () => {
         console.error("Failed to load draft", e);
       }
     }
-  }, [location.search]);
+  }, [location.search, location.state, userEmail]);
 
   // Save draft to localStorage (debounced)
   useEffect(() => {

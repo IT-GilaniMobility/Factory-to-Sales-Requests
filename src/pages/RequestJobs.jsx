@@ -910,7 +910,29 @@ const RequestJobs = () => {
                     className={`p-2 rounded-md cursor-pointer transition-colors ${
                       darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                     }`}
-                    onClick={() => navigate(`/customer-form-view/${form.id}`)}
+                    onClick={() => navigate('/customer', { 
+                      state: { 
+                        prefillData: {
+                          customerName: form.customer_name || '',
+                          customerMobile: form.customer_mobile || '',
+                          customerAddress: form.customer_address || '',
+                          vehicleMake: form.vehicle_make || '',
+                          vehicleModel: form.vehicle_model || '',
+                          vehicleYear: form.vehicle_year || '',
+                          userWeight: form.user_weight_kg || '',
+                          wheelchairWeight: form.wheelchair_weight_kg || '',
+                          wheelchairType: form.wheelchair_type || '',
+                          measureA: form.measure_a || '',
+                          measureB: form.measure_b || '',
+                          measureC: form.measure_c || '',
+                          userSituation: form.user_situation || '',
+                          measureD: form.measure_d || '',
+                          measureH: form.measure_h || '',
+                          floorToGround: form.floor_to_ground || '',
+                          customerFormId: form.id
+                        }
+                      }
+                    })}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
