@@ -11,6 +11,7 @@ import Deliveries from './pages/Deliveries';
 import WorkHours from './pages/WorkHours';
 import CustomerForm from './pages/CustomerForm';
 import CustomerMeasurementsForm from './pages/CustomerMeasurementsForm';
+import CustomerFormPublic from './pages/CustomerFormPublic';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -50,6 +51,7 @@ function AppContent() {
         {/* Public routes for customer forms - no auth required */}
         <Route path="/customer-form/:token" element={<CustomerForm />} />
         <Route path="/customer-measurements/:token" element={<CustomerMeasurementsForm />} />
+        <Route path="/customer-form-public/:token" element={<CustomerFormPublic />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
@@ -64,6 +66,7 @@ function AppContent() {
         {/* Public routes for customer forms - no auth required */}
         <Route path="/customer-form/:token" element={<CustomerForm />} />
         <Route path="/customer-measurements/:token" element={<CustomerMeasurementsForm />} />
+        <Route path="/customer-form-public/:token" element={<CustomerFormPublic />} />
         <Route
           path="/signing-in"
           element={

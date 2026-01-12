@@ -277,3 +277,76 @@ export const fetchCustomerMeasurements = async (customerName) => {
     return null;
   }
 };
+
+/**
+ * Create new public customer form and return the token URL
+ * @param {string} generatedByEmail - Admin email who generated the link
+ * @param {string} notes - Optional notes
+ * @returns {Promise<string>} - Customer form public URL
+ */
+export const createCustomerFormPublic = async (generatedByEmail = '', notes = '') => {
+  try {
+    const token = generateToken();
+    
+    const { error } = await supabase
+      .from('customer_forms_public')
+      .insert([{
+        form_token: token,
+        generated_by_email: generatedByEmail,
+        notes: notes,
+        is_submitted: false,
+        payload: {
+          createdAt: new Date().toISOString(),
+          generatedBy: generatedByEmail
+        }
+      }]);
+    
+    if (error) {
+      console.error('Error creating customer form:', error);
+      throw error;
+    }
+    
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/customer-form-public/${token}`;
+    
+    console.log('✅ Customer form public created:', url);
+    return url;
+  } catch (error) {
+    console.error('❌ Error creating customer form:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get customer form public URL
+ * @param {string} token - Customer form token
+ * @returns {string} - Full customer form URL
+ */
+export const getCustomerFormPublicURL = (token) => {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/customer-form-public/${token}`;
+};
+
+/**
+ * Fetch all submitted customer forms
+ * @returns {Promise<Array>} - Array of submitted customer forms
+ */
+export const fetchSubmittedCustomerForms = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('customer_forms_public')
+      .select('*')
+      .eq('is_submitted', true)
+      .order('submitted_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching customer forms:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchSubmittedCustomerForms:', error);
+    return [];
+  }
+};

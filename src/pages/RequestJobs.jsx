@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers } from 'react-icons/fi';
+import { createCustomerFormPublic } from '../utils/pdfService';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -31,6 +32,14 @@ const RequestJobs = () => {
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const requestCodesRef = useRef(new Set());
+  
+  // Customer Form Link state
+  const [showCustomerFormModal, setShowCustomerFormModal] = useState(false);
+  const [customerFormUrl, setCustomerFormUrl] = useState(null);
+  const [isGeneratingCustomerForm, setIsGeneratingCustomerForm] = useState(false);
+  const [customerFormLinkCopied, setCustomerFormLinkCopied] = useState(false);
+  const [submittedCustomerForms, setSubmittedCustomerForms] = useState([]);
+  const [loadingCustomerForms, setLoadingCustomerForms] = useState(false);
 
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
     const payload = row?.payload || {};
@@ -371,6 +380,30 @@ const RequestJobs = () => {
 
   const visibleRequests = getVisibleRequests();
 
+  // Handle generating customer form link
+  const handleGenerateCustomerForm = async () => {
+    setIsGeneratingCustomerForm(true);
+    try {
+      const url = await createCustomerFormPublic(userEmail, '');
+      setCustomerFormUrl(url);
+      setShowCustomerFormModal(true);
+    } catch (error) {
+      console.error('Error generating customer form:', error);
+      alert('Failed to generate customer form link. Please try again.');
+    } finally {
+      setIsGeneratingCustomerForm(false);
+    }
+  };
+
+  // Copy customer form link
+  const handleCopyCustomerFormLink = () => {
+    if (customerFormUrl) {
+      navigator.clipboard.writeText(customerFormUrl);
+      setCustomerFormLinkCopied(true);
+      setTimeout(() => setCustomerFormLinkCopied(false), 2000);
+    }
+  };
+
   // Reload QC statuses and work hours when requests change or when page becomes visible
   useEffect(() => {
     if (visibleRequests.length > 0) {
@@ -410,6 +443,31 @@ const RequestJobs = () => {
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  // Load submitted customer forms
+  useEffect(() => {
+    const fetchCustomerForms = async () => {
+      if (!supabase) return;
+      
+      setLoadingCustomerForms(true);
+      try {
+        const { data, error } = await supabase
+          .from('customer_forms_public')
+          .select('*')
+          .eq('is_submitted', true)
+          .order('submitted_at', { ascending: false });
+        
+        if (error) throw error;
+        setSubmittedCustomerForms(data || []);
+      } catch (err) {
+        console.error('Error loading customer forms:', err);
+      } finally {
+        setLoadingCustomerForms(false);
+      }
+    };
+
+    fetchCustomerForms();
+  }, [supabase]);
 
   // Track known request codes for polling-based detection
   useEffect(() => {
@@ -827,6 +885,58 @@ const RequestJobs = () => {
           </Link>
         </div>
 
+        {/* Customer Forms Section */}
+        {sidebarOpen && (
+          <div className={`px-4 pb-4 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} mt-4 pt-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Customer Forms
+              </h3>
+              {submittedCustomerForms.length > 0 && (
+                <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {submittedCustomerForms.length}
+                </span>
+              )}
+            </div>
+            {loadingCustomerForms ? (
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading...</p>
+            ) : submittedCustomerForms.length === 0 ? (
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No forms submitted yet</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {submittedCustomerForms.map((form) => (
+                  <div
+                    key={form.id}
+                    className={`p-2 rounded-md cursor-pointer transition-colors ${
+                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => navigate(`/customer-form-view/${form.id}`)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {form.customer_name || 'Unnamed'}
+                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {form.customer_mobile || 'No phone'}
+                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {new Date(form.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {!form.converted_to_request && (
+                        <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded">
+                          New
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <button
             onClick={() => setShowNewRequestModal(true)}
@@ -834,6 +944,16 @@ const RequestJobs = () => {
           >
             <FiPlus size={18} />
             {sidebarOpen && <span>New Request</span>}
+          </button>
+          <button
+            onClick={handleGenerateCustomerForm}
+            disabled={isGeneratingCustomerForm}
+            className={`w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3 ${
+              isGeneratingCustomerForm ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <FiUsers size={18} />
+            {sidebarOpen && <span>{isGeneratingCustomerForm ? 'Generating...' : 'Customer Form Link'}</span>}
           </button>
           <button
             onClick={logout}
@@ -1187,6 +1307,42 @@ const RequestJobs = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
               >
                 Go to Form
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Form Link Modal */}
+      {showCustomerFormModal && customerFormUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FiShare2 className="text-green-600" />
+              Customer Form Link
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Send this link to customers to fill their information (name, mobile, address, measurements, and signature).
+            </p>
+            <div className="bg-gray-100 p-3 rounded-md mb-4 font-mono text-sm break-all">
+              {customerFormUrl}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyCustomerFormLink}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              >
+                {customerFormLinkCopied ? (
+                  <><FiCheck /> Copied!</>
+                ) : (
+                  <><FiCopy /> Copy Link</>
+                )}
+              </button>
+              <button
+                onClick={() => setShowCustomerFormModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
