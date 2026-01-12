@@ -20,7 +20,7 @@ export const generateToken = () => {
  * @param {string} filename - Name for the PDF file
  * @returns {Promise<Blob>} - PDF as a Blob
  */
-export const generatePDFFromElement = async (element, filename = 'request.pdf') => {
+export const generatePDFFromElement = async (element, filename = 'request.pdf', { singlePage = false, pageSize = 'a4' } = {}) => {
   try {
     // Create canvas from the element
     const canvas = await html2canvas(element, {
@@ -31,31 +31,39 @@ export const generatePDFFromElement = async (element, filename = 'request.pdf') 
     });
 
     const imgData = canvas.toDataURL('image/png');
-    
-    // Calculate PDF dimensions
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    
-    // Create PDF
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    let position = 0;
-    
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-    
-    // Add additional pages if content is longer
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
+    if (singlePage) {
+      // Fit entire image to a single page
+      const pdf = new jsPDF('p', 'mm', pageSize);
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pxToMm = 25.4 / 96; // 96 DPI
+      const imgWidthMm = canvas.width * pxToMm;
+      const imgHeightMm = canvas.height * pxToMm;
+      const scale = Math.min(pageWidth / imgWidthMm, pageHeight / imgHeightMm);
+      const renderWidth = imgWidthMm * scale;
+      const renderHeight = imgHeightMm * scale;
+      const marginX = (pageWidth - renderWidth) / 2;
+      const marginY = (pageHeight - renderHeight) / 2;
+      pdf.addImage(imgData, 'PNG', marginX, marginY, renderWidth, renderHeight);
+      return pdf.output('blob');
+    } else {
+      // Calculate PDF dimensions and paginate
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      const pdf = new jsPDF('p', 'mm', pageSize);
+      let position = 0;
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      return pdf.output('blob');
     }
-    
-    // Return as blob
-    return pdf.output('blob');
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
@@ -153,6 +161,26 @@ export const generateAndUploadPDF = async (element, requestCode) => {
     return pdfUrl;
   } catch (error) {
     console.error('❌ Error in generateAndUploadPDF:', error);
+    throw error;
+  }
+};
+
+/**
+ * Generate single-page customer form PDF and upload to storage
+ * @param {HTMLElement} element - Element to capture
+ * @param {string} token - Customer form token
+ * @returns {Promise<string>} - Public URL of uploaded PDF
+ */
+export const generateAndUploadCustomerFormPDF = async (element, token) => {
+  try {
+    console.log('🎨 Generating single-page customer form PDF...');
+    const pdfBlob = await generatePDFFromElement(element, `customerform_${token}.pdf`, { singlePage: true, pageSize: 'a4' });
+    console.log('📤 Uploading PDF to storage...');
+    const pdfUrl = await uploadPDFToStorage(pdfBlob, `customerform_${token}`);
+    console.log('✅ Customer form PDF uploaded:', pdfUrl);
+    return pdfUrl;
+  } catch (error) {
+    console.error('❌ Error generating and uploading customer form PDF:', error);
     throw error;
   }
 };

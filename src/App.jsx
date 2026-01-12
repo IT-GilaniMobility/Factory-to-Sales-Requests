@@ -12,6 +12,7 @@ import WorkHours from './pages/WorkHours';
 import CustomerForm from './pages/CustomerForm';
 import CustomerMeasurementsForm from './pages/CustomerMeasurementsForm';
 import CustomerFormPublic from './pages/CustomerFormPublic';
+import CustomerPDFs from './pages/CustomerPDFs';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, loading } = useAuth();
@@ -112,6 +113,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Deliveries />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customer-pdfs"
+          element={
+            <ProtectedRoute>
+              <CustomerPDFs />
             </ProtectedRoute>
           }
         />

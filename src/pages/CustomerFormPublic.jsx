@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { generateAndUploadCustomerFormPDF } from '../utils/pdfService';
 import { FiCheck, FiAlertCircle, FiLogOut } from 'react-icons/fi';
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
@@ -9,6 +10,7 @@ import vehicleMeasurements from '../assets/vehicle_measurements.png';
 const CustomerFormPublic = () => {
   const { token } = useParams();
   const canvasRef = useRef(null);
+  const formContainerRef = useRef(null);
   
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,6 +24,7 @@ const CustomerFormPublic = () => {
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
   
   // Signature state
   const [isDrawing, setIsDrawing] = useState(false);
@@ -138,6 +141,9 @@ const CustomerFormPublic = () => {
           if (data.signature_data_url) {
             setSignatureData(data.signature_data_url);
           }
+          if (data.payload && data.payload.pdfUrl) {
+            setPdfUrl(data.payload.pdfUrl);
+          }
         } else {
           setFormRecord(data);
         }
@@ -152,15 +158,35 @@ const CustomerFormPublic = () => {
     fetchForm();
   }, [token, isAuthenticated, authLoading]);
 
-  // Initialize canvas
+  // Initialize and resize canvas for device pixel ratio and container width
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas && isAuthenticated && !loading) {
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const parent = canvas.parentElement;
+      if (!parent) return;
+
+      const dpr = Math.max(window.devicePixelRatio || 1, 1);
+      const cssWidth = parent.clientWidth; // fill container width
+      const cssHeight = Math.max(Math.floor(cssWidth * 0.25), 160); // 4:1 ratio min 160px
+
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+
       const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#000';
+    };
+
+    if (isAuthenticated && !loading) {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
     }
+    return () => window.removeEventListener('resize', resizeCanvas);
   }, [isAuthenticated, loading]);
 
   const handleChange = (e) => {
@@ -213,6 +239,7 @@ const CustomerFormPublic = () => {
 
   // Signature canvas handlers
   const startDrawing = (e) => {
+    if (e.touches) e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -232,6 +259,7 @@ const CustomerFormPublic = () => {
 
   const draw = (e) => {
     if (!isDrawing) return;
+    if (e.touches) e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -292,6 +320,8 @@ const CustomerFormPublic = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const formRootRef = useRef(null);
 
   const handleSubmit = async () => {
     if (!validate()) {
@@ -359,6 +389,22 @@ const CustomerFormPublic = () => {
         .eq('form_token', token);
 
       if (updateError) throw updateError;
+      // Generate single-page PDF and upload
+      const targetEl = formRootRef.current || document.body;
+      const uploadedUrl = await generateAndUploadCustomerFormPDF(targetEl, token);
+      setPdfUrl(uploadedUrl);
+
+      // Save pdf url in payload
+      const { error: payloadError } = await supabase
+        .from('customer_forms_public')
+        .update({
+          payload: {
+            ...payload,
+            pdfUrl: uploadedUrl
+          }
+        })
+        .eq('form_token', token);
+      if (payloadError) throw payloadError;
 
       setSubmitted(true);
     } catch (err) {
@@ -439,25 +485,29 @@ const CustomerFormPublic = () => {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <FiCheck className="mx-auto text-green-600 text-5xl mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h1>
-          <p className="text-gray-600 mb-2">
-            Your information has been submitted successfully.
-          </p>
-          <p className="text-sm text-gray-500">
-            Our sales team will contact you shortly to finalize your wheelchair lifter installation request.
-          </p>
+        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl">
+          <div className="text-center mb-4">
+            <FiCheck className="mx-auto text-green-600 text-4xl mb-2" />
+            <h1 className="text-2xl font-bold text-gray-800">{formData.customerName || 'Customer'}</h1>
+            <p className="text-gray-600">Your form was submitted successfully.</p>
+          </div>
+          {pdfUrl ? (
+            <div className="border rounded-lg overflow-hidden" style={{ height: '80vh' }}>
+              <iframe title="Customer Form PDF" src={pdfUrl} className="w-full h-full" />
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">Generating your PDF, please wait...</p>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div ref={formContainerRef} className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header with User Info */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div ref={formRootRef} className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -800,6 +850,7 @@ const CustomerFormPublic = () => {
                 <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
                   <canvas
                     ref={canvasRef}
+                    // dimensions set dynamically; keep attributes but overridden by style
                     width={800}
                     height={200}
                     onMouseDown={startDrawing}
@@ -809,7 +860,7 @@ const CustomerFormPublic = () => {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className="w-full h-32 cursor-crosshair"
+                    className="w-full h-32 cursor-crosshair touch-none select-none"
                   />
                 </div>
                 <button

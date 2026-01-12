@@ -219,7 +219,8 @@ const Customer = () => {
 
     if (isNew) {
       localStorage.removeItem('wheelchair_lifter_form_v1');
-      setFormData(initialState);
+      const prefillName = params.get('name') || '';
+      setFormData({ ...initialState, customerName: prefillName });
       setSignatureData(null);
       return;
     }

@@ -15,6 +15,7 @@ const RequestJobs = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [newRequestCustomerName, setNewRequestCustomerName] = useState('');
   const [dateRangeStart, setDateRangeStart] = useState('');
   const [dateRangeEnd, setDateRangeEnd] = useState('');
   const [darkMode, setDarkMode] = useState(() => {
@@ -885,6 +886,19 @@ const RequestJobs = () => {
           </Link>
         </div>
 
+        {/* Customer PDFs Link */}
+        <div className="px-4 pb-2">
+          <Link
+            to="/customer-pdfs"
+            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
+              darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+            }`}
+          >
+            <FiFileText size={18} />
+            {sidebarOpen && <span className="text-sm">Customer PDFs</span>}
+          </Link>
+        </div>
+
         {/* Customer Forms Section */}
         {sidebarOpen && (
           <div className={`px-4 pb-4 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} mt-4 pt-4`}>
@@ -1320,11 +1334,19 @@ const RequestJobs = () => {
               </button>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-4">Click below to open the full form in a new page.</p>
+              <p className="text-gray-600 mb-4">Optionally enter a customer name to prefill.</p>
+              <input
+                type="text"
+                value={newRequestCustomerName}
+                onChange={(e) => setNewRequestCustomerName(e.target.value)}
+                placeholder="Customer Name"
+                className="w-full px-4 py-2 border rounded-md mb-4"
+              />
               <button
                 onClick={() => {
                   setShowNewRequestModal(false);
-                  window.location.href = '/customer?new=1';
+                  const param = newRequestCustomerName ? `&name=${encodeURIComponent(newRequestCustomerName)}` : '';
+                  window.location.href = `/customer?new=1${param}`;
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
               >
