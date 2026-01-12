@@ -246,11 +246,9 @@ const CustomerFormPublic = () => {
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (point.clientX - rect.left) * scaleX;
-    const y = (point.clientY - rect.top) * scaleY;
+    // We already scale the context by DPR, so use CSS pixel coords
+    const x = (point.clientX - rect.left);
+    const y = (point.clientY - rect.top);
     
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -266,11 +264,9 @@ const CustomerFormPublic = () => {
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
-    
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (point.clientX - rect.left) * scaleX;
-    const y = (point.clientY - rect.top) * scaleY;
+    // Use CSS pixel coords since context is DPR-scaled
+    const x = (point.clientX - rect.left);
+    const y = (point.clientY - rect.top);
     
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -389,24 +385,27 @@ const CustomerFormPublic = () => {
         .eq('form_token', token);
 
       if (updateError) throw updateError;
-      // Generate single-page PDF and upload
-      const targetEl = formRootRef.current || document.body;
-      const uploadedUrl = await generateAndUploadCustomerFormPDF(targetEl, token);
-      setPdfUrl(uploadedUrl);
 
-      // Save pdf url in payload
-      const { error: payloadError } = await supabase
-        .from('customer_forms_public')
-        .update({
-          payload: {
-            ...payload,
-            pdfUrl: uploadedUrl
-          }
-        })
-        .eq('form_token', token);
-      if (payloadError) throw payloadError;
-
+      // Show success immediately; then generate PDF in background
       setSubmitted(true);
+      (async () => {
+        try {
+          const targetEl = formRootRef.current || document.body;
+          const uploadedUrl = await generateAndUploadCustomerFormPDF(targetEl, token);
+          setPdfUrl(uploadedUrl);
+          await supabase
+            .from('customer_forms_public')
+            .update({
+              payload: {
+                ...payload,
+                pdfUrl: uploadedUrl
+              }
+            })
+            .eq('form_token', token);
+        } catch (pdfErr) {
+          console.error('PDF generation failed (non-blocking):', pdfErr);
+        }
+      })();
     } catch (err) {
       console.error('Error submitting form:', err);
       setError('Failed to submit. Please try again.');
@@ -496,7 +495,7 @@ const CustomerFormPublic = () => {
               <iframe title="Customer Form PDF" src={pdfUrl} className="w-full h-full" />
             </div>
           ) : (
-            <p className="text-center text-gray-500">Generating your PDF, please wait...</p>
+            <p className="text-center text-gray-500">Your PDF is being generated in the background. You may close this page.</p>
           )}
         </div>
       </div>
@@ -860,6 +859,7 @@ const CustomerFormPublic = () => {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
+                    onTouchCancel={stopDrawing}
                     className="w-full h-32 cursor-crosshair touch-none select-none"
                   />
                 </div>

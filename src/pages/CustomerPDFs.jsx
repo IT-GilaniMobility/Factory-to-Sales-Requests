@@ -44,30 +44,45 @@ const CustomerPDFs = () => {
             <FiLoader className="animate-spin" /> Loading...
           </div>
         ) : forms.length === 0 ? (
-          <p className="text-gray-600">No customer PDFs found.</p>
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-2">No customer PDFs found yet.</p>
+            <p className="text-gray-500 text-sm">Customer forms will appear here after they are submitted.</p>
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
-            {forms.map((f) => (
-              <div key={f.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-gray-800">{f.customer_name || 'Unnamed Customer'}</p>
-                    <p className="text-xs text-gray-500">{f.submitted_at ? new Date(f.submitted_at).toLocaleString() : ''}</p>
+            {forms.map((f) => {
+              const hasPdf = f?.payload && f.payload.pdfUrl;
+              return (
+                <div key={f.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="font-semibold text-gray-800">{f.customer_name || 'Unnamed Customer'}</p>
+                      <p className="text-xs text-gray-500">{f.submitted_at ? new Date(f.submitted_at).toLocaleString() : ''}</p>
+                    </div>
+                    {hasPdf && (
+                      <a
+                        className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm"
+                        href={f.payload.pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        download={`${f.customer_name || 'form'}.pdf`}
+                      >
+                        Download <FiExternalLink size={14} />
+                      </a>
+                    )}
                   </div>
-                  <a
-                    className="inline-flex items-center gap-1 text-blue-600 hover:underline"
-                    href={f.payload?.pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View <FiExternalLink />
-                  </a>
+                  {hasPdf ? (
+                    <div className="border rounded overflow-hidden bg-gray-100" style={{height: 280}}>
+                      <iframe title={`pdf-${f.id}`} src={f.payload.pdfUrl} className="w-full h-full" />
+                    </div>
+                  ) : (
+                    <div className="border rounded overflow-hidden bg-gray-100 flex items-center justify-center" style={{height: 280}}>
+                      <p className="text-gray-500 text-sm">PDF generating...</p>
+                    </div>
+                  )}
                 </div>
-                <div className="border rounded overflow-hidden" style={{height: 280}}>
-                  <iframe title={`pdf-${f.id}`} src={f.payload?.pdfUrl} className="w-full h-full" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

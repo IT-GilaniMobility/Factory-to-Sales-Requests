@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers } from 'react-icons/fi';
-import { createCustomerFormPublic } from '../utils/pdfService';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers, FiLink } from 'react-icons/fi';
+import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
 
 const RequestJobs = () => {
   const navigate = useNavigate();
@@ -41,6 +41,11 @@ const RequestJobs = () => {
   const [customerFormLinkCopied, setCustomerFormLinkCopied] = useState(false);
   const [submittedCustomerForms, setSubmittedCustomerForms] = useState([]);
   const [loadingCustomerForms, setLoadingCustomerForms] = useState(false);
+
+  // Attach PDF modal state
+  const [showAttachPDFModal, setShowAttachPDFModal] = useState(false);
+  const [selectedRequestForPDF, setSelectedRequestForPDF] = useState(null);
+  const [availablePDFsToAttach, setAvailablePDFsToAttach] = useState([]);
 
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
     const payload = row?.payload || {};
@@ -402,6 +407,43 @@ const RequestJobs = () => {
       navigator.clipboard.writeText(customerFormUrl);
       setCustomerFormLinkCopied(true);
       setTimeout(() => setCustomerFormLinkCopied(false), 2000);
+    }
+  };
+
+  // Handle opening attach PDF modal
+  const handleOpenAttachPDFModal = async (request) => {
+    setSelectedRequestForPDF(request);
+    setShowAttachPDFModal(true);
+    // Fetch available PDFs to attach
+    const forms = await fetchSubmittedCustomerForms();
+    setAvailablePDFsToAttach(forms.filter(f => f.payload?.pdfUrl));
+  };
+
+  // Handle attaching PDF to request
+  const handleAttachPDFToRequest = async (customerFormId) => {
+    if (!selectedRequestForPDF) return;
+    try {
+      const table = selectedRequestForPDF.jobRequest === 'The Ultimate G24' 
+        ? 'g24_requests'
+        : selectedRequestForPDF.jobRequest === 'Diving Solution Installation'
+        ? 'diving_solution_requests'
+        : selectedRequestForPDF.jobRequest === 'Turney Seat Installation'
+        ? 'turney_seat_requests'
+        : 'requests';
+      
+      await attachCustomerPDFToRequest(table, selectedRequestForPDF.request_code, customerFormId);
+      
+      // Refresh the request to show the attachment
+      const refetched = await refetchRequest(selectedRequestForPDF.request_code, selectedRequestForPDF.jobRequest);
+      if (refetched) {
+        setRequests(prev => prev.map(r => r.request_code === selectedRequestForPDF.request_code ? refetched : r));
+      }
+      
+      setShowAttachPDFModal(false);
+      setSelectedRequestForPDF(null);
+    } catch (error) {
+      console.error('Error attaching PDF:', error);
+      alert('Failed to attach PDF. Please try again.');
     }
   };
 
@@ -1175,6 +1217,12 @@ const RequestJobs = () => {
                             Customer Submitted
                           </div>
                         )}
+                        {req.attached_customer_form_id && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                            <FiLink className="w-3 h-3" />
+                            Customer PDF
+                          </div>
+                        )}
                       </div>
 
 
@@ -1194,9 +1242,21 @@ const RequestJobs = () => {
                         </div>
                       </div>
 
-                      <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm">
-                        View Details
-                      </button>
+                      <div className="space-y-2">
+                        <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm">
+                          View Details
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAttachPDFModal(req);
+                          }}
+                          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2"
+                        >
+                          <FiLink size={16} />
+                          Attach Customer PDF
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1389,6 +1449,43 @@ const RequestJobs = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attach Customer PDF Modal */}
+      {showAttachPDFModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FiLink className="text-blue-600" />
+              Attach Customer PDF
+            </h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              Select a customer form to attach to this request:
+            </p>
+            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+              {availablePDFsToAttach.length === 0 ? (
+                <p className="text-gray-500 text-sm py-4 text-center">No customer PDFs available</p>
+              ) : (
+                availablePDFsToAttach.map(form => (
+                  <button
+                    key={form.id}
+                    onClick={() => handleAttachPDFToRequest(form.id)}
+                    className="w-full text-left px-3 py-2 rounded border border-gray-200 hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                  >
+                    <p className="font-medium text-gray-900">{form.customer_name || 'Unnamed Customer'}</p>
+                    <p className="text-xs text-gray-500">{form.submitted_at ? new Date(form.submitted_at).toLocaleString() : ''}</p>
+                  </button>
+                ))
+              )}
+            </div>
+            <button
+              onClick={() => setShowAttachPDFModal(false)}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

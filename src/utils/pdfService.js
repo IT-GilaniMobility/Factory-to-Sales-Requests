@@ -166,21 +166,28 @@ export const generateAndUploadPDF = async (element, requestCode) => {
 };
 
 /**
- * Generate single-page customer form PDF and upload to storage
+ * Generate single-page customer form PDF as data URL
  * @param {HTMLElement} element - Element to capture
  * @param {string} token - Customer form token
- * @returns {Promise<string>} - Public URL of uploaded PDF
+ * @returns {Promise<string>} - Data URL of PDF
  */
 export const generateAndUploadCustomerFormPDF = async (element, token) => {
   try {
     console.log('🎨 Generating single-page customer form PDF...');
     const pdfBlob = await generatePDFFromElement(element, `customerform_${token}.pdf`, { singlePage: true, pageSize: 'a4' });
-    console.log('📤 Uploading PDF to storage...');
-    const pdfUrl = await uploadPDFToStorage(pdfBlob, `customerform_${token}`);
-    console.log('✅ Customer form PDF uploaded:', pdfUrl);
-    return pdfUrl;
+    
+    // Convert blob to data URL
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        console.log('✅ Customer form PDF generated as data URL');
+        resolve(reader.result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(pdfBlob);
+    });
   } catch (error) {
-    console.error('❌ Error generating and uploading customer form PDF:', error);
+    console.error('❌ Error generating customer form PDF:', error);
     throw error;
   }
 };
@@ -376,5 +383,48 @@ export const fetchSubmittedCustomerForms = async () => {
   } catch (error) {
     console.error('Error in fetchSubmittedCustomerForms:', error);
     return [];
+  }
+};
+
+/**
+ * Attach a customer PDF to a job request
+ * @param {string} table - Request table name (requests, g24_requests, diving_solution_requests, turney_seat_requests)
+ * @param {string} requestCode - Request code
+ * @param {string} customerFormId - Customer form ID to attach
+ * @returns {Promise<void>}
+ */
+export const attachCustomerPDFToRequest = async (table, requestCode, customerFormId) => {
+  try {
+    const { error } = await supabase
+      .from(table)
+      .update({ attached_customer_form_id: customerFormId })
+      .eq('request_code', requestCode);
+    
+    if (error) throw error;
+    console.log('✅ Customer PDF attached to request:', requestCode);
+  } catch (error) {
+    console.error('Error attaching customer PDF:', error);
+    throw error;
+  }
+};
+
+/**
+ * Detach a customer PDF from a job request
+ * @param {string} table - Request table name
+ * @param {string} requestCode - Request code
+ * @returns {Promise<void>}
+ */
+export const detachCustomerPDFFromRequest = async (table, requestCode) => {
+  try {
+    const { error } = await supabase
+      .from(table)
+      .update({ attached_customer_form_id: null })
+      .eq('request_code', requestCode);
+    
+    if (error) throw error;
+    console.log('✅ Customer PDF detached from request:', requestCode);
+  } catch (error) {
+    console.error('Error detaching customer PDF:', error);
+    throw error;
   }
 };
