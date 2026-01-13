@@ -27,7 +27,13 @@ export const generatePDFFromElement = async (element, filename = 'request.pdf', 
       scale: 2, // Higher quality
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      x: 0,
+      y: 0
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -152,7 +158,7 @@ export const uploadVehiclePhoto = async (file, token) => {
 export const generateAndUploadPDF = async (element, requestCode) => {
   try {
     console.log('🎨 Generating PDF...');
-    const pdfBlob = await generatePDFFromElement(element, `${requestCode}.pdf`);
+    const pdfBlob = await generatePDFFromElement(element, `${requestCode}.pdf`, { singlePage: true, pageSize: 'a4' });
     
     console.log('📤 Uploading PDF to storage...');
     const pdfUrl = await uploadPDFToStorage(pdfBlob, requestCode);

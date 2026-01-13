@@ -10,13 +10,13 @@ const PDFGenerator = React.forwardRef(({ formData }, ref) => {
   };
 
   return (
-    <div ref={ref} className="bg-white p-6 text-black" style={{ width: '210mm', height: '297mm', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
+    <div ref={ref} style={{ width: '210mm', height: '297mm', fontSize: '11px', fontFamily: 'Arial, sans-serif', backgroundColor: 'white', padding: '24px', color: 'black' }}>
       {/* Header */}
-      <div className="text-center mb-4 pb-3" style={{ borderBottom: '2px solid #1e40af' }}>
-        <h1 className="m-0" style={{ fontSize: '18px', fontWeight: 'bold', color: '#1e40af' }}>
+      <div style={{ textAlign: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid #1e40af' }}>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1e40af' }}>
           WORK REQUEST FORM
         </h1>
-        <p className="m-1" style={{ fontSize: '10px', color: '#666' }}>
+        <p style={{ margin: '4px 0', fontSize: '10px', color: '#666' }}>
           {formData.jobRequest || 'Wheelchair Lifter Installation'}
         </p>
       </div>
