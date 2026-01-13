@@ -761,6 +761,7 @@ const Customer = () => {
             floor_add_on_other: formData.floorAddOnOther,
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
+            customer_form_token: customerToken,
             payload
           }]);
         insertError = error;
@@ -784,6 +785,7 @@ const Customer = () => {
             steering_wheel_position: formData.steeringWheelPosition,
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
+            customer_form_token: customerToken,
             payload
           }]);
         insertError = error;
@@ -818,6 +820,7 @@ const Customer = () => {
             product_location: formData.productLocation,
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
+            customer_form_token: customerToken,
             payload
           }]);
         insertError = error;
@@ -845,6 +848,7 @@ const Customer = () => {
             floor_to_ground: formData.floorToGround ? parseFloat(formData.floorToGround) : null,
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
+            customer_form_token: customerToken,
             payload
           }]);
         insertError = error;
@@ -857,18 +861,10 @@ const Customer = () => {
       } else {
         console.log('Successfully inserted to Supabase');
         
-        // Generate customer token and update request
-        try {
-          const tableName = formData.jobRequest === 'The Ultimate G24' ? 'g24_requests' :
-                            formData.jobRequest === 'Diving Solution Installation' ? 'diving_solution_requests' :
-                            formData.jobRequest === 'Turney Seat Installation' ? 'turney_seat_requests' : 'requests';
-          
-          const token = await updateRequestWithPDF(tableName, requestCode, pdfUrl);
-          setCustomerToken(token);
+        // Show share modal with customer link (token was generated during PDF generation)
+        if (customerToken) {
           setShowShareModal(true);
-          console.log('✅ Customer token generated:', token);
-        } catch (error) {
-          console.error('❌ Failed to generate customer token:', error);
+          console.log('✅ Customer link ready to share');
         }
       }
     } else {
