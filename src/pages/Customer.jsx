@@ -650,6 +650,17 @@ const Customer = () => {
     }
   };
 
+  // Get file icon based on file type
+  const getFileIcon = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📄';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
+    if (['doc', 'docx'].includes(ext)) return '📝';
+    if (['xls', 'xlsx'].includes(ext)) return '📊';
+    if (['dwg', 'dxf'].includes(ext)) return '📐';
+    return '📎';
+  };
+
   const handleSubmit = async () => {
     if (!validate()) {
       window.scrollTo(0, 0);
@@ -1224,8 +1235,15 @@ const Customer = () => {
                         {/* SECTION 10+: File Attachments */}
                         <Section title="10+. Attach Files (Optional)">
                           <p className="text-sm text-gray-600 mb-4">
-                            You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                            You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
                           </p>
+                          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                            <span>📄 Supported:</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+                          </div>
                           
                           {/* Upload Button */}
                           <label className="cursor-pointer inline-block mb-4">
@@ -1234,11 +1252,11 @@ const Customer = () => {
                               multiple
                               onChange={handleAttachmentUpload}
                               className="hidden"
-                              accept="*/*"
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
                             />
                             <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
                               <span>📎</span>
-                              Add Attachments
+                              Upload Files (PDF, Images, Documents)
                             </div>
                           </label>
 
@@ -1249,9 +1267,12 @@ const Customer = () => {
                               <div className="space-y-2">
                                 {formData.requestAttachments.map((attachment, index) => (
                                   <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                    <div className="flex-1">
-                                      <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                                      <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                                      <div>
+                                        <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                        <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                      </div>
                                     </div>
                                     <div className="flex gap-2">
                                       <a
@@ -1408,8 +1429,15 @@ const Customer = () => {
                 {/* SECTION 7.5: File Attachments - G24 */}
                 <Section title="7.5. Attach Files (Optional)">
                   <p className="text-sm text-gray-600 mb-4">
-                    You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                    You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
                   </p>
+                  <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                    <span>📄 Supported:</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+                  </div>
                   
                   {/* Upload Button */}
                   <label className="cursor-pointer inline-block mb-4">
@@ -1418,11 +1446,11 @@ const Customer = () => {
                       multiple
                       onChange={handleAttachmentUpload}
                       className="hidden"
-                      accept="*/*"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
                     />
                     <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
                       <span>📎</span>
-                      Add Attachments
+                      Upload Files (PDF, Images, Documents)
                     </div>
                   </label>
 
@@ -1433,9 +1461,12 @@ const Customer = () => {
                       <div className="space-y-2">
                         {formData.requestAttachments.map((attachment, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                              <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                              <div>
+                                <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                              </div>
                             </div>
                             <div className="flex gap-2">
                               <a
@@ -1562,8 +1593,15 @@ const Customer = () => {
                     {/* SECTION 4.5: File Attachments - Diving Solution */}
                     <Section title="4.5. Attach Files (Optional)">
                       <p className="text-sm text-gray-600 mb-4">
-                        You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                        You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
                       </p>
+                      <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                        <span>📄 Supported:</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+                      </div>
                       
                       {/* Upload Button */}
                       <label className="cursor-pointer inline-block mb-4">
@@ -1572,11 +1610,11 @@ const Customer = () => {
                           multiple
                           onChange={handleAttachmentUpload}
                           className="hidden"
-                          accept="*/*"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
                         />
                         <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
                           <span>📎</span>
-                          Add Attachments
+                          Upload Files (PDF, Images, Documents)
                         </div>
                       </label>
 
@@ -1587,9 +1625,12 @@ const Customer = () => {
                           <div className="space-y-2">
                             {formData.requestAttachments.map((attachment, index) => (
                               <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                                  <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                <div className="flex items-center gap-3 flex-1">
+                                  <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                                  <div>
+                                    <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                    <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                  </div>
                                 </div>
                                 <div className="flex gap-2">
                                   <a
@@ -1768,8 +1809,15 @@ const Customer = () => {
                         {/* SECTION 6.5: File Attachments - Turney Seat */}
                         <Section title="6.5. Attach Files (Optional)">
                           <p className="text-sm text-gray-600 mb-4">
-                            You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                            You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
                           </p>
+                          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                            <span>📄 Supported:</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                            <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+                          </div>
                           
                           {/* Upload Button */}
                           <label className="cursor-pointer inline-block mb-4">
@@ -1778,11 +1826,11 @@ const Customer = () => {
                               multiple
                               onChange={handleAttachmentUpload}
                               className="hidden"
-                              accept="*/*"
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
                             />
                             <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
                               <span>📎</span>
-                              Add Attachments
+                              Upload Files (PDF, Images, Documents)
                             </div>
                           </label>
 
@@ -1793,9 +1841,12 @@ const Customer = () => {
                               <div className="space-y-2">
                                 {formData.requestAttachments.map((attachment, index) => (
                                   <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                    <div className="flex-1">
-                                      <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                                      <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                                      <div>
+                                        <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                        <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                      </div>
                                     </div>
                                     <div className="flex gap-2">
                                       <a
