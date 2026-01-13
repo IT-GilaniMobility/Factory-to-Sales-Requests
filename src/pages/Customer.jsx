@@ -9,7 +9,7 @@ import womenHeight from '../assets/women-height.png';
 import turneySeat from '../assets/turney-seat.png';
 import { supabase } from '../lib/supabaseClient';
 import PDFGenerator from '../components/PDFGenerator';
-import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL, createCustomerMeasurementsForm, getCustomerMeasurementsURL, fetchCustomerMeasurements, generateToken } from '../utils/pdfService';
+import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL, createCustomerMeasurementsForm, getCustomerMeasurementsURL, fetchCustomerMeasurements, generateToken, uploadRequestAttachment, deleteRequestAttachment } from '../utils/pdfService';
 import { FiDownload, FiShare2, FiFileText, FiCopy, FiCheck } from 'react-icons/fi';
 
 // Shared initial state so hooks don't warn about missing deps
@@ -89,6 +89,9 @@ const initialState = {
     specialRequest: '',
     productLocation: '',
     optionalExtraAddOns: '',
+    
+    // File attachments
+    requestAttachments: [],
   };
 
 // Plain input component - no memo, just simple JSX
@@ -190,6 +193,7 @@ const Customer = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const pdfRef = useRef(null);
+  const [pdfFormData, setPdfFormData] = useState(null);
 
   // Measurements Form State
   const [measurementsUrl, setMeasurementsUrl] = useState(null);
@@ -550,8 +554,11 @@ const Customer = () => {
         }
       };
 
-      // Wait for PDF element to render
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Store PDF data in state for rendering
+      setPdfFormData(pdfData);
+
+      // Wait for PDF element to render with new data
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       if (pdfRef.current) {
         console.log('🎨 Starting PDF generation...');
@@ -607,6 +614,39 @@ const Customer = () => {
       navigator.clipboard.writeText(measurementsUrl);
       setMeasurementsLinkCopied(true);
       setTimeout(() => setMeasurementsLinkCopied(false), 2000);
+    }
+  };
+
+  // Handle file attachment upload
+  const handleAttachmentUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    try {
+      for (const file of files) {
+        const attachment = await uploadRequestAttachment(file, `DRAFT-${Date.now()}`);
+        setFormData(prev => ({
+          ...prev,
+          requestAttachments: [...(prev.requestAttachments || []), attachment]
+        }));
+      }
+    } catch (error) {
+      console.error('Error uploading attachment:', error);
+      alert('Failed to upload attachment. Please try again.');
+    }
+  };
+
+  // Handle attachment removal
+  const handleRemoveAttachment = async (index, attachment) => {
+    try {
+      await deleteRequestAttachment(attachment.url);
+      setFormData(prev => ({
+        ...prev,
+        requestAttachments: prev.requestAttachments.filter((_, i) => i !== index)
+      }));
+    } catch (error) {
+      console.error('Error removing attachment:', error);
+      alert('Failed to remove attachment. Please try again.');
     }
   };
 
@@ -762,6 +802,7 @@ const Customer = () => {
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
             customer_form_token: customerToken,
+            request_attachments: formData.requestAttachments || [],
             payload
           }]);
         insertError = error;
@@ -786,6 +827,7 @@ const Customer = () => {
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
             customer_form_token: customerToken,
+            request_attachments: formData.requestAttachments || [],
             payload
           }]);
         insertError = error;
@@ -821,6 +863,7 @@ const Customer = () => {
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
             customer_form_token: customerToken,
+            request_attachments: formData.requestAttachments || [],
             payload
           }]);
         insertError = error;
@@ -849,6 +892,7 @@ const Customer = () => {
             pdf_url: pdfUrl,
             pdf_generated_at: new Date().toISOString(),
             customer_form_token: customerToken,
+            request_attachments: formData.requestAttachments || [],
             payload
           }]);
         insertError = error;
@@ -1177,6 +1221,61 @@ const Customer = () => {
                           </ul>
                         </Section>
 
+                        {/* SECTION 10+: File Attachments */}
+                        <Section title="10+. Attach Files (Optional)">
+                          <p className="text-sm text-gray-600 mb-4">
+                            You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                          </p>
+                          
+                          {/* Upload Button */}
+                          <label className="cursor-pointer inline-block mb-4">
+                            <input
+                              type="file"
+                              multiple
+                              onChange={handleAttachmentUpload}
+                              className="hidden"
+                              accept="*/*"
+                            />
+                            <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                              <span>📎</span>
+                              Add Attachments
+                            </div>
+                          </label>
+
+                          {/* Attachments List */}
+                          {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                              <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                              <div className="space-y-2">
+                                {formData.requestAttachments.map((attachment, index) => (
+                                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                      <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <a
+                                        href={attachment.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                                      >
+                                        View
+                                      </a>
+                                      <button
+                                        onClick={() => handleRemoveAttachment(index, attachment)}
+                                        className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </Section>
+
                         {/* SECTION 11: Customer Signature */}
                         <Section title="11. Customer Signature">
                           <div className="border border-gray-300 rounded bg-white">
@@ -1306,6 +1405,61 @@ const Customer = () => {
                   )}
                 </Section>
 
+                {/* SECTION 7.5: File Attachments - G24 */}
+                <Section title="7.5. Attach Files (Optional)">
+                  <p className="text-sm text-gray-600 mb-4">
+                    You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                  </p>
+                  
+                  {/* Upload Button */}
+                  <label className="cursor-pointer inline-block mb-4">
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleAttachmentUpload}
+                      className="hidden"
+                      accept="*/*"
+                    />
+                    <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                      <span>📎</span>
+                      Add Attachments
+                    </div>
+                  </label>
+
+                  {/* Attachments List */}
+                  {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                    <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                      <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                      <div className="space-y-2">
+                        {formData.requestAttachments.map((attachment, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                              <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                              >
+                                View
+                              </a>
+                              <button
+                                onClick={() => handleRemoveAttachment(index, attachment)}
+                                className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Section>
+
                 {/* SECTION 8: Customer Signature & Agreement with Disclaimer */}
                 <Section title="8. Signature & Agreement">
                   <div className="mb-6">
@@ -1403,6 +1557,61 @@ const Customer = () => {
                           <p className="text-sm text-gray-700">Customer must know and have received full training with all questions answered on safe usage satisfactory.</p>
                         </div>
                       </div>
+                    </Section>
+
+                    {/* SECTION 4.5: File Attachments - Diving Solution */}
+                    <Section title="4.5. Attach Files (Optional)">
+                      <p className="text-sm text-gray-600 mb-4">
+                        You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                      </p>
+                      
+                      {/* Upload Button */}
+                      <label className="cursor-pointer inline-block mb-4">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleAttachmentUpload}
+                          className="hidden"
+                          accept="*/*"
+                        />
+                        <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                          <span>📎</span>
+                          Add Attachments
+                        </div>
+                      </label>
+
+                      {/* Attachments List */}
+                      {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                        <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                          <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                          <div className="space-y-2">
+                            {formData.requestAttachments.map((attachment, index) => (
+                              <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                  <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <a
+                                    href={attachment.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                                  >
+                                    View
+                                  </a>
+                                  <button
+                                    onClick={() => handleRemoveAttachment(index, attachment)}
+                                    className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </Section>
 
                     {/* SECTION 5: Customer Signature */}
@@ -1556,6 +1765,61 @@ const Customer = () => {
                           </ul>
                         </Section>
 
+                        {/* SECTION 6.5: File Attachments - Turney Seat */}
+                        <Section title="6.5. Attach Files (Optional)">
+                          <p className="text-sm text-gray-600 mb-4">
+                            You can attach additional documents, images, or files to this request (e.g., specifications, photos, drawings, etc.)
+                          </p>
+                          
+                          {/* Upload Button */}
+                          <label className="cursor-pointer inline-block mb-4">
+                            <input
+                              type="file"
+                              multiple
+                              onChange={handleAttachmentUpload}
+                              className="hidden"
+                              accept="*/*"
+                            />
+                            <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                              <span>📎</span>
+                              Add Attachments
+                            </div>
+                          </label>
+
+                          {/* Attachments List */}
+                          {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                              <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                              <div className="space-y-2">
+                                {formData.requestAttachments.map((attachment, index) => (
+                                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                                      <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <a
+                                        href={attachment.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                                      >
+                                        View
+                                      </a>
+                                      <button
+                                        onClick={() => handleRemoveAttachment(index, attachment)}
+                                        className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </Section>
+
                         {/* SECTION 7: Customer Signature */}
                         <Section title="7. Customer Signature">
                           <div className="border border-gray-300 rounded bg-white">
@@ -1670,44 +1934,11 @@ const Customer = () => {
       </div>
 
       {/* Hidden PDF Generator - positioned off-screen but rendered */}
-      <div style={{ position: 'fixed', left: '-10000px', top: '-10000px', width: '210mm', height: '297mm' }}>
-        <PDFGenerator ref={pdfRef} formData={{
-          ...formData,
-          requestCode: `DRAFT-${Date.now()}`,
-          customer: {
-            name: formData.customerName,
-            address: formData.customerAddress,
-            mobile: formData.customerMobile,
-            quoteRef: formData.quoteRef
-          },
-          job: {
-            requestType: formData.jobRequest,
-            vehicle: {
-              make: formData.vehicleMake,
-              model: formData.vehicleModel,
-              year: formData.vehicleYear
-            }
-          },
-          userInfo: {
-            userWeightKg: formData.userWeight,
-            wheelchairWeightKg: formData.wheelchairWeight,
-            wheelchairType: formData.wheelchairType
-          },
-          productModel: {
-            selection: formData.productModel
-          },
-          secondRowSeatPosition: {
-            selection: formData.secondRowSeat
-          },
-          divingSolution: {
-            deviceModel: formData.deviceModel,
-            installationLocation: formData.installationLocation
-          },
-          turneySeats: {
-            seatType: formData.seatType
-          }
-        }} />
-      </div>
+      {pdfFormData && (
+        <div style={{ position: 'fixed', left: '-10000px', top: '-10000px', width: '210mm', height: '297mm' }}>
+          <PDFGenerator ref={pdfRef} formData={pdfFormData} />
+        </div>
+      )}
 
       {/* Share Modal */}
       {showShareModal && customerToken && (

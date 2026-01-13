@@ -434,3 +434,70 @@ export const detachCustomerPDFFromRequest = async (table, requestCode) => {
     throw error;
   }
 };
+
+/**
+ * Upload request attachment file to Supabase Storage
+ * @param {File} file - File to upload
+ * @param {string} requestCode - Request code
+ * @returns {Promise<Object>} - Object with filename and URL
+ */
+export const uploadRequestAttachment = async (file, requestCode) => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const timestamp = Date.now();
+    const filename = `${requestCode}_${timestamp}.${fileExt}`;
+    const filepath = `request-attachments/${filename}`;
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('request-attachments')
+      .upload(filepath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('Supabase attachment upload error:', error);
+      throw error;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('request-attachments')
+      .getPublicUrl(filepath);
+    
+    return {
+      filename: file.name,
+      url: urlData.publicUrl,
+      uploadedAt: new Date().toISOString(),
+      size: file.size
+    };
+  } catch (error) {
+    console.error('Error uploading request attachment:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete request attachment from storage
+ * @param {string} fileUrl - URL of the file to delete
+ * @returns {Promise<void>}
+ */
+export const deleteRequestAttachment = async (fileUrl) => {
+  try {
+    // Extract filename from URL
+    const urlParts = fileUrl.split('/');
+    const filename = urlParts[urlParts.length - 1];
+    const filepath = `request-attachments/${filename}`;
+    
+    const { error } = await supabase.storage
+      .from('request-attachments')
+      .remove([filepath]);
+    
+    if (error) throw error;
+    console.log('✅ Attachment deleted:', filename);
+  } catch (error) {
+    console.error('Error deleting attachment:', error);
+    throw error;
+  }
+};
