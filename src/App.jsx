@@ -15,7 +15,7 @@ import CustomerFormPublic from './pages/CustomerFormPublic';
 import CustomerPDFs from './pages/CustomerPDFs';
 
 function ProtectedRoute({ children }) {
-  const { isLoggedIn, loading } = useAuth();
+  const { isLoggedIn, loading, hasDashboardAccess } = useAuth();
 
   if (loading) {
     return (
@@ -27,6 +27,19 @@ function ProtectedRoute({ children }) {
 
   if (!isLoggedIn()) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check if user has dashboard access
+  if (!hasDashboardAccess()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-700 mb-6">You do not have permission to access the dashboard.</p>
+          <p className="text-gray-600">Please use your customer form link to submit your information.</p>
+        </div>
+      </div>
+    );
   }
 
   return children;

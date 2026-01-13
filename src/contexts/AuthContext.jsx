@@ -196,6 +196,16 @@ export const AuthProvider = ({ children }) => {
   const isFactoryAdmin = () => userRole === 'factory_admin';
   const isSales = () => userRole === 'sales';
   const isLoggedIn = () => !!user;
+  
+  // Check if user has dashboard access (only specific emails allowed)
+  const hasDashboardAccess = () => {
+    const allowedEmails = new Set([
+      'it@gilanimobility.ae',
+      'eng@gilanimobility.ae',
+      'eng1@gilanimobility.ae'
+    ]);
+    return allowedEmails.has(userEmail);
+  };
 
   return (
     <AuthContext.Provider
@@ -210,6 +220,7 @@ export const AuthProvider = ({ children }) => {
         isFactoryAdmin,
         isSales,
         isLoggedIn,
+        hasDashboardAccess,
       }}
     >
       {children}
