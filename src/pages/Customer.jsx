@@ -9,7 +9,7 @@ import womenHeight from '../assets/women-height.png';
 import turneySeat from '../assets/turney-seat.png';
 import { supabase } from '../lib/supabaseClient';
 import PDFGenerator from '../components/PDFGenerator';
-import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL, createCustomerMeasurementsForm, getCustomerMeasurementsURL, fetchCustomerMeasurements } from '../utils/pdfService';
+import { generateAndUploadPDF, updateRequestWithPDF, getCustomerFormURL, createCustomerMeasurementsForm, getCustomerMeasurementsURL, fetchCustomerMeasurements, generateToken } from '../utils/pdfService';
 import { FiDownload, FiShare2, FiFileText, FiCopy, FiCheck } from 'react-icons/fi';
 
 // Shared initial state so hooks don't warn about missing deps
@@ -510,6 +510,8 @@ const Customer = () => {
 
     try {
       const tempRequestCode = `DRAFT-${Date.now()}`;
+      const token = generateToken();
+      
       const pdfData = {
         ...formData,
         requestCode: tempRequestCode,
@@ -549,16 +551,26 @@ const Customer = () => {
       };
 
       // Wait for PDF element to render
-      setTimeout(async () => {
-        if (pdfRef.current) {
-          const url = await generateAndUploadPDF(pdfRef.current, tempRequestCode);
-          setPdfUrl(url);
-          console.log('✅ PDF generated successfully:', url);
-        }
-      }, 100);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (pdfRef.current) {
+        console.log('🎨 Starting PDF generation...');
+        const url = await generateAndUploadPDF(pdfRef.current, tempRequestCode);
+        setPdfUrl(url);
+        setCustomerToken(token);
+        console.log('✅ PDF generated successfully:', url);
+        console.log('🔑 Customer token:', token);
+        
+        // Show success message
+        alert('PDF generated successfully! You can now submit the request or share the customer link.');
+      } else {
+        throw new Error('PDF element not found');
+      }
     } catch (error) {
       console.error('❌ Error generating PDF:', error);
       setSubmitError('Failed to generate PDF. Please try again.');
+      setPdfUrl(null);
+      setCustomerToken(null);
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -1661,8 +1673,8 @@ const Customer = () => {
         </div>
       </div>
 
-      {/* Hidden PDF Generator */}
-      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+      {/* Hidden PDF Generator - positioned off-screen but rendered */}
+      <div style={{ position: 'fixed', left: '-10000px', top: '-10000px', width: '210mm', height: '297mm' }}>
         <PDFGenerator ref={pdfRef} formData={{
           ...formData,
           requestCode: `DRAFT-${Date.now()}`,
