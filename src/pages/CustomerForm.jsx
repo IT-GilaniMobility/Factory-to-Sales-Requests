@@ -266,36 +266,36 @@ const CustomerForm = () => {
   const payload = requestData?.payload || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8 px-3 md:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2">
             Vehicle Information Form
           </h1>
-          <p className="text-gray-600">
-            Request Code: <span className="font-mono font-bold">{requestData?.request_code}</span>
+          <p className="text-xs md:text-sm text-gray-600">
+            Request Code: <span className="font-mono font-bold text-sm md:text-base">{requestData?.request_code}</span>
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs md:text-sm text-gray-500 mt-2">
             Please upload photos of your vehicle and provide any additional information.
           </p>
         </div>
 
         {/* Customer Information Display */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Your Information</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Your Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
             <div>
-              <p className="text-gray-600">Name</p>
-              <p className="font-semibold">{payload.customer?.name || requestData?.customer_name || '—'}</p>
+              <p className="text-gray-600 font-medium">Name</p>
+              <p className="font-semibold text-gray-900">{payload.customer?.name || requestData?.customer_name || '—'}</p>
             </div>
             <div>
-              <p className="text-gray-600">Mobile</p>
-              <p className="font-semibold">{payload.customer?.mobile || requestData?.customer_mobile || '—'}</p>
+              <p className="text-gray-600 font-medium">Mobile</p>
+              <p className="font-semibold text-gray-900">{payload.customer?.mobile || requestData?.customer_mobile || '—'}</p>
             </div>
-            <div className="col-span-2">
-              <p className="text-gray-600">Vehicle</p>
-              <p className="font-semibold">
+            <div className="col-span-1 md:col-span-2">
+              <p className="text-gray-600 font-medium">Vehicle</p>
+              <p className="font-semibold text-gray-900">
                 {payload.job?.vehicle?.make || requestData?.vehicle_make} {payload.job?.vehicle?.model || requestData?.vehicle_model} {payload.job?.vehicle?.year || requestData?.vehicle_year}
               </p>
             </div>
@@ -303,47 +303,47 @@ const CustomerForm = () => {
         </div>
 
         {/* Training Checklist */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Training Acknowledgement</h2>
-          <p className="text-sm text-gray-600 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Training Acknowledgement</h2>
+          <p className="text-xs md:text-sm text-gray-600 mb-3">
             Please acknowledge that you have received training in the following areas:
           </p>
-          <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-green-700 text-lg">✓</span>
-              <span className="text-gray-700">Operate Device</span>
+          <div className="space-y-2 md:space-y-3 bg-gray-50 p-3 md:p-4 rounded-lg">
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="text-green-700 text-base md:text-lg">✓</span>
+              <span className="text-xs md:text-sm text-gray-700">Operate Device</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-green-700 text-lg">✓</span>
-              <span className="text-gray-700">Emergency Procedure</span>
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="text-green-700 text-base md:text-lg">✓</span>
+              <span className="text-xs md:text-sm text-gray-700">Emergency Procedure</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-green-700 text-lg">✓</span>
-              <span className="text-gray-700">Main Fuse Location</span>
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="text-green-700 text-base md:text-lg">✓</span>
+              <span className="text-xs md:text-sm text-gray-700">Main Fuse Location</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-green-700 text-lg">✓</span>
-              <span className="text-gray-700">Tie Down & Seatbelts</span>
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="text-green-700 text-base md:text-lg">✓</span>
+              <span className="text-xs md:text-sm text-gray-700">Tie Down & Seatbelts</span>
             </div>
           </div>
         </div>
 
         {/* Initial Request Signature */}
         {requestData?.payload?.signature && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Installation Request Signature</h2>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+            <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Installation Request Signature</h2>
+            <p className="text-xs md:text-sm text-gray-600 mb-3">
               This is the signature from the initial installation request:
             </p>
-            <div className="border-2 border-gray-300 rounded-lg bg-gray-50 p-3">
+            <div className="border-2 border-gray-300 rounded-lg bg-gray-50 p-2 md:p-3">
               {requestData.payload.signature?.dataUrl ? (
                 <img 
                   src={requestData.payload.signature.dataUrl} 
                   alt="Initial Signature" 
-                  className="w-full h-auto max-h-32 object-contain"
+                  className="w-full h-auto max-h-24 md:max-h-32 object-contain"
                 />
               ) : (
-                <div className="text-center py-8 text-gray-400 text-sm italic">No initial signature available</div>
+                <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-sm italic">No initial signature available</div>
               )}
             </div>
           </div>
@@ -351,15 +351,15 @@ const CustomerForm = () => {
 
         {/* PDF Preview */}
         {requestData?.pdf_url && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FiFileText className="text-blue-600" />
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+            <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <FiFileText className="text-blue-600 text-base md:text-lg" />
               Request Details (PDF)
             </h2>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden bg-gray-100 min-h-48 md:min-h-96">
               <iframe
                 src={requestData.pdf_url}
-                className="w-full h-96"
+                className="w-full h-48 md:h-96"
                 title="Request PDF"
               />
             </div>
@@ -367,7 +367,7 @@ const CustomerForm = () => {
               href={requestData.pdf_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-block text-blue-600 hover:text-blue-700 text-sm underline"
+              className="mt-2 md:mt-3 inline-block text-blue-600 hover:text-blue-700 text-xs md:text-sm underline"
             >
               Open PDF in new tab
             </a>
@@ -375,11 +375,11 @@ const CustomerForm = () => {
         )}
 
         {/* Photo Upload */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">
             Vehicle Photos <span className="text-red-500">*</span>
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-xs md:text-sm text-gray-600 mb-3">
             Please upload clear photos of your vehicle from multiple angles (exterior, interior, installation area, etc.)
           </p>
 
@@ -393,7 +393,7 @@ const CustomerForm = () => {
               className="hidden"
               disabled={uploadingPhotos}
             />
-            <div className={`px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 ${
+            <div className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-sm md:text-base ${
               uploadingPhotos
                 ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -405,17 +405,17 @@ const CustomerForm = () => {
 
           {/* Photo Grid */}
           {photos.length > 0 && (
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {photos.map((url, index) => (
                 <div key={index} className="relative group">
                   <img
                     src={url}
                     alt={`Vehicle ${index + 1}`}
-                    className="w-full h-40 object-cover rounded-lg border"
+                    className="w-full h-32 md:h-40 object-cover rounded-lg border"
                   />
                   <button
                     onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-base md:text-lg"
                   >
                     <FiX />
                   </button>
@@ -426,23 +426,23 @@ const CustomerForm = () => {
         </div>
 
         {/* Additional Notes */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Additional Notes (Optional)</h2>
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Additional Notes (Optional)</h2>
           <textarea
             value={customerNotes}
             onChange={(e) => setCustomerNotes(e.target.value)}
             placeholder="Any additional information, concerns, or special requests..."
             rows={4}
-            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
           />
         </div>
 
         {/* Signature Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">
             Your Signature <span className="text-red-500">*</span>
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-xs md:text-sm text-gray-600 mb-3">
             Please sign below to confirm the information provided
           </p>
           <div className="border-2 border-gray-300 rounded-lg bg-white">
@@ -457,25 +457,25 @@ const CustomerForm = () => {
               onTouchStart={startDrawing}
               onTouchMove={draw}
               onTouchEnd={stopDrawing}
-              className="w-full h-48 cursor-crosshair touch-none"
+              className="w-full h-32 md:h-48 cursor-crosshair touch-none"
               style={{ touchAction: 'none' }}
             />
           </div>
           <button
             type="button"
             onClick={clearSignature}
-            className="mt-3 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm font-medium"
+            className="mt-2 md:mt-3 px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-xs md:text-sm font-medium"
           >
             Clear Signature
           </button>
         </div>
 
         {/* Submit Button */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
           <button
             onClick={handleSubmit}
             disabled={submitting || photos.length === 0 || !signatureData}
-            className={`w-full px-8 py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 ${
+            className={`w-full px-6 md:px-8 py-3 md:py-4 rounded-lg font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 ${
               submitting || photos.length === 0 || !signatureData
                 ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
@@ -488,7 +488,7 @@ const CustomerForm = () => {
             )}
           </button>
           {(photos.length === 0 || !signatureData) && (
-            <p className="text-sm text-red-600 text-center mt-2">
+            <p className="text-xs md:text-sm text-red-600 text-center mt-2">
               {photos.length === 0 && 'Please upload at least one photo'}
               {photos.length === 0 && !signatureData && ' and '}
               {!signatureData && 'provide your signature'}
