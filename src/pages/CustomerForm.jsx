@@ -70,6 +70,9 @@ const CustomerForm = () => {
           setSubmitted(true);
         }
 
+        console.log('📋 Customer Form - Request Data:', found);
+        console.log('📋 Customer Form - Payload:', found.payload);
+        console.log('📋 Customer Form - Signature:', found.payload?.signature);
         setRequestData({ ...found, tableName: foundTable });
       } catch (err) {
         console.error('Error fetching request:', err);
@@ -336,11 +339,15 @@ const CustomerForm = () => {
               This is the signature from the initial installation request:
             </p>
             <div className="border-2 border-gray-300 rounded-lg bg-gray-50 p-2 md:p-3">
-              {requestData.payload.signature?.dataUrl ? (
+              {requestData.payload.signature?.dataUrl || requestData.payload.signature ? (
                 <img 
-                  src={requestData.payload.signature.dataUrl} 
+                  src={requestData.payload.signature?.dataUrl || requestData.payload.signature} 
                   alt="Initial Signature" 
                   className="w-full h-auto max-h-24 md:max-h-32 object-contain"
+                  onError={(e) => {
+                    console.error('Failed to load signature image:', e);
+                    e.target.style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-sm italic">No initial signature available</div>
