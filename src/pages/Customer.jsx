@@ -519,6 +519,7 @@ const Customer = () => {
       const pdfData = {
         ...formData,
         requestCode: tempRequestCode,
+        signatureData: signatureData,
         customer: {
           name: formData.customerName,
           address: formData.customerAddress,
@@ -624,12 +625,18 @@ const Customer = () => {
 
     try {
       for (const file of files) {
-        const attachment = await uploadRequestAttachment(file, `DRAFT-${Date.now()}`);
-        setFormData(prev => ({
-          ...prev,
-          requestAttachments: [...(prev.requestAttachments || []), attachment]
-        }));
+        try {
+          const attachment = await uploadRequestAttachment(file, `DRAFT-${Date.now()}`);
+          setFormData(prev => ({
+            ...prev,
+            requestAttachments: [...(prev.requestAttachments || []), attachment]
+          }));
+        } catch (fileError) {
+          console.error(`Error uploading file ${file.name}:`, fileError);
+          alert(`Failed to upload ${file.name}: ${fileError.message || 'Unknown error'}`);
+        }
       }
+      e.target.value = '';
     } catch (error) {
       console.error('Error uploading attachment:', error);
       alert('Failed to upload attachment. Please try again.');

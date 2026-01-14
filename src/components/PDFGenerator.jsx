@@ -152,8 +152,23 @@ const PDFGenerator = React.forwardRef(({ formData }, ref) => {
           border: '1px solid #999', 
           borderRadius: '2px',
           marginBottom: '4px',
-          backgroundColor: '#fafafa'
+          backgroundColor: '#fafafa',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden'
         }}>
+          {formData?.signatureData ? (
+            <img 
+              src={formData.signatureData} 
+              alt="Customer Signature" 
+              style={{ 
+                maxHeight: '40px',
+                maxWidth: '100%',
+                objectFit: 'contain'
+              }}
+            />
+          ) : null}
         </div>
         <p style={{ margin: '2px 0 0 0', fontSize: '9px', color: '#666' }}>Customer/Authority Name & Date</p>
       </div>
