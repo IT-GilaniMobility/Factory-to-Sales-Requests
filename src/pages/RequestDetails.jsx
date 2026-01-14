@@ -627,7 +627,11 @@ const RequestDetails = () => {
               .limit(1);
 
             if (!error && data && data.length > 0) {
+              console.log('📎 Raw request data from Supabase:', data[0]);
+              console.log('📎 request_attachments column:', data[0].request_attachments);
               found = normalizeRequest(data[0], table.type, id);
+              console.log('📎 Normalized request:', found);
+              console.log('📎 requestAttachments in normalized:', found.requestAttachments);
               break;
             }
           }
