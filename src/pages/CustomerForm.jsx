@@ -281,6 +281,74 @@ const CustomerForm = () => {
           </p>
         </div>
 
+        {/* Customer Information Display */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Your Information</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-600">Name</p>
+              <p className="font-semibold">{payload.customer?.name || requestData?.customer_name || '—'}</p>
+            </div>
+            <div>
+              <p className="text-gray-600">Mobile</p>
+              <p className="font-semibold">{payload.customer?.mobile || requestData?.customer_mobile || '—'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-gray-600">Vehicle</p>
+              <p className="font-semibold">
+                {payload.job?.vehicle?.make || requestData?.vehicle_make} {payload.job?.vehicle?.model || requestData?.vehicle_model} {payload.job?.vehicle?.year || requestData?.vehicle_year}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Training Checklist */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Training Acknowledgement</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Please acknowledge that you have received training in the following areas:
+          </p>
+          <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-green-700 text-lg">✓</span>
+              <span className="text-gray-700">Operate Device</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-green-700 text-lg">✓</span>
+              <span className="text-gray-700">Emergency Procedure</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-green-700 text-lg">✓</span>
+              <span className="text-gray-700">Main Fuse Location</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-green-700 text-lg">✓</span>
+              <span className="text-gray-700">Tie Down & Seatbelts</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Initial Request Signature */}
+        {requestData?.payload?.signature && (
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Installation Request Signature</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              This is the signature from the initial installation request:
+            </p>
+            <div className="border-2 border-gray-300 rounded-lg bg-gray-50 p-3">
+              {requestData.payload.signature?.dataUrl ? (
+                <img 
+                  src={requestData.payload.signature.dataUrl} 
+                  alt="Initial Signature" 
+                  className="w-full h-auto max-h-32 object-contain"
+                />
+              ) : (
+                <div className="text-center py-8 text-gray-400 text-sm italic">No initial signature available</div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* PDF Preview */}
         {requestData?.pdf_url && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -305,27 +373,6 @@ const CustomerForm = () => {
             </a>
           </div>
         )}
-
-        {/* Customer Information Display */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Your Information</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-600">Name</p>
-              <p className="font-semibold">{payload.customer?.name || requestData?.customer_name || '—'}</p>
-            </div>
-            <div>
-              <p className="text-gray-600">Mobile</p>
-              <p className="font-semibold">{payload.customer?.mobile || requestData?.customer_mobile || '—'}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-gray-600">Vehicle</p>
-              <p className="font-semibold">
-                {payload.job?.vehicle?.make || requestData?.vehicle_make} {payload.job?.vehicle?.model || requestData?.vehicle_model} {payload.job?.vehicle?.year || requestData?.vehicle_year}
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Photo Upload */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
