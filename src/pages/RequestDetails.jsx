@@ -70,6 +70,7 @@ const AttachmentsSection = ({ attachments = [] }) => {
   }
 
   const getFileIcon = (filename) => {
+    if (!filename || typeof filename !== 'string') return '📎';
     const ext = filename.split('.').pop().toLowerCase();
     if (ext === 'pdf') return '📄';
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
@@ -89,23 +90,26 @@ const AttachmentsSection = ({ attachments = [] }) => {
   return (
     <Section title="Attached Files">
       <div className="space-y-3">
-        {attachments.map((attachment, index) => (
-          <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
-            <span className="text-2xl">{getFileIcon(attachment.name)}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
-              <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+        {attachments.map((attachment, index) => {
+          if (!attachment || !attachment.name || !attachment.url) return null;
+          return (
+            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
+              <span className="text-2xl">{getFileIcon(attachment.name)}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+              </div>
+              <a
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition screen-only"
+              >
+                View
+              </a>
             </div>
-            <a
-              href={attachment.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition screen-only"
-            >
-              View
-            </a>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Section>
   );
