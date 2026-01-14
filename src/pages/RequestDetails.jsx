@@ -28,12 +28,28 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const SignatureBlock = ({ signature }) => (
-  <div className="border border-gray-200 rounded bg-white p-2">
-    {signature?.dataUrl ? (
-      <img src={signature.dataUrl} alt="Signature" className="w-full h-auto max-h-32 object-contain" />
-    ) : (
-      <div className="text-center py-8 text-gray-400 text-sm italic">No signature</div>
+const SignatureBlock = ({ signature, customerSignature }) => (
+  <div className="space-y-4">
+    {/* Salesperson/Initial Signature */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Initial Request Signature</p>
+      <div className="border border-gray-200 rounded bg-white p-2">
+        {signature?.dataUrl ? (
+          <img src={signature.dataUrl} alt="Signature" className="w-full h-auto max-h-32 object-contain" />
+        ) : (
+          <div className="text-center py-8 text-gray-400 text-sm italic">No signature</div>
+        )}
+      </div>
+    </div>
+    
+    {/* Customer Signature (if submitted via customer form) */}
+    {customerSignature && (
+      <div>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Customer Confirmation Signature</p>
+        <div className="border border-green-200 rounded bg-green-50 p-2">
+          <img src={customerSignature} alt="Customer Signature" className="w-full h-auto max-h-32 object-contain" />
+        </div>
+      </div>
     )}
   </div>
 );
@@ -250,7 +266,10 @@ const WheelchairLayout = ({ request }) => {
           </div>
           <div>
             <span className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Customer Signature</span>
-            <SignatureBlock signature={request.signature} />
+            <SignatureBlock 
+              signature={request.signature} 
+              customerSignature={request.customerFilledData?.signature}
+            />
           </div>
         </Section>
 
@@ -322,7 +341,10 @@ const G24Layout = ({ request }) => {
       </Section>
 
       <Section title="Signature">
-        <SignatureBlock signature={request.signature} />
+        <SignatureBlock 
+          signature={request.signature} 
+          customerSignature={request.customerFilledData?.signature}
+        />
       </Section>
 
       <AttachmentsSection attachments={request.requestAttachments} />
@@ -389,7 +411,10 @@ const DivingLayout = ({ request }) => {
       </Section>
 
       <Section title="Signature">
-        <SignatureBlock signature={request.signature} />
+        <SignatureBlock 
+          signature={request.signature} 
+          customerSignature={request.customerFilledData?.signature}
+        />
       </Section>
 
       <AttachmentsSection attachments={request.requestAttachments} />
@@ -525,7 +550,10 @@ const TurneyLayout = ({ request }) => {
       </Section>
 
       <Section title="Signature">
-        <SignatureBlock signature={request.signature} />
+        <SignatureBlock 
+          signature={request.signature} 
+          customerSignature={request.customerFilledData?.signature}
+        />
       </Section>
 
       <AttachmentsSection attachments={request.requestAttachments} />
@@ -557,6 +585,7 @@ const normalizeRequest = (row, fallbackType, idHint) => {
     divingSolution: payload.divingSolution || payload.diving_solution || {},
     turneySeat: payload.turneySeat || {},
     requestAttachments: row.request_attachments || payload.requestAttachments || [],
+    customerFilledData: row.customer_filled_data || payload.customerFilledData || null,
     jobRequest,
   };
 };
@@ -622,7 +651,7 @@ const RequestDetails = () => {
           for (const table of tables) {
             const { data, error } = await supabase
               .from(table.name)
-              .select('request_code, status, created_at, payload, request_attachments')
+              .select('request_code, status, created_at, payload, request_attachments, customer_filled_data')
               .eq('request_code', id)
               .limit(1);
 

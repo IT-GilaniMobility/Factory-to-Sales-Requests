@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { uploadVehiclePhoto } from '../utils/pdfService';
@@ -7,6 +7,7 @@ import { FiUpload, FiX, FiCheck, FiFileText } from 'react-icons/fi';
 const CustomerForm = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const canvasRef = useRef(null);
   
   const [loading, setLoading] = useState(true);
   const [requestData, setRequestData] = useState(null);
@@ -18,6 +19,10 @@ const CustomerForm = () => {
   const [photos, setPhotos] = useState([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
+  
+  // Signature state
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureData, setSignatureData] = useState(null);
 
   // Fetch request data by token
   useEffect(() => {
@@ -77,6 +82,73 @@ const CustomerForm = () => {
     fetchRequest();
   }, [token]);
 
+  // Initialize signature canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+    }
+  }, []);
+
+  // Signature drawing handlers
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const point = e.touches ? e.touches[0] : e;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (point.clientX - rect.left) * scaleX;
+    const y = (point.clientY - rect.top) * scaleY;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const point = e.touches ? e.touches[0] : e;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (point.clientX - rect.left) * scaleX;
+    const y = (point.clientY - rect.top) * scaleY;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing) {
+      setIsDrawing(false);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        setSignatureData(canvas.toDataURL('image/png'));
+      }
+    }
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setSignatureData(null);
+    }
+  };
+
   // Handle photo upload
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -111,14 +183,28 @@ const CustomerForm = () => {
       return;
     }
 
+    if (!signatureData) {
+      alert('Please provide your signature');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
+      // Prepare filled data with signature
+      const customerFilledData = {
+        vehicle_photos: photos,
+        notes: customerNotes,
+        signature: signatureData,
+        submitted_at: new Date().toISOString()
+      };
+
       const { error: updateError } = await supabase
         .from(requestData.tableName)
         .update({
           customer_vehicle_photos: photos,
           customer_notes: customerNotes,
+          customer_filled_data: customerFilledData,
           customer_submitted: true,
           customer_submitted_at: new Date().toISOString()
         })
@@ -304,13 +390,46 @@ const CustomerForm = () => {
           />
         </div>
 
+        {/* Signature Section */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Your Signature <span className="text-red-500">*</span>
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Please sign below to confirm the information provided
+          </p>
+          <div className="border-2 border-gray-300 rounded-lg bg-white">
+            <canvas
+              ref={canvasRef}
+              width={600}
+              height={200}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+              className="w-full h-48 cursor-crosshair touch-none"
+              style={{ touchAction: 'none' }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={clearSignature}
+            className="mt-3 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm font-medium"
+          >
+            Clear Signature
+          </button>
+        </div>
+
         {/* Submit Button */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <button
             onClick={handleSubmit}
-            disabled={submitting || photos.length === 0}
+            disabled={submitting || photos.length === 0 || !signatureData}
             className={`w-full px-8 py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 ${
-              submitting || photos.length === 0
+              submitting || photos.length === 0 || !signatureData
                 ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
@@ -321,9 +440,12 @@ const CustomerForm = () => {
               <><FiCheck /> Submit Information</>
             )}
           </button>
-          {photos.length === 0 && (
+          {(photos.length === 0 || !signatureData) && (
             <p className="text-sm text-red-600 text-center mt-2">
-              Please upload at least one photo before submitting
+              {photos.length === 0 && 'Please upload at least one photo'}
+              {photos.length === 0 && !signatureData && ' and '}
+              {!signatureData && 'provide your signature'}
+              {' before submitting'}
             </p>
           )}
         </div>
