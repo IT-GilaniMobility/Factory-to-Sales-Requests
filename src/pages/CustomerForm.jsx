@@ -65,14 +65,21 @@ const CustomerForm = () => {
           return;
         }
 
-        // Check if already submitted
+        // Check if already submitted and load their data
         if (found.customer_submitted) {
           setSubmitted(true);
+          // Load previously submitted data
+          if (found.customer_filled_data) {
+            setPhotos(found.customer_filled_data.vehicle_photos || found.customer_vehicle_photos || []);
+            setCustomerNotes(found.customer_filled_data.notes || found.customer_notes || '');
+            setSignatureData(found.customer_filled_data.signature || null);
+          }
         }
 
         console.log('📋 Customer Form - Request Data:', found);
         console.log('📋 Customer Form - Payload:', found.payload);
         console.log('📋 Customer Form - Signature:', found.payload?.signature);
+        console.log('📋 Customer Form - Customer Filled Data:', found.customer_filled_data);
         setRequestData({ ...found, tableName: foundTable });
       } catch (err) {
         console.error('Error fetching request:', err);
@@ -212,6 +219,8 @@ const CustomerForm = () => {
       };
 
       console.log('💾 Saving to table:', requestData.tableName);
+      console.log('🖊️ Signature data being saved:', signatureData ? signatureData.substring(0, 50) + '...' : 'MISSING!');
+      console.log('🖊️ customerFilledData object:', { ...customerFilledData, signature: signatureData ? 'exists' : 'MISSING' });
 
       const { error: updateError } = await supabase
         .from(requestData.tableName)
@@ -262,24 +271,8 @@ const CustomerForm = () => {
     );
   }
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <div className="text-green-600 text-5xl mb-4">
-            <FiCheck className="mx-auto" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h1>
-          <p className="text-gray-600 mb-4">
-            Your vehicle photos and information have been submitted successfully.
-          </p>
-          <p className="text-sm text-gray-500">
-            Your sales representative will contact you shortly.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Submitted view now shows the form in read-only mode
+  const isReadOnly = submitted;
 
   const payload = requestData?.payload || {};
 
@@ -288,15 +281,26 @@ const CustomerForm = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          {isReadOnly && (
+            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+              <FiCheck className="text-green-600 text-xl" />
+              <div>
+                <p className="text-green-800 font-semibold text-sm md:text-base">Form Submitted Successfully</p>
+                <p className="text-green-700 text-xs md:text-sm">Your sales representative will contact you shortly.</p>
+              </div>
+            </div>
+          )}
           <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2">
             Vehicle Information Form
           </h1>
           <p className="text-xs md:text-sm text-gray-600">
             Request Code: <span className="font-mono font-bold text-sm md:text-base">{requestData?.request_code}</span>
           </p>
-          <p className="text-xs md:text-sm text-gray-500 mt-2">
-            Please upload photos of your vehicle and provide any additional information.
-          </p>
+          {!isReadOnly && (
+            <p className="text-xs md:text-sm text-gray-500 mt-2">
+              Please upload photos of your vehicle and provide any additional information.
+            </p>
+          )}
         </div>
 
         {/* Customer Information Display */}
@@ -371,9 +375,9 @@ const CustomerForm = () => {
           </div>
         )}
 
-        {/* PDF Preview */}
+        {/* PDF Preview - Desktop Only */}
         {requestData?.pdf_url && (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <div className="hidden md:block bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
             <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
               <FiFileText className="text-blue-600 text-base md:text-lg" />
               Request Details (PDF)
@@ -395,6 +399,21 @@ const CustomerForm = () => {
             </a>
           </div>
         )}
+        
+        {/* PDF Link for Mobile */}
+        {requestData?.pdf_url && (
+          <div className="md:hidden bg-white rounded-lg shadow-lg p-4 mb-4">
+            <a
+              href={requestData.pdf_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <FiFileText className="text-lg" />
+              View Request Details (PDF)
+            </a>
+          </div>
+        )}
 
         {/* Photo Upload */}
         <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
@@ -406,24 +425,26 @@ const CustomerForm = () => {
           </p>
 
           {/* Upload Button */}
-          <label className="cursor-pointer inline-block">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handlePhotoUpload}
-              className="hidden"
-              disabled={uploadingPhotos}
-            />
-            <div className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-sm md:text-base ${
-              uploadingPhotos
-                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}>
-              <FiUpload />
-              {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
-            </div>
-          </label>
+          {!isReadOnly && (
+            <label className="cursor-pointer inline-block">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoUpload}
+                className="hidden"
+                disabled={uploadingPhotos}
+              />
+              <div className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-sm md:text-base ${
+                uploadingPhotos
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}>
+                <FiUpload />
+                {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+              </div>
+            </label>
+          )}
 
           {/* Photo Grid */}
           {photos.length > 0 && (
@@ -435,12 +456,14 @@ const CustomerForm = () => {
                     alt={`Vehicle ${index + 1}`}
                     className="w-full h-32 md:h-40 object-cover rounded-lg border"
                   />
-                  <button
-                    onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-base md:text-lg"
-                  >
-                    <FiX />
-                  </button>
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => handleRemovePhoto(index)}
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-base md:text-lg"
+                    >
+                      <FiX />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -455,7 +478,9 @@ const CustomerForm = () => {
             onChange={(e) => setCustomerNotes(e.target.value)}
             placeholder="Any additional information, concerns, or special requests..."
             rows={4}
+            readOnly={isReadOnly}
             className="w-full px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+            style={isReadOnly ? { backgroundColor: '#f9fafb', cursor: 'default' } : {}}
           />
         </div>
 
@@ -467,62 +492,77 @@ const CustomerForm = () => {
           <p className="text-xs md:text-sm text-gray-600 mb-3">
             Please sign below to confirm the information provided
           </p>
-          <div className="border-2 border-gray-300 rounded-lg bg-white relative">
-            <canvas
-              ref={canvasRef}
-              width={600}
-              height={200}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-              className="w-full h-32 md:h-48 cursor-crosshair touch-none"
-              style={{ touchAction: 'none' }}
-            />
-            {signatureData && (
-              <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                ✓ Signature captured
+          {isReadOnly && signatureData ? (
+            <div className="border-2 border-green-300 rounded-lg bg-green-50 p-2 md:p-3">
+              <img 
+                src={signatureData} 
+                alt="Customer Signature" 
+                className="w-full h-auto max-h-32 md:max-h-48 object-contain"
+              />
+              <p className="text-center text-green-700 text-xs mt-2 font-medium">✓ Signed and Submitted</p>
+            </div>
+          ) : (
+            <>
+              <div className="border-2 border-gray-300 rounded-lg bg-white relative">
+                <canvas
+                  ref={canvasRef}
+                  width={600}
+                  height={200}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="w-full h-32 md:h-48 cursor-crosshair touch-none"
+                  style={{ touchAction: 'none' }}
+                />
+                {signatureData && (
+                  <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                    ✓ Signature captured
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={clearSignature}
-            className="mt-2 md:mt-3 px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-xs md:text-sm font-medium"
-          >
-            Clear Signature
-          </button>
-        </div>
-
-        {/* Submit Button */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || photos.length === 0 || !signatureData}
-            className={`w-full px-6 md:px-8 py-3 md:py-4 rounded-lg font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 ${
-              submitting || photos.length === 0 || !signatureData
-                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:bg-green-700'
-            }`}
-          >
-            {submitting ? (
-              <>Submitting...</>
-            ) : (
-              <><FiCheck /> Submit Information</>
-            )}
-          </button>
-          {(photos.length === 0 || !signatureData) && (
-            <p className="text-xs md:text-sm text-red-600 text-center mt-2">
-              {photos.length === 0 && 'Please upload at least one photo'}
-              {photos.length === 0 && !signatureData && ' and '}
-              {!signatureData && 'provide your signature'}
-              {' before submitting'}
-            </p>
+              <button
+                type="button"
+                onClick={clearSignature}
+                className="mt-2 md:mt-3 px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-xs md:text-sm font-medium"
+              >
+                Clear Signature
+              </button>
+            </>
           )}
         </div>
+
+        {/* Submit Button - Hide when read-only */}
+        {!isReadOnly && (
+          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || photos.length === 0 || !signatureData}
+              className={`w-full px-6 md:px-8 py-3 md:py-4 rounded-lg font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 ${
+                submitting || photos.length === 0 || !signatureData
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+            >
+              {submitting ? (
+                <>Submitting...</>
+              ) : (
+                <><FiCheck /> Submit Information</>
+              )}
+            </button>
+            {(photos.length === 0 || !signatureData) && (
+              <p className="text-xs md:text-sm text-red-600 text-center mt-2">
+                {photos.length === 0 && 'Please upload at least one photo'}
+                {photos.length === 0 && !signatureData && ' and '}
+                {!signatureData && 'provide your signature'}
+                {' before submitting'}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -28,7 +28,13 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const SignatureBlock = ({ signature, customerSignature }) => (
+const SignatureBlock = ({ signature, customerSignature }) => {
+  console.log('🖊️ SignatureBlock received:', { 
+    signature: signature ? 'exists' : 'missing', 
+    customerSignature: customerSignature ? customerSignature.substring(0, 50) + '...' : 'missing' 
+  });
+  
+  return (
   <div className="space-y-4">
     {/* Salesperson/Initial Signature */}
     <div>
@@ -52,7 +58,7 @@ const SignatureBlock = ({ signature, customerSignature }) => (
       </div>
     )}
   </div>
-);
+);};
 
 const TrainingList = ({ training = {} }) => {
   const items = [
@@ -658,9 +664,11 @@ const RequestDetails = () => {
             if (!error && data && data.length > 0) {
               console.log('📎 Raw request data from Supabase:', data[0]);
               console.log('📎 request_attachments column:', data[0].request_attachments);
+              console.log('🖊️ customer_filled_data column:', data[0].customer_filled_data);
               found = normalizeRequest(data[0], table.type, id);
               console.log('📎 Normalized request:', found);
               console.log('📎 requestAttachments in normalized:', found.requestAttachments);
+              console.log('🖊️ customerFilledData in normalized:', found.customerFilledData);
               break;
             }
           }
