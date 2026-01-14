@@ -576,7 +576,9 @@ const Customer = () => {
       }
     } catch (error) {
       console.error('❌ Error generating PDF:', error);
-      setSubmitError('Failed to generate PDF. Please try again.');
+      const errorMsg = error.message || error.toString();
+      setSubmitError(`Failed to generate PDF: ${errorMsg}. Please check the console for details.`);
+      alert(`PDF Generation Error: ${errorMsg}\n\nPlease check:\n1. All form fields are filled\n2. Signature is drawn\n3. Browser console (F12) for detailed error`);
       setPdfUrl(null);
       setCustomerToken(null);
     } finally {
@@ -1938,27 +1940,6 @@ const Customer = () => {
           >
             Reset
           </button>
-          
-          {/* Generate PDF Button */}
-          <button
-            onClick={handleGeneratePDF}
-            disabled={isGeneratingPDF}
-            className={`px-6 py-2 rounded-md font-semibold shadow-sm transition-colors flex items-center gap-2 ${
-              pdfUrl 
-                ? 'bg-green-100 text-green-700 border border-green-300'
-                : isGeneratingPDF 
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-            }`}
-          >
-            {isGeneratingPDF ? (
-              <>Generating...</>
-            ) : pdfUrl ? (
-              <><FiCheck className="w-4 h-4" /> PDF Ready</>
-            ) : (
-              <><FiFileText className="w-4 h-4" /> Generate PDF</>
-            )}
-          </button>
 
           {/* Generate Measurements Form Button */}
           <button
@@ -1979,14 +1960,19 @@ const Customer = () => {
           
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !pdfUrl}
-            className={`px-8 py-2 rounded-md font-semibold shadow-sm transition-colors ${
-              isSubmitting || !pdfUrl
-                ? 'bg-blue-300 text-white cursor-not-allowed' 
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+            disabled={isSubmitting}
+            title="Submit the job request"
+            className={`px-8 py-2 rounded-md font-semibold shadow-sm transition-colors flex items-center gap-2 ${
+              isSubmitting 
+                ? 'bg-blue-400 text-white cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
             }`}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Request'}
+            {isSubmitting ? (
+              <>Submitting...</>
+            ) : (
+              <><FiDownload className="w-4 h-4" /> Submit Request</>
+            )}
           </button>
         </div>
       </div>
