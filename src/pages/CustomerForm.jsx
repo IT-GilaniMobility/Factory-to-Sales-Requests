@@ -138,7 +138,9 @@ const CustomerForm = () => {
       setIsDrawing(false);
       const canvas = canvasRef.current;
       if (canvas) {
-        setSignatureData(canvas.toDataURL('image/png'));
+        const dataUrl = canvas.toDataURL('image/png');
+        setSignatureData(dataUrl);
+        console.log('✍️ Signature captured:', dataUrl.substring(0, 50) + '...');
       }
     }
   };
@@ -191,6 +193,13 @@ const CustomerForm = () => {
       return;
     }
 
+    console.log('📤 Submitting customer form:', {
+      photos: photos.length,
+      notes: customerNotes.substring(0, 50),
+      signature: signatureData.substring(0, 50) + '...',
+      token: token
+    });
+
     setSubmitting(true);
 
     try {
@@ -201,6 +210,8 @@ const CustomerForm = () => {
         signature: signatureData,
         submitted_at: new Date().toISOString()
       };
+
+      console.log('💾 Saving to table:', requestData.tableName);
 
       const { error: updateError } = await supabase
         .from(requestData.tableName)
@@ -213,11 +224,15 @@ const CustomerForm = () => {
         })
         .eq('customer_form_token', token);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('❌ Update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('✅ Customer form submitted successfully');
       setSubmitted(true);
     } catch (error) {
-      console.error('Error submitting customer data:', error);
+      console.error('❌ Error submitting customer data:', error);
       alert('Failed to submit. Please try again.');
     } finally {
       setSubmitting(false);
@@ -452,7 +467,7 @@ const CustomerForm = () => {
           <p className="text-xs md:text-sm text-gray-600 mb-3">
             Please sign below to confirm the information provided
           </p>
-          <div className="border-2 border-gray-300 rounded-lg bg-white">
+          <div className="border-2 border-gray-300 rounded-lg bg-white relative">
             <canvas
               ref={canvasRef}
               width={600}
@@ -467,6 +482,11 @@ const CustomerForm = () => {
               className="w-full h-32 md:h-48 cursor-crosshair touch-none"
               style={{ touchAction: 'none' }}
             />
+            {signatureData && (
+              <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                ✓ Signature captured
+              </div>
+            )}
           </div>
           <button
             type="button"
