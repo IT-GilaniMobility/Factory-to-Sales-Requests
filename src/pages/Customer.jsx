@@ -676,13 +676,6 @@ const Customer = () => {
       return;
     }
 
-    // Require PDF before submission
-    if (!pdfUrl) {
-      setSubmitError('Please generate PDF before submitting the request');
-      window.scrollTo(0, 0);
-      return;
-    }
-
     setSubmitError(null);
     setIsSubmitting(true);
 
