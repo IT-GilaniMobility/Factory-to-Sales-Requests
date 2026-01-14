@@ -250,10 +250,12 @@ const CustomerForm = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="border-4 border-black bg-yellow-300 p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="animate-pulse text-center">
+            <div className="text-6xl mb-4">⏳</div>
+            <p className="text-black font-black text-xl uppercase">Loading...</p>
+          </div>
         </div>
       </div>
     );
@@ -261,11 +263,11 @@ const CustomerForm = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <div className="text-red-600 text-5xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Error</h1>
-          <p className="text-gray-600">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+        <div className="border-4 border-black bg-red-200 p-8 max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="text-6xl mb-4 text-center">⚠️</div>
+          <h1 className="text-3xl font-black text-black mb-4 uppercase text-center border-b-4 border-black pb-3">Error</h1>
+          <p className="text-black font-bold text-center">{error}</p>
         </div>
       </div>
     );
@@ -277,156 +279,115 @@ const CustomerForm = () => {
   const payload = requestData?.payload || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 md:py-8 px-3 md:px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          {isReadOnly && (
-            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-              <FiCheck className="text-green-600 text-xl" />
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-4 py-6 md:py-12">
+        
+        {/* Success Banner - Neo-brutalist Style */}
+        {isReadOnly && (
+          <div className="mb-8 border-4 border-black bg-green-400 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">✓</div>
               <div>
-                <p className="text-green-800 font-semibold text-sm md:text-base">Form Submitted Successfully</p>
-                <p className="text-green-700 text-xs md:text-sm">Your sales representative will contact you shortly.</p>
+                <h2 className="text-xl md:text-2xl font-bold text-black mb-2">FORM SUBMITTED</h2>
+                <p className="text-black text-sm md:text-base font-medium">
+                  Your sales representative will contact you shortly.
+                </p>
               </div>
             </div>
-          )}
-          <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2">
-            Vehicle Information Form
+          </div>
+        )}
+
+        {/* Header - Neo-brutalist */}
+        <div className="mb-8 border-4 border-black bg-yellow-300 p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h1 className="text-2xl md:text-4xl font-black text-black mb-3 uppercase tracking-tight">
+            Vehicle Information
           </h1>
-          <p className="text-xs md:text-sm text-gray-600">
-            Request Code: <span className="font-mono font-bold text-sm md:text-base">{requestData?.request_code}</span>
-          </p>
+          <div className="border-2 border-black bg-white px-4 py-2 inline-block mb-3">
+            <p className="text-xs md:text-sm font-bold text-black uppercase">
+              Request: <span className="font-mono">{requestData?.request_code}</span>
+            </p>
+          </div>
           {!isReadOnly && (
-            <p className="text-xs md:text-sm text-gray-500 mt-2">
-              Please upload photos of your vehicle and provide any additional information.
+            <p className="text-sm md:text-base text-black font-medium mt-3">
+              Please upload vehicle photos and provide your signature below.
             </p>
           )}
         </div>
 
-        {/* Customer Information Display */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Your Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
+        {/* Customer Information - Neo-brutalist */}
+        <div className="mb-6 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-xl md:text-2xl font-black text-black mb-6 uppercase border-b-4 border-black pb-3">
+            Your Information
+          </h2>
+          <div className="space-y-4">
             <div>
-              <p className="text-gray-600 font-medium">Name</p>
-              <p className="font-semibold text-gray-900">{payload.customer?.name || requestData?.customer_name || '—'}</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Name</p>
+              <p className="text-base md:text-lg font-bold text-black border-l-4 border-black pl-3">
+                {payload.customer?.name || requestData?.customer_name || '—'}
+              </p>
             </div>
             <div>
-              <p className="text-gray-600 font-medium">Mobile</p>
-              <p className="font-semibold text-gray-900">{payload.customer?.mobile || requestData?.customer_mobile || '—'}</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Mobile</p>
+              <p className="text-base md:text-lg font-bold text-black border-l-4 border-black pl-3">
+                {payload.customer?.mobile || requestData?.customer_mobile || '—'}
+              </p>
             </div>
-            <div className="col-span-1 md:col-span-2">
-              <p className="text-gray-600 font-medium">Vehicle</p>
-              <p className="font-semibold text-gray-900">
+            <div>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Vehicle</p>
+              <p className="text-base md:text-lg font-bold text-black border-l-4 border-black pl-3">
                 {payload.job?.vehicle?.make || requestData?.vehicle_make} {payload.job?.vehicle?.model || requestData?.vehicle_model} {payload.job?.vehicle?.year || requestData?.vehicle_year}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Training Checklist */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Training Acknowledgement</h2>
-          <p className="text-xs md:text-sm text-gray-600 mb-3">
-            Please acknowledge that you have received training in the following areas:
-          </p>
-          <div className="space-y-2 md:space-y-3 bg-gray-50 p-3 md:p-4 rounded-lg">
-            <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-green-700 text-base md:text-lg">✓</span>
-              <span className="text-xs md:text-sm text-gray-700">Operate Device</span>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-green-700 text-base md:text-lg">✓</span>
-              <span className="text-xs md:text-sm text-gray-700">Emergency Procedure</span>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-green-700 text-base md:text-lg">✓</span>
-              <span className="text-xs md:text-sm text-gray-700">Main Fuse Location</span>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-green-700 text-base md:text-lg">✓</span>
-              <span className="text-xs md:text-sm text-gray-700">Tie Down & Seatbelts</span>
-            </div>
+        {/* Training Checklist - Neo-brutalist */}
+        <div className="mb-6 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-xl md:text-2xl font-black text-black mb-4 uppercase border-b-4 border-black pb-3">
+            Training Acknowledgement
+          </h2>
+          <div className="space-y-3">
+            {['Operate Device', 'Emergency Procedure', 'Main Fuse Location', 'Tie Down & Seatbelts'].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 border-2 border-black bg-green-100 p-3">
+                <span className="text-2xl">✓</span>
+                <span className="text-sm md:text-base font-bold text-black">{item}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Initial Request Signature */}
+        {/* Initial Request Signature - Neo-brutalist */}
         {requestData?.payload?.signature && (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-            <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Installation Request Signature</h2>
-            <p className="text-xs md:text-sm text-gray-600 mb-3">
-              This is the signature from the initial installation request:
-            </p>
-            <div className="border-2 border-gray-300 rounded-lg bg-gray-50 p-2 md:p-3">
+          <div className="mb-6 border-4 border-black bg-blue-100 p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="text-xl md:text-2xl font-black text-black mb-4 uppercase border-b-4 border-black pb-3">
+              Installation Request Signature
+            </h2>
+            <div className="border-4 border-black bg-white p-4">
               {requestData.payload.signature?.dataUrl || requestData.payload.signature ? (
                 <img 
                   src={requestData.payload.signature?.dataUrl || requestData.payload.signature} 
                   alt="Initial Signature" 
-                  className="w-full h-auto max-h-24 md:max-h-32 object-contain"
+                  className="w-full h-auto max-h-32 object-contain"
                   onError={(e) => {
                     console.error('Failed to load signature image:', e);
                     e.target.style.display = 'none';
                   }}
                 />
               ) : (
-                <div className="text-center py-6 md:py-8 text-gray-400 text-xs md:text-sm italic">No initial signature available</div>
+                <div className="text-center py-8 text-gray-400 text-sm font-bold">NO SIGNATURE</div>
               )}
             </div>
           </div>
         )}
 
-        {/* PDF Preview - Desktop Only */}
-        {requestData?.pdf_url && (
-          <div className="hidden md:block bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-            <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <FiFileText className="text-blue-600 text-base md:text-lg" />
-              Request Details (PDF)
-            </h2>
-            <div className="border rounded-lg overflow-hidden bg-gray-100 min-h-48 md:min-h-96">
-              <iframe
-                src={requestData.pdf_url}
-                className="w-full h-48 md:h-96"
-                title="Request PDF"
-              />
-            </div>
-            <a
-              href={requestData.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 md:mt-3 inline-block text-blue-600 hover:text-blue-700 text-xs md:text-sm underline"
-            >
-              Open PDF in new tab
-            </a>
-          </div>
-        )}
-        
-        {/* PDF Link for Mobile */}
-        {requestData?.pdf_url && (
-          <div className="md:hidden bg-white rounded-lg shadow-lg p-4 mb-4">
-            <a
-              href={requestData.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              <FiFileText className="text-lg" />
-              View Request Details (PDF)
-            </a>
-          </div>
-        )}
-
-        {/* Photo Upload */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">
-            Vehicle Photos <span className="text-red-500">*</span>
+        {/* Photo Upload - Neo-brutalist */}
+        <div className="mb-6 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-xl md:text-2xl font-black text-black mb-4 uppercase border-b-4 border-black pb-3">
+            Vehicle Photos {!isReadOnly && <span className="text-red-600">*</span>}
           </h2>
-          <p className="text-xs md:text-sm text-gray-600 mb-3">
-            Please upload clear photos of your vehicle from multiple angles (exterior, interior, installation area, etc.)
-          </p>
-
-          {/* Upload Button */}
+          
           {!isReadOnly && (
-            <label className="cursor-pointer inline-block">
+            <label className="cursor-pointer">
               <input
                 type="file"
                 accept="image/*"
@@ -435,75 +396,82 @@ const CustomerForm = () => {
                 className="hidden"
                 disabled={uploadingPhotos}
               />
-              <div className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 text-sm md:text-base ${
+              <div className={`border-4 border-black px-6 py-4 font-black text-base uppercase transition-all inline-flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${
                 uploadingPhotos
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-400 text-black hover:bg-blue-500'
               }`}>
-                <FiUpload />
-                {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+                <FiUpload className="text-xl" />
+                {uploadingPhotos ? 'UPLOADING...' : 'UPLOAD PHOTOS'}
               </div>
             </label>
           )}
 
-          {/* Photo Grid */}
           {photos.length > 0 && (
-            <div className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((url, index) => (
-                <div key={index} className="relative group">
+                <div key={index} className="relative group border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <img
                     src={url}
                     alt={`Vehicle ${index + 1}`}
-                    className="w-full h-32 md:h-40 object-cover rounded-lg border"
+                    className="w-full h-32 md:h-40 object-cover"
                   />
                   {!isReadOnly && (
                     <button
                       onClick={() => handleRemovePhoto(index)}
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-base md:text-lg"
+                      className="absolute top-2 right-2 bg-red-600 border-2 border-black text-white font-black px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <FiX />
+                      <FiX className="text-lg" />
                     </button>
                   )}
                 </div>
               ))}
             </div>
           )}
+          
+          {photos.length === 0 && (
+            <div className="mt-4 border-4 border-dashed border-gray-400 bg-gray-50 p-8 text-center">
+              <p className="text-gray-600 font-bold uppercase text-sm">No photos uploaded yet</p>
+            </div>
+          )}
         </div>
 
-        {/* Additional Notes */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">Additional Notes (Optional)</h2>
+        {/* Additional Notes - Neo-brutalist */}
+        <div className="mb-6 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-xl md:text-2xl font-black text-black mb-4 uppercase border-b-4 border-black pb-3">
+            Additional Notes
+          </h2>
           <textarea
             value={customerNotes}
             onChange={(e) => setCustomerNotes(e.target.value)}
             placeholder="Any additional information, concerns, or special requests..."
-            rows={4}
+            rows={5}
             readOnly={isReadOnly}
-            className="w-full px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            style={isReadOnly ? { backgroundColor: '#f9fafb', cursor: 'default' } : {}}
+            className="w-full border-4 border-black p-4 font-medium text-base focus:outline-none focus:ring-4 focus:ring-yellow-300"
+            style={isReadOnly ? { backgroundColor: '#f3f4f6', cursor: 'default' } : {}}
           />
         </div>
 
-        {/* Signature Section */}
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3">
-            Your Signature <span className="text-red-500">*</span>
+        {/* Signature Section - Neo-brutalist */}
+        <div className="mb-6 border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-xl md:text-2xl font-black text-black mb-4 uppercase border-b-4 border-black pb-3">
+            Your Signature {!isReadOnly && <span className="text-red-600">*</span>}
           </h2>
-          <p className="text-xs md:text-sm text-gray-600 mb-3">
-            Please sign below to confirm the information provided
-          </p>
+          
           {isReadOnly && signatureData ? (
-            <div className="border-2 border-green-300 rounded-lg bg-green-50 p-2 md:p-3">
+            <div className="border-4 border-black bg-green-100 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <img 
                 src={signatureData} 
                 alt="Customer Signature" 
-                className="w-full h-auto max-h-32 md:max-h-48 object-contain"
+                className="w-full h-auto max-h-40 object-contain bg-white border-2 border-black p-2"
               />
-              <p className="text-center text-green-700 text-xs mt-2 font-medium">✓ Signed and Submitted</p>
+              <div className="mt-4 bg-green-500 border-2 border-black p-3 text-center">
+                <p className="text-black font-black text-sm uppercase">✓ SIGNED & SUBMITTED</p>
+              </div>
             </div>
           ) : (
             <>
-              <div className="border-2 border-gray-300 rounded-lg bg-white relative">
+              <div className="border-4 border-black bg-white relative shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <canvas
                   ref={canvasRef}
                   width={600}
@@ -515,19 +483,19 @@ const CustomerForm = () => {
                   onTouchStart={startDrawing}
                   onTouchMove={draw}
                   onTouchEnd={stopDrawing}
-                  className="w-full h-32 md:h-48 cursor-crosshair touch-none"
+                  className="w-full h-40 md:h-48 cursor-crosshair touch-none"
                   style={{ touchAction: 'none' }}
                 />
                 {signatureData && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                    ✓ Signature captured
+                  <div className="absolute top-2 right-2 bg-green-500 border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    ✓ CAPTURED
                   </div>
                 )}
               </div>
               <button
                 type="button"
                 onClick={clearSignature}
-                className="mt-2 md:mt-3 px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-xs md:text-sm font-medium"
+                className="mt-4 border-4 border-black bg-gray-200 text-black px-6 py-3 font-black uppercase text-sm hover:bg-gray-300 transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
               >
                 Clear Signature
               </button>
@@ -535,31 +503,32 @@ const CustomerForm = () => {
           )}
         </div>
 
-        {/* Submit Button - Hide when read-only */}
+        {/* Submit Button - Neo-brutalist */}
         {!isReadOnly && (
-          <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+          <div className="border-4 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
             <button
               onClick={handleSubmit}
               disabled={submitting || photos.length === 0 || !signatureData}
-              className={`w-full px-6 md:px-8 py-3 md:py-4 rounded-lg font-bold text-base md:text-lg transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full border-4 border-black px-8 py-5 font-black text-lg md:text-xl uppercase transition-all flex items-center justify-center gap-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${
                 submitting || photos.length === 0 || !signatureData
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-green-400 text-black hover:bg-green-500'
               }`}
             >
               {submitting ? (
-                <>Submitting...</>
+                <>SUBMITTING...</>
               ) : (
-                <><FiCheck /> Submit Information</>
+                <><FiCheck className="text-2xl" /> SUBMIT FORM</>
               )}
             </button>
             {(photos.length === 0 || !signatureData) && (
-              <p className="text-xs md:text-sm text-red-600 text-center mt-2">
-                {photos.length === 0 && 'Please upload at least one photo'}
-                {photos.length === 0 && !signatureData && ' and '}
-                {!signatureData && 'provide your signature'}
-                {' before submitting'}
-              </p>
+              <div className="mt-4 border-4 border-red-500 bg-red-50 p-4 text-center">
+                <p className="text-red-700 font-black text-sm uppercase">
+                  {photos.length === 0 && '⚠ Upload photos'}
+                  {photos.length === 0 && !signatureData && ' & '}
+                  {!signatureData && '⚠ Sign above'}
+                </p>
+              </div>
             )}
           </div>
         )}
