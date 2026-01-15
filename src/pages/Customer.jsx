@@ -981,6 +981,10 @@ const Customer = () => {
             Cloud sync is off: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in .env.local, then restart. Requests will save locally until then.
           </div>
         )}
+        <div className="flex items-center mb-6">
+          <img src="/gm-header.png" alt="GM Header" className="h-12 w-auto" />
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{formTitle}</h1>
           <button
