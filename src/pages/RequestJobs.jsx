@@ -47,6 +47,10 @@ const RequestJobs = () => {
   const [selectedRequestForPDF, setSelectedRequestForPDF] = useState(null);
   const [availablePDFsToAttach, setAvailablePDFsToAttach] = useState([]);
 
+  // View attachments modal state
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
+  const [selectedRequestForView, setSelectedRequestForView] = useState(null);
+
   const mapSupabaseRowToRequest = (row, jobRequestLabel) => {
     const payload = row?.payload || {};
     return {
@@ -207,6 +211,7 @@ const RequestJobs = () => {
               customer_submitted_at: row.customer_submitted_at,
               customer_vehicle_photos: row.customer_vehicle_photos,
               customer_notes: row.customer_notes,
+              requestAttachments: row.request_attachments || payload.requestAttachments || [],
             };
           });
           allData.push(...mapped);
@@ -233,6 +238,7 @@ const RequestJobs = () => {
               customer_submitted_at: row.customer_submitted_at,
               customer_vehicle_photos: row.customer_vehicle_photos,
               customer_notes: row.customer_notes,
+              requestAttachments: row.request_attachments || payload.requestAttachments || [],
             };
           });
           allData.push(...mapped);
@@ -259,6 +265,7 @@ const RequestJobs = () => {
               customer_submitted_at: row.customer_submitted_at,
               customer_vehicle_photos: row.customer_vehicle_photos,
               customer_notes: row.customer_notes,
+              requestAttachments: row.request_attachments || payload.requestAttachments || [],
             };
           });
           allData.push(...mapped);
@@ -285,6 +292,7 @@ const RequestJobs = () => {
               customer_submitted_at: row.customer_submitted_at,
               customer_vehicle_photos: row.customer_vehicle_photos,
               customer_notes: row.customer_notes,
+              requestAttachments: row.request_attachments || payload.requestAttachments || [],
             };
           });
           allData.push(...mapped);
@@ -408,6 +416,12 @@ const RequestJobs = () => {
       setCustomerFormLinkCopied(true);
       setTimeout(() => setCustomerFormLinkCopied(false), 2000);
     }
+  };
+
+  // Handle opening view attachments modal
+  const handleOpenAttachmentsModal = (request) => {
+    setSelectedRequestForView(request);
+    setShowAttachmentsModal(true);
   };
 
   // Handle opening attach PDF modal
@@ -1238,17 +1252,20 @@ const RequestJobs = () => {
                         <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm">
                           View Details
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenAttachPDFModal(req);
-                          }}
-                          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2"
-                        >
-                          <FiLink size={16} />
-                          Attach Customer PDF
-                        </button>
                       </div>
+
+                      {/* Resources/Attachments Button */}
+                      {req.requestAttachments && req.requestAttachments.length > 0 && (
+                        <div className="mt-4" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleOpenAttachmentsModal(req)}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2"
+                          >
+                            <FiFileText size={16} />
+                            Resources ({req.requestAttachments.length})
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1478,6 +1495,55 @@ const RequestJobs = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* View Attachments Modal */}
+      {showAttachmentsModal && selectedRequestForView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FiFileText className="text-purple-600" />
+                Resources & Attachments
+              </h2>
+              <button
+                onClick={() => setShowAttachmentsModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {!selectedRequestForView.requestAttachments || selectedRequestForView.requestAttachments.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No attachments available</p>
+              ) : (
+                <div className="space-y-3">
+                  {selectedRequestForView.requestAttachments.map((attachment, index) => {
+                    if (!attachment || !attachment.filename || !attachment.url) return null;
+                    return (
+                      <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
+                        <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{attachment.filename}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                        </div>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition whitespace-nowrap"
+                        >
+                          View
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
