@@ -1541,13 +1541,15 @@ const RequestJobs = () => {
               ) : (
                 <div className="space-y-3">
                   {selectedRequestForView.requestAttachments.map((attachment, index) => {
-                    if (!attachment || !attachment.filename || !attachment.url) return null;
+                    if (!attachment || !attachment.url) return null;
+                    const displayName = attachment.filename || attachment.name || 'Attachment';
+                    const sizeValue = attachment.size || attachment.fileSize;
                     return (
                       <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
-                        <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                        <span className="text-2xl">{getFileIcon(displayName)}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{attachment.filename}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(sizeValue)}</p>
                         </div>
                         <a
                           href={attachment.url}
