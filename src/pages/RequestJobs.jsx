@@ -5,6 +5,25 @@ import { supabase } from '../lib/supabaseClient';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers, FiLink } from 'react-icons/fi';
 import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
 
+// Helper functions for file attachments
+const getFileIcon = (filename) => {
+  if (!filename || typeof filename !== 'string') return '📎';
+  const ext = filename.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return '📄';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
+  if (['doc', 'docx'].includes(ext)) return '📝';
+  if (['xls', 'xlsx'].includes(ext)) return '📊';
+  if (['dwg', 'dxf'].includes(ext)) return '📐';
+  return '📎';
+};
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
 const RequestJobs = () => {
   const navigate = useNavigate();
   const { logout, isFactoryAdmin, userEmail } = useAuth();
