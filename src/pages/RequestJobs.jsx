@@ -4,6 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers, FiLink } from 'react-icons/fi';
 import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
+import { startSession, heartbeat, endSession } from '../utils/userTracking';
+import ProfileHeader from '../components/ProfileHeader';
+import ActiveUsersWidget from '../components/ActiveUsersWidget';
+import TimeSpentWidget from '../components/TimeSpentWidget';
 
 // Helper functions for file attachments
 const getFileIcon = (filename) => {
@@ -26,7 +30,7 @@ const formatFileSize = (bytes) => {
 
 const RequestJobs = () => {
   const navigate = useNavigate();
-  const { logout, isFactoryAdmin, userEmail } = useAuth();
+  const { logout, isFactoryAdmin, userEmail, user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -52,6 +56,11 @@ const RequestJobs = () => {
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const requestCodesRef = useRef(new Set());
+  
+  // Session tracking state
+  const [sessionId, setSessionId] = useState(null);
+  const sessionIdRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
   
   // Customer Form Link state
   const [showCustomerFormModal, setShowCustomerFormModal] = useState(false);
@@ -602,6 +611,90 @@ const RequestJobs = () => {
     return () => clearInterval(interval);
   }, [isFactoryAdmin, supabase]);
 
+  // Session tracking: Initialize session on mount
+  useEffect(() => {
+    const initSession = async () => {
+      if (!userEmail || !user) return;
+      
+      try {
+        const sid = await startSession({
+          email: userEmail,
+          name: user?.full_name || user?.email || userEmail,
+          role: user?.role || (isFactoryAdmin() ? 'admin' : 'staff'),
+          page: window.location.pathname,
+          userAgent: navigator.userAgent
+        });
+        
+        if (sid) {
+          setSessionId(sid);
+          sessionIdRef.current = sid;
+          localStorage.setItem('session_id', sid);
+          console.log('✅ Session started:', sid);
+        }
+      } catch (error) {
+        console.error('❌ Failed to start session:', error);
+      }
+    };
+
+    initSession();
+  }, [userEmail, user, isFactoryAdmin]);
+
+  // Session tracking: Heartbeat to keep session alive
+  useEffect(() => {
+    if (!sessionIdRef.current) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await heartbeat(sessionIdRef.current);
+      } catch (error) {
+        console.error('❌ Heartbeat failed:', error);
+      }
+    };
+
+    // Send heartbeat every 20 seconds
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 20000);
+
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+    };
+  }, [sessionId]);
+
+  // Session tracking: Cleanup on unmount and tab close
+  useEffect(() => {
+    const cleanup = async () => {
+      const sid = sessionIdRef.current || localStorage.getItem('session_id');
+      if (sid) {
+        try {
+          await endSession(sid);
+          console.log('✅ Session ended:', sid);
+          localStorage.removeItem('session_id');
+        } catch (error) {
+          console.error('❌ Failed to end session:', error);
+        }
+      }
+    };
+
+    const handleBeforeUnload = (e) => {
+      // Use sendBeacon for reliable cleanup on tab close
+      const sid = sessionIdRef.current || localStorage.getItem('session_id');
+      if (sid && navigator.sendBeacon) {
+        // Send async request that continues even after page unload
+        const blob = new Blob([JSON.stringify({ sessionId: sid })], { type: 'application/json' });
+        navigator.sendBeacon('/api/end-session', blob);
+      }
+      cleanup(); // Also try regular cleanup
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      cleanup();
+    };
+  }, []);
+
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
     setStatusError('');
@@ -1090,7 +1183,7 @@ const RequestJobs = () => {
                 {isFactoryAdmin() ? 'Request Management Dashboard' : 'New Work Request'}
               </h1>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-3 items-center">
               <button 
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
@@ -1120,6 +1213,8 @@ const RequestJobs = () => {
               <button onClick={() => setSortOrder('oldest')} className={`px-3 py-2 rounded-md text-sm transition ${sortOrder === 'oldest' ? 'bg-blue-600 text-white' : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                 Oldest
               </button>
+              {/* Profile Header with User Info and Dropdown */}
+              <ProfileHeader />
             </div>
           </div>
         </div>
@@ -1406,6 +1501,19 @@ const RequestJobs = () => {
             </div>
           )}
         </div>
+
+        {/* Admin-Only Analytics Widgets */}
+        {isFactoryAdmin() && (
+          <div className="p-6">
+            <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              User Analytics
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ActiveUsersWidget />
+              <TimeSpentWidget isAdmin={true} userEmail={userEmail} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* New Request Modal */}
