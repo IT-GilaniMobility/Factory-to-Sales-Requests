@@ -833,11 +833,13 @@ const RequestJobs = () => {
           </button>
         </div>
 
-        <nav className="flex-1 py-6 space-y-4 px-2 overflow-y-auto">
-          <div className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-4 ${sidebarOpen ? '' : 'hidden'}`}>
-            Dashboard
-          </div>
-          <div className="space-y-2">
+        <nav className="flex-1 py-4 px-3 overflow-y-auto">
+          {sidebarOpen && (
+            <div className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-3`}>
+              Dashboard
+            </div>
+          )}
+          <div className="space-y-1.5">
             {[
               { label: 'All Requests', count: stats.total, key: 'All' },
               { label: 'Requested', count: stats.requested, key: 'Requested to factory' },
@@ -848,30 +850,30 @@ const RequestJobs = () => {
               <button
                 key={item.key}
                 onClick={() => setFilterStatus(item.key)}
-                className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center justify-between ${
+                className={`w-full text-left px-3 py-2.5 rounded-md transition-all flex items-center justify-between ${
                   filterStatus === item.key
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                 }`}
               >
                 <span className="flex items-center gap-2 flex-1 min-w-0">
                   {sidebarOpen && <span className="truncate text-sm">{item.label}</span>}
                 </span>
-                {sidebarOpen && <span className={`text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0 ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-black'}`}>{item.count}</span>}
+                {sidebarOpen && <span className={`text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0 ${filterStatus === item.key ? 'bg-blue-700 text-white' : darkMode ? 'bg-gray-700 text-white' : 'bg-gray-300 text-gray-800'}`}>{item.count}</span>}
               </button>
             ))}
           </div>
 
           {/* Recent Jobs */}
           {sidebarOpen && requests.length > 0 && (
-            <div className="pt-4 border-t border-gray-600">
+            <div className="pt-6 mt-4 border-t border-gray-600">
               <h3 className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-3`}>Recent Jobs</h3>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {requests.slice(0, 5).map((req, idx) => (
                   <button
                     key={idx}
                     onClick={() => navigate(`/requests/${req.request_code}`)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-xs transition-all truncate ${
+                    className={`w-full text-left px-3 py-2.5 rounded-md text-xs transition-all truncate ${
                       darkMode
                         ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
                         : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
@@ -887,11 +889,18 @@ const RequestJobs = () => {
           )}
         </nav>
 
-        {/* Work Hours Link - PROMINENT */}
-        <div className="px-4 pb-2">
+        {/* Quick Access Section */}
+        <div className={`px-4 py-4 space-y-2 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} mt-2`}>
+          {sidebarOpen && (
+            <div className={`text-xs font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-600'} uppercase tracking-wider px-2 mb-3`}>
+              Quick Access
+            </div>
+          )}
+          
+          {/* Work Hours Link - PROMINENT */}
           <Link
             to="/work-hours"
-            className={`w-full text-left px-3 py-3 rounded-md transition-all flex items-center gap-2 block font-semibold border-2 ${
+            className={`w-full text-left px-3 py-3 rounded-md transition-all flex items-center gap-3 block font-semibold border-2 ${
               darkMode 
                 ? 'bg-blue-900 border-blue-500 text-blue-100 hover:bg-blue-800' 
                 : 'bg-blue-50 border-blue-400 text-blue-900 hover:bg-blue-100'
@@ -900,26 +909,22 @@ const RequestJobs = () => {
             <FiClock size={20} />
             {sidebarOpen && <span className="text-sm">Work Hours</span>}
           </Link>
-        </div>
 
-        {/* Activity Logs Link */}
-        <div className="px-4 pb-2">
+          {/* Activity Logs Link */}
           <Link
             to="/logs"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
+            className={`w-full text-left px-3 py-2.5 rounded-md transition-all flex items-center gap-3 block ${
               darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
             }`}
           >
             <FiActivity size={18} />
             {sidebarOpen && <span className="text-sm">Activity Logs</span>}
           </Link>
-        </div>
 
-        {/* Deliveries Link */}
-        <div className="px-4 pb-2">
+          {/* Deliveries Link */}
           <Link
             to="/deliveries"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
+            className={`w-full text-left px-3 py-2.5 rounded-md transition-all flex items-center gap-3 block ${
               darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
             }`}
           >
@@ -928,22 +933,9 @@ const RequestJobs = () => {
           </Link>
         </div>
 
-        {/* Customer PDFs Link */}
-        <div className="px-4 pb-2">
-          <Link
-            to="/customer-pdfs"
-            className={`w-full text-left px-3 py-2 rounded-md transition-all flex items-center gap-2 block ${
-              darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-            }`}
-          >
-            <FiFileText size={18} />
-            {sidebarOpen && <span className="text-sm">Customer PDFs</span>}
-          </Link>
-        </div>
-
         {/* Customer Forms Section */}
         {sidebarOpen && (
-          <div className={`px-4 pb-4 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'} mt-4 pt-4`}>
+          <div className={`px-4 py-4 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
             <div className="flex items-center justify-between mb-3">
               <h3 className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                 Customer Forms
@@ -1015,10 +1007,10 @@ const RequestJobs = () => {
           </div>
         )}
 
-        <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`p-4 space-y-2.5 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
           <button
             onClick={() => setShowNewRequestModal(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
           >
             <FiPlus size={18} />
             {sidebarOpen && <span>New Request</span>}
@@ -1026,7 +1018,7 @@ const RequestJobs = () => {
           <button
             onClick={handleGenerateCustomerForm}
             disabled={isGeneratingCustomerForm}
-            className={`w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 mb-3 ${
+            className={`w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${
               isGeneratingCustomerForm ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -1035,7 +1027,7 @@ const RequestJobs = () => {
           </button>
           <button
             onClick={logout}
-            className={`w-full font-semibold py-2 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 ${
+            className={`w-full font-semibold py-2.5 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 shadow-sm ${
               darkMode
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : 'bg-red-200 hover:bg-red-300 text-red-900'
@@ -1045,7 +1037,7 @@ const RequestJobs = () => {
             {sidebarOpen && <span>Logout</span>}
           </button>
           {sidebarOpen && (
-            <p className={`text-xs mt-3 text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xs mt-3 text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'} truncate px-2`}>
               {userEmail}
             </p>
           )}
