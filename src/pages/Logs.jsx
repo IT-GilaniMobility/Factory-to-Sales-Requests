@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Logs = () => {
-  const { userEmail, isFactoryAdmin, logout } = useAuth();
+  const { userEmail } = useAuth();
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({ total: 0, today: 0, thisWeek: 0, thisMonth: 0 });
   const [monthlyStats, setMonthlyStats] = useState({ added: 0, completed: 0, rejected: 0 });
