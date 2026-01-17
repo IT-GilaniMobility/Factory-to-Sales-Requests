@@ -8,23 +8,23 @@ const TimeSpentHover = ({ isAdmin, userEmail }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  const fetchStats = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const result = await getUserTimeStats({
-        startDate: today,
-        endDate: today,
-        email: isAdmin ? undefined : userEmail
-      });
-      setStats(result);
-    } catch (error) {
-      console.error('❌ Failed to fetch time stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const result = await getUserTimeStats({
+          startDate: today,
+          endDate: today,
+          email: isAdmin ? undefined : userEmail
+        });
+        setStats(result);
+      } catch (error) {
+        console.error('❌ Failed to fetch time stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchStats();
     // Auto-refresh every 60 seconds
     const interval = setInterval(fetchStats, 60000);
