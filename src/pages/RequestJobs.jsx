@@ -6,8 +6,6 @@ import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, F
 import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
 import { startSession, heartbeat, endSession } from '../utils/userTracking';
 import ProfileHeader from '../components/ProfileHeader';
-import ActiveUsersHover from '../components/ActiveUsersHover';
-import TimeSpentHover from '../components/TimeSpentHover';
 
 // Helper functions for file attachments
 const getFileIcon = (filename) => {
@@ -1213,13 +1211,6 @@ const RequestJobs = () => {
               <button onClick={() => setSortOrder('oldest')} className={`px-3 py-2 rounded-md text-sm transition ${sortOrder === 'oldest' ? 'bg-blue-600 text-white' : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                 Oldest
               </button>
-              {/* User Tracking Widgets - Admin Only */}
-              {isFactoryAdmin() && (
-                <>
-                  <ActiveUsersHover />
-                  <TimeSpentHover isAdmin={true} userEmail={userEmail} />
-                </>
-              )}
               {/* Profile Header with User Info and Dropdown */}
               <ProfileHeader />
             </div>
