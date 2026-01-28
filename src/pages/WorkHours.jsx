@@ -10,7 +10,7 @@ const WorkHours = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(() => {
+  const [darkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     return stored ? JSON.parse(stored) : false;
   });
@@ -209,11 +209,6 @@ const WorkHours = () => {
 
   const getLinkedRequest = (requestCode) => {
     return requests.find(r => r.request_code === requestCode);
-  };
-
-  const STATUS_COLORS = {
-    'in_progress': 'bg-yellow-100 text-yellow-800',
-    'completed': 'bg-green-100 text-green-800'
   };
 
   return (

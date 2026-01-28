@@ -450,15 +450,6 @@ const RequestJobs = () => {
     setShowAttachmentsModal(true);
   };
 
-  // Handle opening attach PDF modal
-  const handleOpenAttachPDFModal = async (request) => {
-    setSelectedRequestForPDF(request);
-    setShowAttachPDFModal(true);
-    // Fetch available PDFs to attach
-    const forms = await fetchSubmittedCustomerForms();
-    setAvailablePDFsToAttach(forms.filter(f => f.payload?.pdfUrl));
-  };
-
   // Handle attaching PDF to request
   const handleAttachPDFToRequest = async (customerFormId) => {
     if (!selectedRequestForPDF) return;
@@ -521,13 +512,13 @@ const RequestJobs = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [visibleRequests, supabase]);
+  }, [visibleRequests]);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Load submitted customer forms
+  // Load submitted customer forms (run once on mount)
   useEffect(() => {
     const fetchCustomerForms = async () => {
       if (!supabase) return;
@@ -550,7 +541,7 @@ const RequestJobs = () => {
     };
 
     fetchCustomerForms();
-  }, [supabase]);
+  }, []);
 
   // Track known request codes for polling-based detection
   useEffect(() => {
@@ -607,7 +598,7 @@ const RequestJobs = () => {
     checkLatest();
 
     return () => clearInterval(interval);
-  }, [isFactoryAdmin, supabase]);
+  }, [isFactoryAdmin]);
 
   // Session tracking: Initialize session on mount
   useEffect(() => {

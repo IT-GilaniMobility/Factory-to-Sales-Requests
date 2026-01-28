@@ -88,7 +88,7 @@ export const uploadPDFToStorage = async (pdfBlob, requestCode) => {
     const filepath = `pdfs/${filename}`;
     
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('request-pdfs')
       .upload(filepath, pdfBlob, {
         contentType: 'application/pdf',
@@ -125,7 +125,7 @@ export const uploadVehiclePhoto = async (file, token) => {
     const filepath = `photos/${filename}`;
     
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('vehicle-photos')
       .upload(filepath, file, {
         contentType: file.type,
@@ -449,7 +449,7 @@ export const uploadRequestAttachment = async (file, requestCode) => {
     const filepath = `request-attachments/${filename}`;
     
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('request-attachments')
       .upload(filepath, file, {
         cacheControl: '3600',
