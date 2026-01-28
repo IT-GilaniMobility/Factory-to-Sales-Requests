@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
@@ -608,7 +608,7 @@ const RequestDetails = () => {
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
   const [qcStatus, setQCStatus] = useState(null);
 
-  const loadQCStatus = async () => {
+  const loadQCStatus = useCallback(async () => {
     if (!supabase || !id) return;
     try {
       const { data, error } = await supabase
@@ -627,11 +627,11 @@ const RequestDetails = () => {
       console.debug('QC not available:', err?.message);
       setQCStatus(null);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadQCStatus();
-  }, [id, loadQCStatus]);
+  }, [loadQCStatus]);
 
   const handleQCComplete = (status) => {
     setQCStatus(prev => ({ ...prev, inspection_status: status }));

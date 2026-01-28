@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { FiTruck, FiClock, FiPlus, FiEdit2, FiTrash2, FiUser } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,13 +30,7 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
     notes: ''
   });
 
-  useEffect(() => {
-    if (requestId && requestType) {
-      loadData();
-    }
-  }, [requestId, requestType]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!supabase) {
       setLoading(false);
       return;
@@ -68,7 +62,13 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [requestId, requestType]);
+
+  useEffect(() => {
+    if (requestId && requestType) {
+      loadData();
+    }
+  }, [requestId, requestType, loadData]);
 
   const handleAddDelivery = async (e) => {
     e.preventDefault();

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionComplete }) => {
-  const [categories, setCategories] = useState([]);
   const [inspection, setInspection] = useState(null);
   const [inspectionItems, setInspectionItems] = useState([]);
   const [activeJobType, setActiveJobType] = useState(jobType);
@@ -11,11 +10,7 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
   const [saving, setSaving] = useState(false);
   const inspectors = ['Hasan', 'Jay Jay'];
 
-  useEffect(() => {
-    loadInspectionData();
-  }, [requestCode, jobType]);
-
-  const loadInspectionData = async () => {
+  const loadInspectionData = useCallback(async () => {
     setLoading(true);
     try {
       // Check if inspection exists (unique by request_code per schema)
@@ -56,22 +51,16 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
         setActiveJobType(templateName);
         await createNewInspection(templateName);
       }
-
-      // Load categories for the active template
-      if (supabase) {
-        const { data: cats } = await supabase
-          .from('qc_categories')
-          .select('*')
-          .eq('template_name', templateName)
-          .order('category_name');
-        setCategories(cats || []);
-      }
     } catch (error) {
       console.error('Failed to load inspection data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [jobType, requestCode]);
+
+  useEffect(() => {
+    loadInspectionData();
+  }, [loadInspectionData]);
 
   // Backfill inspection items for an existing inspection when DB was seeded later
   const backfillInspectionItems = async (inspectionId, templateName) => {
@@ -285,7 +274,6 @@ const QualityControlInspection = ({ requestCode, jobType, onClose, onInspectionC
 
   const hasFailures = inspectionItems.some(item => item.status === 'fail');
   const hasPending = inspectionItems.some(item => item.status === 'pending');
-  const overallStatus = hasFailures ? 'failed' : hasPending ? 'in_progress' : 'passed';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
