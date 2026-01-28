@@ -728,7 +728,7 @@ const RequestDetails = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [request, supabase]);
+  }, [request]);
 
   const jobType = request?.job?.requestType || request?.jobRequest || 'Wheelchair Lifter Installation';
   const isWheelchair = jobType === 'Wheelchair Lifter Installation';

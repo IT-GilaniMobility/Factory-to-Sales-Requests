@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { uploadVehiclePhoto } from '../utils/pdfService';
 import { FiUpload, FiX, FiCheck, FiFileText } from 'react-icons/fi';
 
 const CustomerForm = () => {
   const { token } = useParams();
-  const navigate = useNavigate();
   const canvasRef = useRef(null);
   
   const [loading, setLoading] = useState(true);
