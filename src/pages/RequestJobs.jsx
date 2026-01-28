@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers, FiLink } from 'react-icons/fi';
 import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
-import { startSession, heartbeat, endSession } from '../utils/userTracking';
 import ProfileHeader from '../components/ProfileHeader';
 
 // Helper functions for file attachments
@@ -54,11 +53,6 @@ const RequestJobs = () => {
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const requestCodesRef = useRef(new Set());
-  
-  // Session tracking state
-  const [sessionId, setSessionId] = useState(null);
-  const sessionIdRef = useRef(null);
-  const heartbeatIntervalRef = useRef(null);
   
   // Customer Form Link state
   const [showCustomerFormModal, setShowCustomerFormModal] = useState(false);
@@ -600,89 +594,7 @@ const RequestJobs = () => {
     return () => clearInterval(interval);
   }, [isFactoryAdmin]);
 
-  // Session tracking: Initialize session on mount
-  useEffect(() => {
-    const initSession = async () => {
-      if (!userEmail || !user) return;
-      
-      try {
-        const sid = await startSession({
-          email: userEmail,
-          name: user?.full_name || user?.email || userEmail,
-          role: user?.role || (isFactoryAdmin() ? 'admin' : 'staff'),
-          page: window.location.pathname,
-          userAgent: navigator.userAgent
-        });
-        
-        if (sid) {
-          setSessionId(sid);
-          sessionIdRef.current = sid;
-          localStorage.setItem('session_id', sid);
-          console.log('✅ Session started:', sid);
-        }
-      } catch (error) {
-        console.error('❌ Failed to start session:', error);
-      }
-    };
-
-    initSession();
-  }, [userEmail, user, isFactoryAdmin]);
-
-  // Session tracking: Heartbeat to keep session alive
-  useEffect(() => {
-    if (!sessionIdRef.current) return;
-
-    const sendHeartbeat = async () => {
-      try {
-        await heartbeat(sessionIdRef.current);
-      } catch (error) {
-        console.error('❌ Heartbeat failed:', error);
-      }
-    };
-
-    // Send heartbeat every 20 seconds
-    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 20000);
-
-    return () => {
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-      }
-    };
-  }, [sessionId]);
-
-  // Session tracking: Cleanup on unmount and tab close
-  useEffect(() => {
-    const cleanup = async () => {
-      const sid = sessionIdRef.current || localStorage.getItem('session_id');
-      if (sid) {
-        try {
-          await endSession(sid);
-          console.log('✅ Session ended:', sid);
-          localStorage.removeItem('session_id');
-        } catch (error) {
-          console.error('❌ Failed to end session:', error);
-        }
-      }
-    };
-
-    const handleBeforeUnload = (e) => {
-      // Use sendBeacon for reliable cleanup on tab close
-      const sid = sessionIdRef.current || localStorage.getItem('session_id');
-      if (sid && navigator.sendBeacon) {
-        // Send async request that continues even after page unload
-        const blob = new Blob([JSON.stringify({ sessionId: sid })], { type: 'application/json' });
-        navigator.sendBeacon('/api/end-session', blob);
-      }
-      cleanup(); // Also try regular cleanup
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      cleanup();
-    };
-  }, []);
+  // Session tracking removed
 
   const handleStatusChange = async (id, newStatus, e) => {
     e.stopPropagation();
