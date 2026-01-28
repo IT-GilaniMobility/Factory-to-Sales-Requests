@@ -607,16 +607,10 @@ const RequestDetails = () => {
   const [showQCSelector, setShowQCSelector] = useState(false);
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
   const [qcStatus, setQCStatus] = useState(null);
-  const [qcLoading, setQCLoading] = useState(false);
-
-  useEffect(() => {
-    loadQCStatus();
-  }, [id]);
 
   const loadQCStatus = async () => {
     if (!supabase || !id) return;
     try {
-      setQCLoading(true);
       const { data, error } = await supabase
         .from('qc_inspections')
         .select('inspection_status, inspector_name, completed_at, job_type')
@@ -632,10 +626,12 @@ const RequestDetails = () => {
       // No QC inspection yet or table doesn't exist
       console.debug('QC not available:', err?.message);
       setQCStatus(null);
-    } finally {
-      setQCLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadQCStatus();
+  }, [id, loadQCStatus]);
 
   const handleQCComplete = (status) => {
     setQCStatus(prev => ({ ...prev, inspection_status: status }));
@@ -700,7 +696,7 @@ const RequestDetails = () => {
     };
 
     loadRequest();
-  }, [id, supabase]);
+  }, [id]);
 
   // Subscribe to realtime updates for this specific request
   useEffect(() => {
@@ -732,7 +728,7 @@ const RequestDetails = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [request?.id, supabase]);
+  }, [request, supabase]);
 
   const jobType = request?.job?.requestType || request?.jobRequest || 'Wheelchair Lifter Installation';
   const isWheelchair = jobType === 'Wheelchair Lifter Installation';

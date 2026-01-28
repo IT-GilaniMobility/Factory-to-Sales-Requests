@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiGrid, FiList, FiSun, FiMoon, FiLogOut, FiActivity, FiTruck, FiBell, FiClock, FiFileText, FiCheck, FiShare2, FiCopy, FiUsers, FiLink } from 'react-icons/fi';
-import { createCustomerFormPublic, attachCustomerPDFToRequest, fetchSubmittedCustomerForms } from '../utils/pdfService';
+import { createCustomerFormPublic, attachCustomerPDFToRequest } from '../utils/pdfService';
 import ProfileHeader from '../components/ProfileHeader';
 
 // Helper functions for file attachments
@@ -27,7 +27,7 @@ const formatFileSize = (bytes) => {
 
 const RequestJobs = () => {
   const navigate = useNavigate();
-  const { logout, isFactoryAdmin, userEmail, user } = useAuth();
+  const { logout, isFactoryAdmin, userEmail } = useAuth();
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -65,7 +65,7 @@ const RequestJobs = () => {
   // Attach PDF modal state
   const [showAttachPDFModal, setShowAttachPDFModal] = useState(false);
   const [selectedRequestForPDF, setSelectedRequestForPDF] = useState(null);
-  const [availablePDFsToAttach, setAvailablePDFsToAttach] = useState([]);
+  const [availablePDFsToAttach] = useState([]);
 
   // View attachments modal state
   const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
@@ -347,7 +347,7 @@ const RequestJobs = () => {
     // Clear any stale cache and load fresh data
     console.log('🔄 Starting fresh data load...');
     loadFromSupabase();
-  }, [isFactoryAdmin, supabase, userEmail]);
+  }, [isFactoryAdmin, userEmail]);
 
   useEffect(() => {
     if (!supabase || !isFactoryAdmin()) return;
@@ -403,7 +403,7 @@ const RequestJobs = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isFactoryAdmin, supabase]);
+  }, [isFactoryAdmin]);
 
   // Filter requests based on user role
   const getVisibleRequests = () => {
