@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/static/css/main.9a9553f0.css",
+    "main.css": "/static/css/main.b485890b.css",
     "main.js": "/static/js/main.028a5e2d.js",
     "static/js/977.2eef3593.chunk.js": "/static/js/977.2eef3593.chunk.js",
     "static/js/455.11896111.chunk.js": "/static/js/455.11896111.chunk.js",
@@ -15,13 +15,13 @@
     "static/media/wheelchair_front.webp": "/static/media/wheelchair_front.63efc3b129a6e4c18293.webp",
     "static/media/gm-header.png": "/static/media/gm-header.379b278b7b352ebf897e.png",
     "index.html": "/index.html",
-    "main.9a9553f0.css.map": "/static/css/main.9a9553f0.css.map",
+    "main.b485890b.css.map": "/static/css/main.b485890b.css.map",
     "main.028a5e2d.js.map": "/static/js/main.028a5e2d.js.map",
     "977.2eef3593.chunk.js.map": "/static/js/977.2eef3593.chunk.js.map",
     "455.11896111.chunk.js.map": "/static/js/455.11896111.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9a9553f0.css",
+    "static/css/main.b485890b.css",
     "static/js/main.028a5e2d.js"
   ]
 }

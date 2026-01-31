@@ -99,3 +99,15 @@
     display: none !important;
   }
 }
+
+/* Hide legacy User Analytics and Customer Forms panels from the UI */
+/* User Analytics section (heading + two cards grid) */
+div.p-6:has(> h2.text-2xl.font-bold.mb-6.text-gray-900) {
+  display: none !important;
+}
+
+/* Customer Forms sidebar block */
+div.px-4.py-4.border-t.border-gray-200:has(h3.font-semibold.text-sm.text-gray-700) {
+  display: none !important;
+}
+
