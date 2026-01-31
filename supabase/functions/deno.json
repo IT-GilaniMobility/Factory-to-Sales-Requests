@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.177.0/"
+  },
+  "tasks": {
+    "dev": "deno run --allow-all --watch=supabase/functions serve"
+  }
+}

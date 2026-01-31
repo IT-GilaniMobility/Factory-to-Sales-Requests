@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .animate-fade-in-down {
+    animation: fadeInDown 0.5s ease-out;
+  }
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated gradient background utility */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@layer utilities {
+  .animate-gradient {
+    animation: gradientMove 6s ease-in-out infinite;
+  }
+}
+
+/* Print styles to mirror on-screen layout for PDF generation */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    background: #ffffff;
+    margin: 0;
+  }
+
+  /* Keep content within the printable width while preserving spacing */
+  .max-w-6xl {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Avoid gray background tinting the page */
+  .bg-gray-50 {
+    background-color: #ffffff !important;
+  }
+
+  /* Prevent sections and key blocks from splitting across pages */
+  .bg-white.rounded-lg.shadow-sm,
+  .border-l-4,
+  .list-disc,
+  .grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Ensure media fits the printable area */
+  img,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Let scrollable areas expand for printing */
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* Hide fixed overlays (toasts, modals, sticky footer) that would cover content */
+  .fixed {
+    display: none !important;
+  }
+}

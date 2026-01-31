@@ -1,0 +1,27 @@
+{
+  "files": {
+    "main.css": "/static/css/main.9a9553f0.css",
+    "main.js": "/static/js/main.028a5e2d.js",
+    "static/js/977.2eef3593.chunk.js": "/static/js/977.2eef3593.chunk.js",
+    "static/js/455.11896111.chunk.js": "/static/js/455.11896111.chunk.js",
+    "static/media/car.jpg": "/static/media/car.b862cedfc08281118a2f.jpg",
+    "static/media/vehicle_measurements.png": "/static/media/vehicle_measurements.24f3d903f7f8f671328d.png",
+    "static/media/turney-seat.png": "/static/media/turney-seat.917e1b15dd4bb4676085.png",
+    "static/media/wheelchair_sideview.png": "/static/media/wheelchair_sideview.0966dbc93e926dcddb85.png",
+    "static/media/man-height.png": "/static/media/man-height.4d7ed57dbb25c3d01318.png",
+    "static/media/g24_layout.png": "/static/media/g24_layout.32b559b766721fe87046.png",
+    "static/media/women-height.png": "/static/media/women-height.b137c2f26257c75fc7f2.png",
+    "static/media/driving-sol.png": "/static/media/driving-sol.15cd53b45cba36af1db5.png",
+    "static/media/wheelchair_front.webp": "/static/media/wheelchair_front.63efc3b129a6e4c18293.webp",
+    "static/media/gm-header.png": "/static/media/gm-header.379b278b7b352ebf897e.png",
+    "index.html": "/index.html",
+    "main.9a9553f0.css.map": "/static/css/main.9a9553f0.css.map",
+    "main.028a5e2d.js.map": "/static/js/main.028a5e2d.js.map",
+    "977.2eef3593.chunk.js.map": "/static/js/977.2eef3593.chunk.js.map",
+    "455.11896111.chunk.js.map": "/static/js/455.11896111.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9a9553f0.css",
+    "static/js/main.028a5e2d.js"
+  ]
+}
