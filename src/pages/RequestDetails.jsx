@@ -4,6 +4,19 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import QualityControlInspection from '../components/QualityControlInspection';
 import DeliveryWorkSection from '../components/DeliveryWorkSection';
+import DeliveryNoteForm from '../components/delivery-note/DeliveryNoteForm';
+import { useDeliveryNote } from '../components/delivery-note/useDeliveryNote';
+  // Delivery Note modal state
+  const [showDeliveryNoteModal, setShowDeliveryNoteModal] = useState(false);
+  let deliveryNoteHooks = { note: null, loading: false, fetchNote: () => {}, saveNote: async () => {} };
+  if (request?.id) {
+    deliveryNoteHooks = useDeliveryNote(request.id);
+  }
+
+  useEffect(() => {
+    if (request?.id && deliveryNoteHooks.fetchNote) deliveryNoteHooks.fetchNote();
+    // eslint-disable-next-line
+  }, [request?.id]);
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
 import vehicleMeasurements from '../assets/vehicle_measurements.png';
@@ -607,6 +620,15 @@ const RequestDetails = () => {
   const [showQCSelector, setShowQCSelector] = useState(false);
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
   const [qcStatus, setQCStatus] = useState(null);
+  // Delivery Note modal state and hooks
+  const [showDeliveryNoteModal, setShowDeliveryNoteModal] = useState(false);
+  // Only call useDeliveryNote after request is loaded
+  const deliveryNoteHooks = request?.id ? useDeliveryNote(request.id) : null;
+  // Fetch delivery note when request changes
+  useEffect(() => {
+    if (deliveryNoteHooks && request?.id) deliveryNoteHooks.fetchNote();
+    // eslint-disable-next-line
+  }, [request?.id]);
 
   const loadQCStatus = useCallback(async () => {
     if (!supabase || !id) return;
@@ -1033,6 +1055,23 @@ const RequestDetails = () => {
               <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
                 Export PDF
               </button>
+              {request?.status === 'Completed' && (
+                deliveryNote ? (
+                  <button
+                    onClick={() => setShowDeliveryNoteModal(true)}
+                    className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-medium text-sm shadow-sm"
+                  >
+                    View Delivery Note
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowDeliveryNoteModal(true)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-sm shadow-sm"
+                  >
+                    Generate Delivery Note
+                  </button>
+                )
+              )}
               {request?.status === 'Completed' && !qcStatus && (
                 <button
                   onClick={openQCModal}
@@ -1044,6 +1083,28 @@ const RequestDetails = () => {
             </div>
           </div>
         )}
+      {/* Delivery Note Modal */}
+      {showDeliveryNoteModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-6 border border-gray-200 relative">
+            <button
+              onClick={() => setShowDeliveryNoteModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+              aria-label="Close"
+            >✕</button>
+            <h2 className="text-xl font-bold mb-4 text-gray-900">{deliveryNote ? 'View Delivery Note' : 'Generate Delivery Note'}</h2>
+            <DeliveryNoteForm
+              initial={deliveryNote}
+              loading={deliveryNoteLoading}
+              onSubmit={async (fields) => {
+                await saveNote({ ...fields });
+                setShowDeliveryNoteModal(false);
+                fetchNote();
+              }}
+            />
+          </div>
+        </div>
+      )}
 
         {/* Quality Control Status */}
         {qcStatus && (

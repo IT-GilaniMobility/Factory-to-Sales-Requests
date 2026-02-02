@@ -1217,20 +1217,35 @@ const Customer = () => {
                   </div>
                 </Section>
 
-                {/* SECTION 4: Product Model - Same as Wheelchair */}
+                {/* SECTION 4: Product Model - Image Select */}
                 <Section title="4. Product Model">
-                  <RadioGroup 
-                    label="Select Model" 
-                    name="productModel" 
-                    options={['1006004', '106016', 'Others']} 
-                    required
-                    value={formData.productModel}
-                    onChange={handleChange}
-                    error={errors.productModel}
-                  />
-                  {formData.productModel === 'Others' && (
-                    <TextareaField label="Comments" name="productModelOther" required value={formData.productModelOther || ''} onChange={handleChange} error={errors.productModelOther} />
-                  )}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Select Model *</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { src: require('../assets/BP-Lift.png'), value: 'BP Lift', label: 'BP Lift' },
+                        { src: require('../assets/BabyLift.png'), value: 'Baby Lift', label: 'Baby Lift' },
+                        { src: require('../assets/OpenBabyLift.png'), value: 'Open Baby Lift', label: 'Open Baby Lift' },
+                        { src: require('../assets/Butterfly-Lift.png'), value: 'Butterfly Lift', label: 'Butterfly Lift' }
+                      ].map((img, idx) => (
+                        <div key={img.value} className={`border rounded-lg p-2 flex flex-col items-center cursor-pointer transition ${formData.productModel === img.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
+                          onClick={() => handleChange({ target: { name: 'productModel', value: img.value } })}
+                        >
+                          <img src={img.src} alt={img.label} className="h-24 w-auto object-contain mb-2" />
+                          <span className="text-xs font-medium text-gray-700">{img.label}</span>
+                          <input
+                            type="radio"
+                            name="productModel"
+                            value={img.value}
+                            checked={formData.productModel === img.value}
+                            onChange={handleChange}
+                            className="hidden"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <ErrorMsg field="productModel" />
+                  </div>
                 </Section>
 
                 {/* SECTION 5: Second Row Seat Positions - Same as Wheelchair */}
