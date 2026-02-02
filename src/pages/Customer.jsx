@@ -1244,8 +1244,94 @@ const Customer = () => {
                         </div>
                       ))}
                     </div>
+
                     <ErrorMsg field="productModel" />
                   </div>
+
+                  {/* Show BP Lift diagrams if selected */}
+                  {formData.productModel === 'BP Lift' && (
+                    <div className="mt-6 space-y-6">
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                        <img
+                          src={require('../assets/BP-Lift-Diagram.png')}
+                          alt="BP Lift Diagram"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                        <img
+                          src={require('../assets/BP-Lift-Table .png')}
+                          alt="BP Lift Technical Information"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.productModel === 'Open Baby Lift' && (
+                    <div className="mt-6 space-y-6">
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                        <img
+                          src={require('../assets/OpenBabyLift-Diagram.png')}
+                          alt="Open Baby Lift Diagram"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                        <img
+                          src={require('../assets/OpenBabyLift-Table.png')}
+                          alt="Open Baby Lift Technical Information"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.productModel === 'Butterfly Lift' && (
+                    <div className="mt-6 space-y-6">
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                        <img
+                          src={require('../assets/butterfly-Lift-Diagram.png')}
+                          alt="Butterfly Lift Diagram"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                        <img
+                          src={require('../assets/ButterflyLift-Table.png')}
+                          alt="Butterfly Lift Technical Information"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.productModel === 'Baby Lift' && (
+                    <div className="mt-6 space-y-6">
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                        <img
+                          src={require('../assets/Babylift-Diagram.png')}
+                          alt="Baby Lift Diagram"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                        <img
+                          src={require('../assets/Babylift-Table.png')}
+                          alt="Baby Lift Technical Information"
+                          className="w-full max-w-lg h-auto rounded border border-gray-300"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </Section>
 
                 {/* SECTION 5: Second Row Seat Positions - Same as Wheelchair */}

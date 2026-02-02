@@ -1008,20 +1008,24 @@ const RequestJobs = () => {
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRequests.map(req => {
+                if (!req || typeof req !== 'object') return null;
                 const colors = getStatusColor(req.status);
+                const customer = req.customer && typeof req.customer === 'object' ? req.customer : { name: '—', mobile: '—', quoteRef: '—' };
+                const jobRequest = req.jobRequest || (req.job && req.job.requestType) || '—';
+                const createdAt = req.createdAt ? formatDate(req.createdAt) : '—';
                 return (
                   <div
-                    key={req.id}
-                    onClick={() => navigate(`/requests/${req.id}`)}
+                    key={req.id || req.request_code || Math.random()}
+                    onClick={() => req.id && navigate(`/requests/${req.id}`)}
                     className={`${colors.bg} ${darkMode ? 'border-gray-600' : 'border-gray-200'} border rounded-lg shadow-sm hover:shadow-lg hover:scale-105 transition-all cursor-pointer overflow-hidden group`}
                   >
                     <div className="p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <div className={`font-mono text-xs px-2 py-1 rounded w-fit ${darkMode ? 'text-gray-300 bg-gray-600' : 'text-gray-600 bg-gray-200'}`}>
-                            {req.id}
+                          <div className={`font-mono text-xs px-2 py-1 rounded w-fit ${darkMode ? 'text-gray-300 bg-gray-600' : 'text-gray-600 bg-gray-200'}`}> 
+                            {req.id || '—'}
                           </div>
-                          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(req.createdAt)}</p>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{createdAt}</p>
                         </div>
                         <div onClick={e => e.stopPropagation()}>
                           {isFactoryAdmin() ? (
@@ -1044,7 +1048,7 @@ const RequestJobs = () => {
                       </div>
 
                       {/* QC Status Badge for Grid */}
-                      {getQCBadge(req.request_code) && (
+                      {req.request_code && getQCBadge(req.request_code) && (
                         <div className={`mb-4 px-3 py-2 rounded-lg text-xs font-semibold text-center ${getQCBadge(req.request_code).bg} ${getQCBadge(req.request_code).text}`}>
                           {getQCBadge(req.request_code).icon} {getQCBadge(req.request_code).label}
                         </div>
@@ -1060,20 +1064,19 @@ const RequestJobs = () => {
                         )}
                       </div>
 
-
                       <div className={`mb-4 pb-4 ${darkMode ? 'border-gray-500' : 'border-gray-300'} border-b`}>
                         <h3 className={`font-bold text-lg group-hover:text-blue-600 transition-colors ${darkMode ? 'text-black' : 'text-gray-900'}`}>
-                          {req.customer?.name || '—'}
+                          {customer.name || '—'}
                         </h3>
-                        <p className={`text-sm mt-1 ${darkMode ? 'text-black' : 'text-gray-600'}`}>{req.customer?.mobile || '—'}</p>
-                        <p className={`text-xs mt-1 ${darkMode ? 'text-gray-700' : 'text-gray-500'}`}>Quote: {req.customer?.quoteRef || '—'}</p>
+                        <p className={`text-sm mt-1 ${darkMode ? 'text-black' : 'text-gray-600'}`}>{customer.mobile || '—'}</p>
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-gray-700' : 'text-gray-500'}`}>Quote: {customer.quoteRef || '—'}</p>
                       </div>
 
                       <div className="space-y-2 text-sm">
                         {renderPreviewDetails(req)}
                         <div className="flex justify-between">
                           <span className={darkMode ? 'text-black' : 'text-gray-600'}>Request Type:</span>
-                          <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.jobRequest || req.job?.requestType || '—'}</span>
+                          <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{jobRequest}</span>
                         </div>
                       </div>
 
@@ -1084,7 +1087,7 @@ const RequestJobs = () => {
                       </div>
 
                       {/* Resources/Attachments Button */}
-                      {req.requestAttachments && req.requestAttachments.length > 0 && (
+                      {Array.isArray(req.requestAttachments) && req.requestAttachments.length > 0 && (
                         <div className="mt-4" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenAttachmentsModal(req)}
