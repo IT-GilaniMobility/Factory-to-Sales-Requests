@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.562.0",

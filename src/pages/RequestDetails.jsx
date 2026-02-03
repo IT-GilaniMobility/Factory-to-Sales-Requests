@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import QualityControlInspection from '../components/QualityControlInspection';
 import DeliveryWorkSection from '../components/DeliveryWorkSection';
+import DeliveryNoteTemplate from '../components/DeliveryNoteTemplate';
   // ...existing code...
 import wheelchairSide from '../assets/wheelchair_sideview.png';
 import wheelchairFront from '../assets/wheelchair_front.webp';
@@ -14,6 +15,7 @@ import drivingSol from '../assets/driving-sol.png';
 import manHeight from '../assets/man-height.png';
 import womenHeight from '../assets/women-height.png';
 import turneySeat from '../assets/turney-seat.png';
+import TurneySeatPreview from '../components/TurneySeatPreview';
 
 const Field = ({ label, value }) => (
   <div className="text-sm">
@@ -227,7 +229,7 @@ const WheelchairLayout = ({ request }) => {
         <Section title="Product & Config">
           <div className="space-y-4">
             <div>
-              <Field label="Product Model" value={request.productModel?.selection} />
+              <Field label="Product Model" value={request.productModel?.selection || request.productModel || '—'} />
               {request.productModel?.commentsIfOthers && (
                 <p className="text-sm text-gray-600 mt-1 italic">"{request.productModel.commentsIfOthers}"</p>
               )}
@@ -431,13 +433,29 @@ const DivingLayout = ({ request }) => {
   );
 };
 
+
 const TurneyLayout = ({ request }) => {
+    const [showDebug, setShowDebug] = React.useState(false);
   const turneyLayoutSrc = turneySeat || require('../assets/turney-seat.png');
   const manHeightSrc = manHeight || require('../assets/man-height.png');
   const womenHeightSrc = womenHeight || require('../assets/women-height.png');
 
   return (
     <div className="space-y-6 print-container">
+      {/* Debug Section for troubleshooting */}
+      <div className="mb-4">
+        <button
+          className="px-3 py-1 bg-gray-200 text-xs rounded border border-gray-400 hover:bg-gray-300"
+          onClick={() => setShowDebug(v => !v)}
+        >
+          {showDebug ? 'Hide' : 'Show'} Debug: Full Request Object
+        </button>
+        {showDebug && (
+          <pre className="mt-2 p-2 bg-gray-100 border text-xs overflow-x-auto max-h-96 rounded">
+            {JSON.stringify(request, null, 2)}
+          </pre>
+        )}
+      </div>
       <Section title="Customer & Vehicle">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -533,29 +551,59 @@ const TurneyLayout = ({ request }) => {
       </Section>
 
       <Section title="Product & Configuration">
+        {/* Show selected model and side as images, using DB fields or fallback to payload/turneySeat */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Field label="Product" value={request.turneySeat?.productModel || request.productModel?.selection} />
+          <div>
+            <p className="text-xs text-gray-500 mb-1 text-center">Model Selection</p>
+            <div className="flex flex-col items-center gap-2">
+              {['C400', 'EC400/480'].includes(request.turney_model || request.turneySeat?.turneyModel) ? (
+                <>
+                  <img
+                    src={require(`../assets/${(request.turney_model || request.turneySeat?.turneyModel).replace('/',':')}.png`)}
+                    alt={request.turney_model || request.turneySeat?.turneyModel}
+                    className="h-24 w-auto object-contain border rounded"
+                  />
+                  <span className="text-sm font-semibold text-blue-700">Model: {request.turney_model || request.turneySeat?.turneyModel}</span>
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-blue-700">Model: {request.turney_model || request.turneySeat?.turneyModel || '—'}</span>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1 text-center">Side Selection</p>
+            <div className="relative w-full max-w-xs mx-auto">
+              <img src={require('../assets/LR.png')} alt="Left/Right" className="w-full h-auto rounded border border-gray-300" />
+              {['Left','Right'].includes(request.side_highlight || request.turneySeat?.sideHighlight) && (
+                <div className={`absolute top-0 ${((request.side_highlight || request.turneySeat?.sideHighlight) === 'Left') ? 'left-0 h-full w-1/2' : 'right-0 h-full w-1/2'} pointer-events-none`} style={{ background: 'rgba(59,130,246,0.25)' }} />
+              )}
+              {request.side_highlight || request.turneySeat?.sideHighlight ? (
+                <div className={`absolute top-2 ${((request.side_highlight || request.turneySeat?.sideHighlight) === 'Left') ? 'left-2' : 'right-2'} bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow`}>
+                  {request.side_highlight || request.turneySeat?.sideHighlight}
+                </div>
+              ) : null}
+            </div>
+            {/* Show selected side text below image */}
+            {(request.side_highlight || request.turneySeat?.sideHighlight) && (
+              <p className="text-center mt-2 text-sm font-semibold text-blue-700">Selected Side: {request.side_highlight || request.turneySeat?.sideHighlight}</p>
+            )}
+          </div>
+        </div>
+        {/* Show all other radio button values (productModel, etc.) */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Product Model (Form)" value={request.turneySeat?.productModel || request.productModel?.selection || ''} />
           <Field label="Special Request" value={request.turneySeat?.specialRequest} />
           <Field label="Optional Extra Add-ons" value={request.turneySeat?.optionalExtraAddOns} />
           <Field label="Product Location" value={request.turneySeat?.productLocation} />
         </div>
+        {/* Show comments if present */}
+        {request.productModel?.commentsIfOthers && (
+          <p className="text-sm text-gray-600 mt-1 italic">"{request.productModel.commentsIfOthers}"</p>
+        )}
       </Section>
 
       <Section title="Training Acknowledgement">
-        <ul className="text-sm text-gray-700 space-y-1">
-          <li className="flex items-center gap-2">
-            <span className="text-green-700">✓</span>
-            <span>Fully operate the device</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-green-700">✓</span>
-            <span>Emergency Procedure</span>
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-green-700">✓</span>
-            <span>Locate the main fuse</span>
-          </li>
-        </ul>
+        <TrainingList training={request.training} />
       </Section>
 
       <Section title="Signature">
@@ -569,7 +617,6 @@ const TurneyLayout = ({ request }) => {
     </div>
   );
 };
-
 const normalizeRequest = (row, fallbackType, idHint) => {
   if (!row) return null;
   const payload = row.payload || row;
@@ -596,6 +643,10 @@ const normalizeRequest = (row, fallbackType, idHint) => {
     requestAttachments: row.request_attachments || payload.requestAttachments || [],
     customerFilledData: row.customer_filled_data || payload.customerFilledData || null,
     jobRequest,
+    // Ensure DB columns are always present at top level
+    turney_model: row.turney_model || payload.turney_model || '',
+    side_highlight: row.side_highlight || payload.side_highlight || '',
+    side_location: row.side_location || payload.side_location || '',
   };
 };
 
@@ -608,7 +659,7 @@ const RequestDetails = () => {
   const [showQCSelector, setShowQCSelector] = useState(false);
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
   const [qcStatus, setQCStatus] = useState(null);
-    // Delivery Note hooks and modal state removed
+  const [showDeliveryNote, setShowDeliveryNote] = useState(false);
 
   const loadQCStatus = useCallback(async () => {
     if (!supabase || !id) return;
@@ -655,9 +706,14 @@ const RequestDetails = () => {
           ];
 
           for (const table of tables) {
+            // Explicitly select DB fields for turney_seat_requests
+            let selectFields = 'request_code, status, created_at, payload, request_attachments, customer_filled_data';
+            if (table.name === 'turney_seat_requests') {
+              selectFields += ', turney_model, side_highlight, side_location';
+            }
             const { data, error } = await supabase
               .from(table.name)
-              .select('request_code, status, created_at, payload, request_attachments, customer_filled_data')
+              .select(selectFields)
               .eq('request_code', id)
               .limit(1);
 
@@ -1035,7 +1091,14 @@ const RequestDetails = () => {
               <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
                 Export PDF
               </button>
-              {/* Delivery Note buttons removed */}
+              {request?.status === 'Completed' && (
+                <button
+                  onClick={() => setShowDeliveryNote(true)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-medium text-sm shadow-sm"
+                >
+                  📄 Delivery Note
+                </button>
+              )}
               {request?.status === 'Completed' && !qcStatus && (
                 <button
                   onClick={openQCModal}
@@ -1047,7 +1110,46 @@ const RequestDetails = () => {
             </div>
           </div>
         )}
-      {/* Delivery Note modal removed */}
+      {/* Delivery Note Modal */}
+      {showDeliveryNote && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-auto">
+          <div className="min-h-screen py-8">
+            <div className="max-w-4xl mx-auto">
+              <DeliveryNoteTemplate
+                data={{
+                  date: '',
+                  vin: '',
+                  customerName: '',
+                  phone: '',
+                  email: '',
+                  approvalNo: '',
+                  modificationsTitle: 'MODIFICATIONS',
+                  financialCleared: false,
+                  approvedBy: '',
+                  pdiDoneBy: '',
+                  invoiceNo: '',
+                  jcNo: '',
+                  paymentConfirmed: false,
+                  notes: '',
+                  receivedBy: '',
+                  receivedDate: '',
+                  items: [
+                    { description: '', quantity: '', notes: '' },
+                  ],
+                  company: {
+                    name: 'GILANI MOBILITY',
+                    phones: ['+971 4 881 8426', '+971 54 320 0677'],
+                    email: 'sales@gilanimobility.ae',
+                    trn: 'TRN: 104019044700003',
+                    address: 'Warehouse #5-17th St., 917th St. Umm Ramool, Dubai, UAE',
+                  },
+                }}
+                onClose={() => setShowDeliveryNote(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Quality Control Status */}
         {qcStatus && (
@@ -1097,7 +1199,20 @@ const RequestDetails = () => {
             isDiving ? 'diving_solution' : 
             'turney_seat'
           }
+          request={request}
         />
+
+        {/* Show Turney Seat Preview at the very end for Turney Seat jobs */}
+        {isTurney && (
+          <TurneySeatPreview
+            turneySeat={{
+              ...request.turneySeat,
+              turneyModel: request.turney_model || '',
+              sideHighlight: request.side_highlight || '',
+              sideLocation: request.side_location || '',
+            }}
+          />
+        )}
       </div>
 
       {/* Print Footer - Hidden */}

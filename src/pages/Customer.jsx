@@ -740,6 +740,10 @@ const Customer = () => {
             special_request: formData.specialRequest,
             optional_extra_add_ons: formData.optionalExtraAddOns,
             product_location: formData.productLocation,
+            // Store exact model and side names in new columns
+            turney_model: formData.turneyModel || '',
+            side_highlight: formData.sideHighlight || '',
+            side_location: (formData.sideHighlight === 'Left' || formData.sideHighlight === 'Right') ? formData.sideHighlight : (formData.sideLocation || ''),
             pdf_url: null,
             pdf_generated_at: null,
             customer_form_token: null,
@@ -976,17 +980,118 @@ const Customer = () => {
                       <>
                         {/* SECTION 5: Product Model */}
                         <Section title="5. Product Model">
-                          <RadioGroup 
-                            label="Select Model" 
-                            name="productModel" 
-                            options={['1006004', '106016', 'Others']} 
-                            required
-                            value={formData.productModel}
-                            onChange={handleChange}
-                            error={errors.productModel}
-                          />
-                          {formData.productModel === 'Others' && (
-                            <TextareaField label="Comments" name="productModelOther" required value={formData.productModelOther || ''} onChange={handleChange} error={errors.productModelOther} />
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Model *</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {[
+                                { src: require('../assets/BP-Lift.png'), value: 'BP Lift', label: 'BP Lift' },
+                                { src: require('../assets/BabyLift.png'), value: 'Baby Lift', label: 'Baby Lift' },
+                                { src: require('../assets/OpenBabyLift.png'), value: 'Open Baby Lift', label: 'Open Baby Lift' },
+                                { src: require('../assets/Butterfly-Lift.png'), value: 'Butterfly Lift', label: 'Butterfly Lift' }
+                              ].map((img, idx) => (
+                                <div key={img.value} className={`border rounded-lg p-2 flex flex-col items-center cursor-pointer transition ${formData.productModel === img.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
+                                  onClick={() => handleChange({ target: { name: 'productModel', value: img.value } })}
+                                >
+                                  <img src={img.src} alt={img.label} className="h-24 w-auto object-contain mb-2" />
+                                  <span className="text-xs font-medium text-gray-700">{img.label}</span>
+                                  <input
+                                    type="radio"
+                                    name="productModel"
+                                    value={img.value}
+                                    checked={formData.productModel === img.value}
+                                    onChange={handleChange}
+                                    className="hidden"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            <ErrorMsg field="productModel" />
+                          </div>
+
+                          {/* Show BP Lift diagrams if selected */}
+                          {formData.productModel === 'BP Lift' && (
+                            <div className="mt-6 space-y-6">
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                                <img
+                                  src={require('../assets/BP-Lift-Diagram.png')}
+                                  alt="BP Lift Diagram"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                                <img
+                                  src={require('../assets/BP-Lift-Table .png')}
+                                  alt="BP Lift Technical Information"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {formData.productModel === 'Open Baby Lift' && (
+                            <div className="mt-6 space-y-6">
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                                <img
+                                  src={require('../assets/OpenBabyLift-Diagram.png')}
+                                  alt="Open Baby Lift Diagram"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                                <img
+                                  src={require('../assets/OpenBabyLift-Table.png')}
+                                  alt="Open Baby Lift Technical Information"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {formData.productModel === 'Butterfly Lift' && (
+                            <div className="mt-6 space-y-6">
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                                <img
+                                  src={require('../assets/butterfly-Lift-Diagram.png')}
+                                  alt="Butterfly Lift Diagram"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                                <img
+                                  src={require('../assets/ButterflyLift-Table.png')}
+                                  alt="Butterfly Lift Technical Information"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {formData.productModel === 'Baby Lift' && (
+                            <div className="mt-6 space-y-6">
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
+                                <img
+                                  src={require('../assets/Babylift-Diagram.png')}
+                                  alt="Baby Lift Diagram"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
+                                <img
+                                  src={require('../assets/Babylift-Table.png')}
+                                  alt="Baby Lift Technical Information"
+                                  className="w-full max-w-lg h-auto rounded border border-gray-300"
+                                />
+                              </div>
+                            </div>
                           )}
                         </Section>
 
@@ -1219,118 +1324,17 @@ const Customer = () => {
 
                 {/* SECTION 4: Product Model - Image Select */}
                 <Section title="4. Product Model">
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Select Model *</label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[
-                        { src: require('../assets/BP-Lift.png'), value: 'BP Lift', label: 'BP Lift' },
-                        { src: require('../assets/BabyLift.png'), value: 'Baby Lift', label: 'Baby Lift' },
-                        { src: require('../assets/OpenBabyLift.png'), value: 'Open Baby Lift', label: 'Open Baby Lift' },
-                        { src: require('../assets/Butterfly-Lift.png'), value: 'Butterfly Lift', label: 'Butterfly Lift' }
-                      ].map((img, idx) => (
-                        <div key={img.value} className={`border rounded-lg p-2 flex flex-col items-center cursor-pointer transition ${formData.productModel === img.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
-                          onClick={() => handleChange({ target: { name: 'productModel', value: img.value } })}
-                        >
-                          <img src={img.src} alt={img.label} className="h-24 w-auto object-contain mb-2" />
-                          <span className="text-xs font-medium text-gray-700">{img.label}</span>
-                          <input
-                            type="radio"
-                            name="productModel"
-                            value={img.value}
-                            checked={formData.productModel === img.value}
-                            onChange={handleChange}
-                            className="hidden"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <ErrorMsg field="productModel" />
-                  </div>
-
-                  {/* Show BP Lift diagrams if selected */}
-                  {formData.productModel === 'BP Lift' && (
-                    <div className="mt-6 space-y-6">
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
-                        <img
-                          src={require('../assets/BP-Lift-Diagram.png')}
-                          alt="BP Lift Diagram"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
-                        <img
-                          src={require('../assets/BP-Lift-Table .png')}
-                          alt="BP Lift Technical Information"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.productModel === 'Open Baby Lift' && (
-                    <div className="mt-6 space-y-6">
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
-                        <img
-                          src={require('../assets/OpenBabyLift-Diagram.png')}
-                          alt="Open Baby Lift Diagram"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
-                        <img
-                          src={require('../assets/OpenBabyLift-Table.png')}
-                          alt="Open Baby Lift Technical Information"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.productModel === 'Butterfly Lift' && (
-                    <div className="mt-6 space-y-6">
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
-                        <img
-                          src={require('../assets/butterfly-Lift-Diagram.png')}
-                          alt="Butterfly Lift Diagram"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
-                        <img
-                          src={require('../assets/ButterflyLift-Table.png')}
-                          alt="Butterfly Lift Technical Information"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {formData.productModel === 'Baby Lift' && (
-                    <div className="mt-6 space-y-6">
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Diagram</h4>
-                        <img
-                          src={require('../assets/Babylift-Diagram.png')}
-                          alt="Baby Lift Diagram"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-2">Technical Information</h4>
-                        <img
-                          src={require('../assets/Babylift-Table.png')}
-                          alt="Baby Lift Technical Information"
-                          className="w-full max-w-lg h-auto rounded border border-gray-300"
-                        />
-                      </div>
-                    </div>
+                  <RadioGroup 
+                    label="Select Model *" 
+                    name="productModel" 
+                    options={['1006004', '106016', 'Others']} 
+                    required
+                    value={formData.productModel}
+                    onChange={handleChange}
+                    error={errors.productModel}
+                  />
+                  {formData.productModel === 'Others' && (
+                    <TextareaField label="Comments" name="productModelOther" required value={formData.productModelOther || ''} onChange={handleChange} error={errors.productModelOther} />
                   )}
                 </Section>
 
@@ -1709,7 +1713,7 @@ const Customer = () => {
                           <InputField label="Measurement between highest point on seat bracket to the top roof" name="seatBracketMeasurement" type="number" value={formData.seatBracketMeasurement || ''} onChange={handleChange} error={errors.seatBracketMeasurement} />
                         </div>
 
-                        <div className="flex justify-center items-start">
+                        <div className="flex flex-col items-center gap-6 w-full">
                           <div className="relative border rounded p-2 bg-gray-50 w-full">
                             <p className="text-xs text-gray-500 mb-2 text-center">Turney Seat Measurements</p>
                             <div className="relative inline-block w-full">
@@ -1736,12 +1740,118 @@ const Customer = () => {
                               </div>
                             </div>
                           </div>
+                          {/* Swivel image below measurements */}
+                          <div className="w-full flex flex-col items-center">
+                            <img src={require('../assets/Swivel.png')} alt="Swivel" className="w-full max-w-md h-auto rounded border border-gray-300 mt-4" />
+                          </div>
                         </div>
+                      </div>
+                    </Section>
+
+                    {/* Side Section with LR.png and highlight logic */}
+                    <Section title="Side">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="flex gap-6 mb-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="sideHighlight"
+                              value="Left"
+                              checked={formData.sideHighlight === 'Left'}
+                              onChange={e => handleChange({ target: { name: 'sideHighlight', value: e.target.value } })}
+                            />
+                            <span>Left</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="sideHighlight"
+                              value="Right"
+                              checked={formData.sideHighlight === 'Right'}
+                              onChange={e => handleChange({ target: { name: 'sideHighlight', value: e.target.value } })}
+                            />
+                            <span>Right</span>
+                          </label>
+                        </div>
+                        <div className="relative w-full max-w-md">
+                          <img src={require('../assets/LR.png')} alt="Left/Right" className="w-full h-auto rounded border border-gray-300" />
+                          {/* Overlay for highlight */}
+                          {formData.sideHighlight === 'Left' && (
+                            <div className="absolute top-0 left-0 h-full w-1/2 pointer-events-none" style={{ background: 'rgba(59,130,246,0.25)' }} />
+                          )}
+                          {formData.sideHighlight === 'Right' && (
+                            <div className="absolute top-0 right-0 h-full w-1/2 pointer-events-none" style={{ background: 'rgba(59,130,246,0.25)' }} />
+                          )}
+                        </div>
+                      </div>
+                    </Section>
+
+                    {/* Model Section with C400 and EC400/480 image select */}
+                    <Section title="Model">
+                      <div className="grid grid-cols-2 gap-6">
+                        {[
+                          { src: require('../assets/C400.png'), value: 'C400', label: 'C400' },
+                          { src: require('../assets/EC400:480.png'), value: 'EC400/480', label: 'EC400/480' }
+                        ].map((img, idx) => (
+                          <div key={img.value} className={`border rounded-lg p-2 flex flex-col items-center cursor-pointer transition ${formData.turneyModel === img.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
+                            onClick={() => handleChange({ target: { name: 'turneyModel', value: img.value } })}
+                          >
+                            <img src={img.src} alt={img.label} className="h-32 w-auto object-contain mb-2" />
+                            <span className="text-xs font-medium text-gray-700">{img.label}</span>
+                            <input
+                              type="radio"
+                              name="turneyModel"
+                              value={img.value}
+                              checked={formData.turneyModel === img.value}
+                              onChange={handleChange}
+                              className="hidden"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </Section>
+
+                    <Section title="Side Selection">
+                      <div className="grid grid-cols-2 gap-6">
+                        {[
+                          { src: require('../assets/LR.png'), value: 'Left', label: 'Left' },
+                          { src: require('../assets/LR.png'), value: 'Right', label: 'Right' }
+                        ].map((img, idx) => (
+                          <div key={img.value} className={`border rounded-lg p-2 flex flex-col items-center cursor-pointer transition ${formData.sideHighlight === img.value ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
+                            onClick={() => handleChange({ target: { name: 'sideHighlight', value: img.value } })}
+                          >
+                            <div className="relative">
+                              <img src={img.src} alt={img.label} className="h-32 w-auto object-contain mb-2" />
+                              {/* Highlight left or right half visually */}
+                              {img.value === 'Left' && formData.sideHighlight === 'Left' && (
+                                <div className="absolute top-0 left-0 h-full w-1/2" style={{ background: 'rgba(59,130,246,0.25)' }} />
+                              )}
+                              {img.value === 'Right' && formData.sideHighlight === 'Right' && (
+                                <div className="absolute top-0 right-0 h-full w-1/2" style={{ background: 'rgba(59,130,246,0.25)' }} />
+                              )}
+                              {formData.sideHighlight === img.value && (
+                                <div className={`absolute top-2 ${img.value === 'Left' ? 'left-2' : 'right-2'} bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow`}>
+                                  {img.label}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-medium text-gray-700">{img.label}</span>
+                            <input
+                              type="radio"
+                              name="sideHighlight"
+                              value={img.value}
+                              checked={formData.sideHighlight === img.value}
+                              onChange={handleChange}
+                              className="hidden"
+                            />
+                          </div>
+                        ))}
                       </div>
                     </Section>
 
                     {turneySeatSection4Valid && (
                       <>
+
                         {/* SECTION 5: Product & Configuration */}
                         <Section title="5. Product & Configuration">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { FiTruck, FiClock, FiPlus, FiEdit2, FiTrash2, FiUser } from 'react-icons/fi';
+import { FiTruck, FiClock, FiPlus, FiEdit2, FiTrash2, FiUser, FiDownload } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
+import { exportDeliveryNoteXlsx } from '../utils/exportDeliveryNoteXlsx';
 
-const DeliveryWorkSection = ({ requestId, requestType }) => {
+const DeliveryWorkSection = ({ requestId, requestType, request }) => {
   const { userEmail } = useAuth();
   const [deliveries, setDeliveries] = useState([]);
   const [workHours, setWorkHours] = useState([]);
@@ -291,13 +292,44 @@ const DeliveryWorkSection = ({ requestId, requestType }) => {
             <FiTruck className="text-blue-600" />
             Delivery Notes
           </h3>
-          <button
-            onClick={() => { resetDeliveryForm(); setShowDeliveryModal(true); }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition"
-          >
-            <FiPlus />
-            Add Delivery
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { resetDeliveryForm(); setShowDeliveryModal(true); }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition"
+            >
+              <FiPlus />
+              Add Delivery
+            </button>
+            {deliveries.length > 0 && (
+              <button
+                onClick={() => {
+                  const latestDelivery = deliveries[0];
+                  const note = {
+                    date: latestDelivery.delivery_date || new Date().toISOString(),
+                    vin: request?.job?.vehicle?.vin || 'N/A',
+                    vehicle: `${request?.job?.vehicle?.make || ''} ${request?.job?.vehicle?.model || ''} ${request?.job?.vehicle?.year || ''}`.trim() || 'N/A',
+                    customerName: request?.customer?.name || latestDelivery.recipient_name || '',
+                    phone: request?.customer?.mobile || latestDelivery.recipient_contact || '',
+                    email: request?.salespersonName ? `${request.salespersonName}@gilanimobility.ae` : 'sales@gilanimobility.ae',
+                    invoiceNo: request?.customer?.quoteRef || requestId || '',
+                    financialCleared: latestDelivery.delivery_status === 'delivered',
+                    by: latestDelivery.created_by || userEmail || '',
+                    items: deliveries.map((d, i) => ({
+                      description: d.notes || `Delivery ${i + 1}`,
+                      quantity: 1,
+                      notes: d.delivery_status || ''
+                    }))
+                  };
+                  exportDeliveryNoteXlsx(note);
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition"
+                title="Export delivery note to Excel"
+              >
+                <FiDownload />
+                Export Excel
+              </button>
+            )}
+          </div>
         </div>
 
         {deliveries.length === 0 ? (
