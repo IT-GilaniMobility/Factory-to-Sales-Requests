@@ -50,6 +50,22 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
     'Camilotes, Arni Pamplona'
   ];
 
+  // Auto-calculate hours worked when dates and times change
+  useEffect(() => {
+    if (workHoursForm.start_date && workHoursForm.end_date && workHoursForm.start_time && workHoursForm.end_time) {
+      const startDateTime = new Date(`${workHoursForm.start_date}T${workHoursForm.start_time}`);
+      const endDateTime = new Date(`${workHoursForm.end_date}T${workHoursForm.end_time}`);
+      
+      if (!isNaN(startDateTime.getTime()) && !isNaN(endDateTime.getTime())) {
+        const diffMs = endDateTime - startDateTime;
+        if (diffMs > 0) {
+          const diffHours = diffMs / (1000 * 60 * 60);
+          setWorkHoursForm(prev => ({ ...prev, hours_worked: diffHours.toFixed(2) }));
+        }
+      }
+    }
+  }, [workHoursForm.start_date, workHoursForm.end_date, workHoursForm.start_time, workHoursForm.end_time]);
+
   const loadData = useCallback(async () => {
     if (!supabase) {
       setLoading(false);
@@ -652,7 +668,7 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time (AM/PM) *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time *</label>
                   <input
                     type="time"
                     value={workHoursForm.start_time}
@@ -662,7 +678,7 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Time (AM/PM) *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Time *</label>
                   <input
                     type="time"
                     value={workHoursForm.end_time}
@@ -674,17 +690,18 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Hours Worked *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Hours Worked (Auto-calculated) *</label>
                 <input
                   type="number"
-                  step="0.25"
-                  min="0.25"
-                  max="24"
+                  step="0.01"
+                  min="0"
                   value={workHoursForm.hours_worked}
-                  onChange={(e) => setWorkHoursForm({ ...workHoursForm, hours_worked: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+                  placeholder="Fill dates and times above"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Automatically calculated from start and end date/time</p>
               </div>
 
               <div>
