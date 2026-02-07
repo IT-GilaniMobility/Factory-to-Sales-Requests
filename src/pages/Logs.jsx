@@ -187,6 +187,10 @@ const Logs = () => {
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Approved').length}</span>
                 </button>
                 <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
+                  <span>Ready for delivery</span>
+                  <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Ready for delivery').length}</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-gray-200 text-sm transition-all flex items-center justify-between">
                   <span>Completed</span>
                   <span className="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs">{logs.filter(l => l.status === 'Completed').length}</span>
                 </button>

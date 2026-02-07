@@ -27,9 +27,28 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
     employee_name: '',
     hours_worked: '',
     work_date: new Date().toISOString().slice(0, 10),
+    start_date: new Date().toISOString().slice(0, 10),
+    end_date: new Date().toISOString().slice(0, 10),
+    start_time: '',
+    end_time: '',
     task_description: '',
     notes: ''
   });
+
+  const EMPLOYEES = [
+    'Agramon, Ridney Steva',
+    'Furto, Ramil',
+    'Clapis, Emelito Sarmiento',
+    'Rulloda, Dominic Nel',
+    'Min, Aung Kyaw (JIMMY)',
+    'Nagdaparan, Roldan',
+    'Maheswaran Kannakadavath',
+    'Shakil, Shaikh',
+    'Yahaya. Richard',
+    'Amankona, Foster',
+    'Iglesias, Edwardo',
+    'Camilotes, Arni Pamplona'
+  ];
 
   const loadData = useCallback(async () => {
     if (!supabase) {
@@ -234,6 +253,10 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
       employee_name: work.employee_name,
       hours_worked: work.hours_worked,
       work_date: work.work_date,
+      start_date: work.start_date || work.work_date,
+      end_date: work.end_date || work.work_date,
+      start_time: work.start_time || '',
+      end_time: work.end_time || '',
       task_description: work.task_description || '',
       notes: work.notes || ''
     });
@@ -257,6 +280,10 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
       employee_name: '',
       hours_worked: '',
       work_date: new Date().toISOString().slice(0, 10),
+      start_date: new Date().toISOString().slice(0, 10),
+      end_date: new Date().toISOString().slice(0, 10),
+      start_time: '',
+      end_time: '',
       task_description: '',
       notes: ''
     });
@@ -409,46 +436,70 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
           <p className="text-gray-500 text-sm italic">No work hours logged yet</p>
         ) : (
           <div className="space-y-3">
-            {workHours.map((work) => (
-              <div key={work.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-2">
-                        <FiUser className="text-gray-400" />
-                        <span className="font-semibold text-gray-900">{work.employee_name}</span>
+            {workHours.map((work) => {
+              const formatTime = (time) => {
+                if (!time) return '';
+                const [hours, minutes] = time.split(':');
+                const hour = parseInt(hours);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                return `${displayHour}:${minutes} ${ampm}`;
+              };
+
+              return (
+                <div key={work.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <FiUser className="text-gray-400" />
+                          <span className="font-semibold text-gray-900">{work.employee_name}</span>
+                        </div>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                          {work.hours_worked}h
+                        </span>
                       </div>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                        {work.hours_worked}h
-                      </span>
-                      <span className="text-sm text-gray-500">{new Date(work.work_date).toLocaleDateString()}</span>
+                      <div className="text-sm text-gray-600 mb-1">
+                        {work.start_date && work.end_date ? (
+                          work.start_date === work.end_date ? (
+                            <span><strong>Date:</strong> {new Date(work.start_date).toLocaleDateString()}</span>
+                          ) : (
+                            <span><strong>Period:</strong> {new Date(work.start_date).toLocaleDateString()} - {new Date(work.end_date).toLocaleDateString()}</span>
+                          )
+                        ) : (
+                          <span><strong>Date:</strong> {new Date(work.work_date).toLocaleDateString()}</span>
+                        )}
+                        {work.start_time && work.end_time && (
+                          <span className="ml-3"><strong>Time:</strong> {formatTime(work.start_time)} - {formatTime(work.end_time)}</span>
+                        )}
+                      </div>
+                      {work.task_description && (
+                        <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Task:</span> {work.task_description}</p>
+                      )}
+                      {work.notes && (
+                        <p className="text-sm text-gray-600 italic">"{work.notes}"</p>
+                      )}
                     </div>
-                    {work.task_description && (
-                      <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Task:</span> {work.task_description}</p>
-                    )}
-                    {work.notes && (
-                      <p className="text-sm text-gray-600 italic">"{work.notes}"</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditWorkHours(work)}
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      title="Edit"
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteWorkHours(work.id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title="Delete"
-                    >
-                      <FiTrash2 />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openEditWorkHours(work)}
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                        title="Edit"
+                      >
+                        <FiEdit2 />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteWorkHours(work.id)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Delete"
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -563,39 +614,77 @@ const DeliveryWorkSection = ({ requestId, requestType, request }) => {
             <form onSubmit={editingWorkHours ? handleUpdateWorkHours : handleAddWorkHours} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Employee Name *</label>
-                <input
-                  type="text"
+                <select
                   value={workHoursForm.employee_name}
                   onChange={(e) => setWorkHoursForm({ ...workHoursForm, employee_name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
-                />
+                >
+                  <option value="">Select an employee</option>
+                  {EMPLOYEES.map((emp) => (
+                    <option key={emp} value={emp}>{emp}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Hours Worked *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date *</label>
                   <input
-                    type="number"
-                    step="0.25"
-                    min="0.25"
-                    max="24"
-                    value={workHoursForm.hours_worked}
-                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, hours_worked: e.target.value })}
+                    type="date"
+                    value={workHoursForm.start_date}
+                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, start_date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Work Date *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date *</label>
                   <input
                     type="date"
-                    value={workHoursForm.work_date}
-                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, work_date: e.target.value })}
+                    value={workHoursForm.end_date}
+                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, end_date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time (AM/PM) *</label>
+                  <input
+                    type="time"
+                    value={workHoursForm.start_time}
+                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, start_time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Time (AM/PM) *</label>
+                  <input
+                    type="time"
+                    value={workHoursForm.end_time}
+                    onChange={(e) => setWorkHoursForm({ ...workHoursForm, end_time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Hours Worked *</label>
+                <input
+                  type="number"
+                  step="0.25"
+                  min="0.25"
+                  max="24"
+                  value={workHoursForm.hours_worked}
+                  onChange={(e) => setWorkHoursForm({ ...workHoursForm, hours_worked: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  required
+                />
               </div>
 
               <div>

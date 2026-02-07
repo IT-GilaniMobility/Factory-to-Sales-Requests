@@ -605,6 +605,7 @@ const RequestJobs = () => {
       case 'Requested to factory': return { bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' };
       case 'In review': return { bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' };
       case 'Approved': return { bg: 'bg-green-50', badge: 'bg-green-100 text-green-800' };
+      case 'Ready for delivery': return { bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' };
       case 'Completed': return { bg: 'bg-gray-50', badge: 'bg-gray-200 text-gray-800' };
       default: return { bg: 'bg-white', badge: 'bg-gray-100 text-gray-600' };
     }
@@ -725,6 +726,7 @@ const RequestJobs = () => {
     requested: requests.filter(r => r.status === 'Requested to factory').length,
     inReview: requests.filter(r => r.status === 'In review').length,
     approved: requests.filter(r => r.status === 'Approved').length,
+    readyForDelivery: requests.filter(r => r.status === 'Ready for delivery').length,
     completed: requests.filter(r => r.status === 'Completed').length,
   };
 
@@ -781,6 +783,7 @@ const RequestJobs = () => {
               { label: 'Requested', count: stats.requested, key: 'Requested to factory' },
               { label: 'In Review', count: stats.inReview, key: 'In review' },
               { label: 'Approved', count: stats.approved, key: 'Approved' },
+              { label: 'Ready for delivery', count: stats.readyForDelivery, key: 'Ready for delivery' },
               { label: 'Completed', count: stats.completed, key: 'Completed' },
             ].map((item) => (
               <button
@@ -1037,6 +1040,7 @@ const RequestJobs = () => {
                               <option value="Requested to factory">Requested</option>
                               <option value="In review">In Review</option>
                               <option value="Approved">Approved</option>
+                              <option value="Ready for delivery">Ready for delivery</option>
                               <option value="Completed">Completed</option>
                             </select>
                           ) : (
@@ -1205,6 +1209,7 @@ const RequestJobs = () => {
                           <option value="Requested to factory">Requested</option>
                           <option value="In review">In Review</option>
                           <option value="Approved">Approved</option>
+                          <option value="Ready for delivery">Ready for delivery</option>
                           <option value="Completed">Completed</option>
                         </select>
                       ) : (

@@ -85,14 +85,7 @@ const TrainingList = ({ training = {} }) => {
   );
 };
 
-const AttachmentsSection = ({ attachments = [] }) => {
-  if (!attachments || attachments.length === 0) {
-    return (
-      <Section title="Attached Files">
-        <p className="text-sm text-gray-500 italic">No attachments</p>
-      </Section>
-    );
-  }
+const AttachmentsSection = ({ attachments = [], onUpload, onDelete, uploading, uploadProgress, isFactoryView }) => {
 
   const getFileIcon = (filename) => {
     if (!filename || typeof filename !== 'string') return '📎';
@@ -114,35 +107,74 @@ const AttachmentsSection = ({ attachments = [] }) => {
 
   return (
     <Section title="Attached Files">
-      <div className="space-y-3">
-        {attachments.map((attachment, index) => {
-          if (!attachment || !attachment.url) return null;
-          const displayName = attachment.name || attachment.filename || 'Attachment';
-          const sizeValue = attachment.size || attachment.fileSize;
-          return (
-            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
-              <span className="text-2xl">{getFileIcon(displayName)}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
-                <p className="text-xs text-gray-500">{formatFileSize(sizeValue)}</p>
-              </div>
-              <a
-                href={attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition screen-only"
-              >
-                View
-              </a>
+      {isFactoryView && (
+        <div className="mb-4 screen-only">
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg cursor-pointer transition">
+            <span>📎</span>
+            <span>{uploading ? `Uploading ${uploadProgress.toFixed(0)}%...` : 'Upload Documents'}</span>
+            <input
+              type="file"
+              multiple
+              onChange={onUpload}
+              disabled={uploading}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf"
+            />
+          </label>
+          {uploading && (
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
             </div>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
+      {(!attachments || attachments.length === 0) ? (
+        <p className="text-sm text-gray-500 italic">No attachments</p>
+      ) : (
+        <div className="space-y-3">
+          {attachments.map((attachment, index) => {
+            if (!attachment || !attachment.url) return null;
+            const displayName = attachment.name || attachment.filename || 'Attachment';
+            const sizeValue = attachment.size || attachment.fileSize;
+            return (
+              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
+                <span className="text-2xl">{getFileIcon(displayName)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                  <p className="text-xs text-gray-500">{formatFileSize(sizeValue)}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition screen-only"
+                  >
+                    View
+                  </a>
+                  {isFactoryView && onDelete && (
+                    <button
+                      onClick={() => onDelete(index)}
+                      className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 transition screen-only"
+                      title="Delete attachment"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </Section>
   );
 };
 
-const WheelchairLayout = ({ request }) => {
+const WheelchairLayout = ({ request, onFileUpload, onDeleteAttachment, uploading, uploadProgress, isFactoryAdmin }) => {
   const measurements = request.userInfo?.measurements || {};
   const vehicleMeasure = request.vehicleMeasurements || {};
 
@@ -284,13 +316,20 @@ const WheelchairLayout = ({ request }) => {
           </div>
         </Section>
 
-        <AttachmentsSection attachments={request.requestAttachments} />
+        <AttachmentsSection 
+          attachments={request.requestAttachments} 
+          onUpload={onFileUpload}
+          onDelete={onDeleteAttachment}
+          uploading={uploading}
+          uploadProgress={uploadProgress}
+          isFactoryView={isFactoryAdmin}
+        />
       </div>
     </div>
   );
 };
 
-const G24Layout = ({ request }) => {
+const G24Layout = ({ request, onFileUpload, onDeleteAttachment, uploading, uploadProgress, isFactoryAdmin }) => {
   const g24LayoutSrc = g24Layout || require('../assets/g24_layout.png');
 
   return (
@@ -358,12 +397,19 @@ const G24Layout = ({ request }) => {
         />
       </Section>
 
-      <AttachmentsSection attachments={request.requestAttachments} />
+      <AttachmentsSection 
+        attachments={request.requestAttachments} 
+        onUpload={onFileUpload}
+        onDelete={onDeleteAttachment}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        isFactoryView={isFactoryAdmin}
+      />
     </div>
   );
 };
 
-const DivingLayout = ({ request }) => {
+const DivingLayout = ({ request, onFileUpload, onDeleteAttachment, uploading, uploadProgress, isFactoryAdmin }) => {
   const drivingLayoutSrc = drivingSol || require('../assets/driving-sol.png');
 
   return (
@@ -428,13 +474,20 @@ const DivingLayout = ({ request }) => {
         />
       </Section>
 
-      <AttachmentsSection attachments={request.requestAttachments} />
+      <AttachmentsSection 
+        attachments={request.requestAttachments} 
+        onUpload={onFileUpload}
+        onDelete={onDeleteAttachment}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        isFactoryView={isFactoryAdmin}
+      />
     </div>
   );
 };
 
 
-const TurneyLayout = ({ request }) => {
+const TurneyLayout = ({ request, onFileUpload, onDeleteAttachment, uploading, uploadProgress, isFactoryAdmin }) => {
     const [showDebug, setShowDebug] = React.useState(false);
   const turneyLayoutSrc = turneySeat || require('../assets/turney-seat.png');
   const manHeightSrc = manHeight || require('../assets/man-height.png');
@@ -613,7 +666,14 @@ const TurneyLayout = ({ request }) => {
         />
       </Section>
 
-      <AttachmentsSection attachments={request.requestAttachments} />
+      <AttachmentsSection 
+        attachments={request.requestAttachments} 
+        onUpload={onFileUpload}
+        onDelete={onDeleteAttachment}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        isFactoryView={isFactoryAdmin}
+      />
     </div>
   );
 };
@@ -660,6 +720,8 @@ const RequestDetails = () => {
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
   const [qcStatus, setQCStatus] = useState(null);
   const [showDeliveryNote, setShowDeliveryNote] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const loadQCStatus = useCallback(async () => {
     if (!supabase || !id) return;
@@ -689,6 +751,162 @@ const RequestDetails = () => {
   const handleQCComplete = (status) => {
     setQCStatus(prev => ({ ...prev, inspection_status: status }));
     setShowQCModal(false);
+  };
+
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    if (!supabase) {
+      alert('Storage not available');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const uploadedFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('request-attachments')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('request-attachments')
+          .getPublicUrl(fileName);
+
+        uploadedFiles.push({
+          name: file.name,
+          url: urlData.publicUrl,
+          size: file.size,
+          uploadedAt: new Date().toISOString()
+        });
+
+        setUploadProgress(((i + 1) / files.length) * 100);
+      }
+
+      // Update request_attachments in database
+      const currentAttachments = request?.requestAttachments || [];
+      const updatedAttachments = [...currentAttachments, ...uploadedFiles];
+
+      // Determine which table to update
+      const tables = [
+        { name: 'requests', type: 'Wheelchair Lifter Installation' },
+        { name: 'g24_requests', type: 'The Ultimate G24' },
+        { name: 'diving_solution_requests', type: 'Diving Solution Installation' },
+        { name: 'turney_seat_requests', type: 'Turney Seat Installation' },
+      ];
+
+      for (const table of tables) {
+        const { data: checkData } = await supabase
+          .from(table.name)
+          .select('request_code')
+          .eq('request_code', id)
+          .limit(1);
+
+        if (checkData && checkData.length > 0) {
+          const { error: updateError } = await supabase
+            .from(table.name)
+            .update({ request_attachments: updatedAttachments })
+            .eq('request_code', id);
+
+          if (updateError) throw updateError;
+          break;
+        }
+      }
+
+      // Update local state
+      setRequest(prev => ({
+        ...prev,
+        requestAttachments: updatedAttachments
+      }));
+
+      alert(`Successfully uploaded ${files.length} file(s)`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload files: ' + error.message);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      event.target.value = ''; // Reset input
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentIndex) => {
+    if (!window.confirm('Are you sure you want to delete this attachment?')) return;
+
+    if (!supabase) {
+      alert('Storage not available');
+      return;
+    }
+
+    try {
+      const attachment = request.requestAttachments[attachmentIndex];
+      
+      // Extract file path from URL
+      if (attachment.url && attachment.url.includes('request-attachments')) {
+        const urlParts = attachment.url.split('request-attachments/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1].split('?')[0];
+          
+          // Delete from storage
+          const { error: deleteError } = await supabase.storage
+            .from('request-attachments')
+            .remove([filePath]);
+
+          if (deleteError) console.warn('Storage delete warning:', deleteError);
+        }
+      }
+
+      // Update database
+      const updatedAttachments = request.requestAttachments.filter((_, i) => i !== attachmentIndex);
+
+      const tables = [
+        { name: 'requests', type: 'Wheelchair Lifter Installation' },
+        { name: 'g24_requests', type: 'The Ultimate G24' },
+        { name: 'diving_solution_requests', type: 'Diving Solution Installation' },
+        { name: 'turney_seat_requests', type: 'Turney Seat Installation' },
+      ];
+
+      for (const table of tables) {
+        const { data: checkData } = await supabase
+          .from(table.name)
+          .select('request_code')
+          .eq('request_code', id)
+          .limit(1);
+
+        if (checkData && checkData.length > 0) {
+          const { error: updateError } = await supabase
+            .from(table.name)
+            .update({ request_attachments: updatedAttachments })
+            .eq('request_code', id);
+
+          if (updateError) throw updateError;
+          break;
+        }
+      }
+
+      // Update local state
+      setRequest(prev => ({
+        ...prev,
+        requestAttachments: updatedAttachments
+      }));
+
+      alert('Attachment deleted successfully');
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete attachment: ' + error.message);
+    }
   };
 
   useEffect(() => {
@@ -1045,15 +1263,24 @@ const RequestDetails = () => {
                 <select
                   value={request.status}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium focus:ring-2 focus:ring-blue-500"
+                  className={`px-3 py-1.5 border rounded-md text-sm font-medium focus:ring-2 focus:ring-blue-500 ${
+                    request.status === 'Ready for delivery'
+                      ? 'bg-orange-100 border-orange-300 text-orange-900'
+                      : 'border-gray-300'
+                  }`}
                 >
                   <option value="Requested to factory">Requested to factory</option>
                   <option value="In review">In review</option>
                   <option value="Approved">Approved</option>
+                  <option value="Ready for delivery">Ready for delivery</option>
                   <option value="Completed">Completed</option>
                 </select>
               ) : (
-                <span className="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700">
+                <span className={`px-3 py-1.5 border rounded-md text-sm font-medium ${
+                  request.status === 'Ready for delivery'
+                    ? 'bg-orange-100 border-orange-300 text-orange-900'
+                    : 'bg-gray-100 border-gray-300 text-gray-700'
+                }`}>
                   {request.status}
                 </span>
               )}
@@ -1091,7 +1318,7 @@ const RequestDetails = () => {
               <button onClick={handlePrint} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm shadow-sm">
                 Export PDF
               </button>
-              {request?.status === 'Completed' && (
+              {(request?.status === 'Completed' || request?.status === 'Ready for delivery') && (
                 <button
                   onClick={() => setShowDeliveryNote(true)}
                   className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-medium text-sm shadow-sm"
@@ -1099,7 +1326,7 @@ const RequestDetails = () => {
                   📄 Delivery Note
                 </button>
               )}
-              {request?.status === 'Completed' && !qcStatus && (
+              {(request?.status === 'Completed' || request?.status === 'Ready for delivery') && !qcStatus && (
                 <button
                   onClick={openQCModal}
                   className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 font-medium text-sm shadow-sm"
@@ -1118,17 +1345,17 @@ const RequestDetails = () => {
               <DeliveryNoteTemplate
                 data={{
                   date: '',
-                  vin: '',
-                  customerName: '',
-                  phone: '',
-                  email: '',
+                  vin: request?.job?.vehicle?.vin || '',
+                  customerName: request?.customer?.name || '',
+                  phone: request?.customer?.mobile || '',
+                  email: request?.customer?.email || '',
                   approvalNo: '',
                   modificationsTitle: 'MODIFICATIONS',
                   financialCleared: false,
                   approvedBy: '',
                   pdiDoneBy: '',
                   invoiceNo: '',
-                  jcNo: '',
+                  jcNo: request?.request_code || id || '',
                   paymentConfirmed: false,
                   notes: '',
                   receivedBy: '',
@@ -1185,10 +1412,10 @@ const RequestDetails = () => {
           </div>
         )}
 
-        {isWheelchair && <WheelchairLayout request={request} />}
-        {isG24 && <G24Layout request={request} />}
-        {isDiving && <DivingLayout request={request} />}
-        {isTurney && <TurneyLayout request={request} />}
+        {isWheelchair && <WheelchairLayout request={request} onFileUpload={handleFileUpload} onDeleteAttachment={handleDeleteAttachment} uploading={uploading} uploadProgress={uploadProgress} isFactoryAdmin={isFactoryAdmin} />}
+        {isG24 && <G24Layout request={request} onFileUpload={handleFileUpload} onDeleteAttachment={handleDeleteAttachment} uploading={uploading} uploadProgress={uploadProgress} isFactoryAdmin={isFactoryAdmin} />}
+        {isDiving && <DivingLayout request={request} onFileUpload={handleFileUpload} onDeleteAttachment={handleDeleteAttachment} uploading={uploading} uploadProgress={uploadProgress} isFactoryAdmin={isFactoryAdmin} />}
+        {isTurney && <TurneyLayout request={request} onFileUpload={handleFileUpload} onDeleteAttachment={handleDeleteAttachment} uploading={uploading} uploadProgress={uploadProgress} isFactoryAdmin={isFactoryAdmin} />}
 
         {/* Delivery Notes and Work Hours Tracking */}
         <DeliveryWorkSection 

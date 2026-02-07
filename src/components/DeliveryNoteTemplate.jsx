@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 
 export default function DeliveryNoteTemplate({
   data = {
@@ -32,13 +32,17 @@ export default function DeliveryNoteTemplate({
   onClose,
 }) {
   const printRef = useRef(null);
+  const [formData, setFormData] = useState(data);
+  useEffect(() => {
+    setFormData(data);
+  }, [data]);
   
   // Ensure at least 5 empty rows for manual fill
   const rows = useMemo(() => {
-    const items = data.items?.length ? data.items : [];
+    const items = formData.items?.length ? formData.items : [];
     const emptyRows = Array(Math.max(5 - items.length, 0)).fill({ description: "", quantity: "", notes: "" });
     return [...items, ...emptyRows];
-  }, [data.items]);
+  }, [formData.items]);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -48,7 +52,7 @@ export default function DeliveryNoteTemplate({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Delivery Note - ${data.invoiceNo || 'Print'}</title>
+        <title>Delivery Note - ${formData.invoiceNo || 'Print'}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; background: #fff; }
@@ -91,11 +95,11 @@ export default function DeliveryNoteTemplate({
             <div style={styles.metaGrid}>
               <div style={styles.metaRow}>
                 <div style={styles.metaLabel}>Date</div>
-                <div style={styles.metaValue}>{data.date}</div>
+                <div style={styles.metaValue}>{formData.date}</div>
               </div>
               <div style={styles.metaRow}>
                 <div style={styles.metaLabel}>VIN #</div>
-                <div style={styles.metaValue}>{data.vin}</div>
+                <div style={styles.metaValue}>{formData.vin}</div>
               </div>
             </div>
           </div>
@@ -106,9 +110,9 @@ export default function DeliveryNoteTemplate({
           <div style={styles.block}>
             <div style={styles.blockHeader}>CUSTOMER DETAIL</div>
             <div style={styles.blockBody}>
-              <Field label="Customer Name" value={data.customerName} />
-              <Field label="Phone No." value={data.phone} />
-              <Field label="Email" value={data.email} />
+              <EditableField label="Customer Name" value={formData.customerName} onChange={(v) => setFormData(prev => ({...prev, customerName: v}))} />
+              <EditableField label="Phone No." value={formData.phone} onChange={(v) => setFormData(prev => ({...prev, phone: v}))} />
+              <EditableField label="Email" value={formData.email} onChange={(v) => setFormData(prev => ({...prev, email: v}))} />
             </div>
           </div>
 
@@ -128,7 +132,7 @@ export default function DeliveryNoteTemplate({
 
         {/* MODIFICATIONS TABLE */}
         <div style={styles.section}>
-          <div style={styles.sectionHeader}>{data.modificationsTitle}</div>
+          <div style={styles.sectionHeader}>{formData.modificationsTitle}</div>
 
           <table style={styles.table}>
             <thead>
@@ -143,9 +147,57 @@ export default function DeliveryNoteTemplate({
               {rows.map((it, idx) => (
                 <tr key={idx}>
                   <td style={styles.tdCenter}>{idx + 1}</td>
-                  <td style={styles.td}>{it.description}</td>
-                  <td style={styles.tdCenter}>{it.quantity}</td>
-                  <td style={styles.td}>{it.notes}</td>
+                  <td style={styles.td}>
+                    <input
+                      value={it.description || ""}
+                      onChange={(e) => {
+                        setFormData(prev => {
+                          const items = Array.isArray(prev.items) ? [...prev.items] : [];
+                          if (idx >= items.length) {
+                            items.length = idx + 1;
+                          }
+                          const existing = items[idx] || { description: "", quantity: "", notes: "" };
+                          items[idx] = { ...existing, description: e.target.value };
+                          return { ...prev, items };
+                        });
+                      }}
+                      style={styles.input}
+                    />
+                  </td>
+                  <td style={styles.tdCenter}>
+                    <input
+                      value={it.quantity || ""}
+                      onChange={(e) => {
+                        setFormData(prev => {
+                          const items = Array.isArray(prev.items) ? [...prev.items] : [];
+                          if (idx >= items.length) {
+                            items.length = idx + 1;
+                          }
+                          const existing = items[idx] || { description: "", quantity: "", notes: "" };
+                          items[idx] = { ...existing, quantity: e.target.value };
+                          return { ...prev, items };
+                        });
+                      }}
+                      style={{...styles.input, textAlign:'center'}}
+                    />
+                  </td>
+                  <td style={styles.td}>
+                    <input
+                      value={it.notes || ""}
+                      onChange={(e) => {
+                        setFormData(prev => {
+                          const items = Array.isArray(prev.items) ? [...prev.items] : [];
+                          if (idx >= items.length) {
+                            items.length = idx + 1;
+                          }
+                          const existing = items[idx] || { description: "", quantity: "", notes: "" };
+                          items[idx] = { ...existing, notes: e.target.value };
+                          return { ...prev, items };
+                        });
+                      }}
+                      style={styles.input}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -157,24 +209,24 @@ export default function DeliveryNoteTemplate({
           <div style={styles.block}>
             <div style={styles.blockHeader}>FINANCIAL</div>
             <div style={styles.blockBody}>
-              <CheckboxField label="Financial Cleared" checked={data.financialCleared} />
-              <Field label="By" value={data.approvedBy} />
+              <CheckboxField label="Financial Cleared" checked={formData.financialCleared} onChange={(val) => setFormData(prev => ({...prev, financialCleared: val}))} />
+              <EditableField label="By" value={formData.approvedBy} onChange={(v) => setFormData(prev => ({...prev, approvedBy: v}))} />
             </div>
           </div>
 
           <div style={styles.block}>
             <div style={styles.blockHeader}>QUALITY</div>
             <div style={styles.blockBody}>
-              <Field label="PDI Done By" value={data.pdiDoneBy} />
+              <EditableField label="PDI Done By" value={formData.pdiDoneBy} onChange={(v) => setFormData(prev => ({...prev, pdiDoneBy: v}))} />
             </div>
           </div>
 
           <div style={styles.block}>
             <div style={styles.blockHeader}>REFERENCE</div>
             <div style={styles.blockBody}>
-              <Field label="Invoice #" value={data.invoiceNo} />
-              <Field label="JC #" value={data.jcNo} />
-              <CheckboxField label="Payment Confirmed" checked={data.paymentConfirmed} />
+              <EditableField label="Invoice #" value={formData.invoiceNo} onChange={(v) => setFormData(prev => ({...prev, invoiceNo: v}))} />
+              <EditableField label="JC #" value={formData.jcNo} onChange={(v) => setFormData(prev => ({...prev, jcNo: v}))} />
+              <CheckboxField label="Payment Confirmed" checked={formData.paymentConfirmed} onChange={(val) => setFormData(prev => ({...prev, paymentConfirmed: val}))} />
             </div>
           </div>
         </div>
@@ -183,7 +235,7 @@ export default function DeliveryNoteTemplate({
         <div style={styles.block}>
           <div style={styles.blockHeader}>NOTES</div>
           <div style={{ ...styles.blockBody, minHeight: 80 }}>
-            <div style={styles.noteText}>{data.notes}</div>
+            <EditableTextarea value={formData.notes} onChange={(v) => setFormData(prev => ({...prev, notes: v}))} />
           </div>
         </div>
 
@@ -205,8 +257,8 @@ export default function DeliveryNoteTemplate({
           <div style={styles.block}>
             <div style={styles.blockHeader}>RECEIVED BY</div>
             <div style={styles.blockBody}>
-              <Field label="Name" value={data.receivedBy} />
-              <Field label="Date" value={data.receivedDate} />
+              <EditableField label="Name" value={formData.receivedBy} onChange={(v) => setFormData(prev => ({...prev, receivedBy: v}))} />
+              <EditableField label="Date" value={formData.receivedDate} onChange={(v) => setFormData(prev => ({...prev, receivedDate: v}))} />
               <div style={styles.signatureLine}>Signature:</div>
               <div style={styles.signatureBox} />
             </div>
@@ -215,7 +267,7 @@ export default function DeliveryNoteTemplate({
           <div style={styles.block}>
             <div style={styles.blockHeader}>AUTHORIZED SIGNATURE</div>
             <div style={styles.blockBody}>
-              <Field label="Name" value={data.approvedBy} />
+              <EditableField label="Name" value={formData.approvedBy} onChange={(v) => setFormData(prev => ({...prev, approvedBy: v}))} />
               <div style={styles.signatureLine}>Signature:</div>
               <div style={styles.signatureBox} />
             </div>
@@ -247,12 +299,14 @@ function Field({ label, value }) {
   );
 }
 
-function CheckboxField({ label, checked }) {
+function CheckboxField({ label, checked, onChange }) {
   return (
     <div style={styles.fieldRow}>
       <div style={styles.fieldLabel}>{label}</div>
       <div style={styles.fieldValue}>
-        <span style={{
+        <span
+          onClick={() => onChange && onChange(!checked)}
+          style={{
           display: 'inline-block',
           width: 16,
           height: 16,
@@ -262,11 +316,37 @@ function CheckboxField({ label, checked }) {
           lineHeight: '12px',
           fontSize: 12,
           fontWeight: 'bold',
+          cursor: onChange ? 'pointer' : 'default',
         }}>
           {checked ? '✓' : ''}
         </span>
       </div>
     </div>
+  );
+}
+
+function EditableField({ label, value, onChange }) {
+  return (
+    <div style={styles.fieldRow}>
+      <div style={styles.fieldLabel}>{label}</div>
+      <div style={styles.fieldValue}>
+        <input
+          value={value || ""}
+          onChange={(e) => onChange && onChange(e.target.value)}
+          style={styles.input}
+        />
+      </div>
+    </div>
+  );
+}
+
+function EditableTextarea({ value, onChange }) {
+  return (
+    <textarea
+      value={value || ""}
+      onChange={(e) => onChange && onChange(e.target.value)}
+      style={{ ...styles.input, width: '100%', minHeight: 70, resize: 'vertical' }}
+    />
   );
 }
 
@@ -326,6 +406,7 @@ const styles = {
   fieldRow: { display: "grid", gridTemplateColumns: "120px 1fr", marginBottom: 6 },
   fieldLabel: { fontWeight: 700, fontSize: 12 },
   fieldValue: { fontSize: 12, borderBottom: "1px solid #bbb", paddingBottom: 2 },
+  input: { width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 12, padding: 0 },
 
   companyName: { fontWeight: 900, fontSize: 14, marginBottom: 6 },
   smallText: { fontSize: 11, marginTop: 3, lineHeight: 1.2 },

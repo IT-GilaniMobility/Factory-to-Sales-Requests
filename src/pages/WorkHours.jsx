@@ -386,71 +386,131 @@ const WorkHours = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredWorkHours.map(entry => {
-                const linkedRequest = entry.request_id ? getLinkedRequest(entry.request_id) : null;
-                return (
-                  <div
-                    key={entry.id}
-                    className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="flex-1">
-                            <h3 className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'} overflow-hidden`}>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <tr>
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Employee Name
+                      </th>
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Task Description
+                      </th>
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Date Range
+                      </th>
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Time
+                      </th>
+                      <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Hours
+                      </th>
+                      <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Request
+                      </th>
+                      <th className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className={`${darkMode ? 'divide-gray-700' : 'divide-gray-200'} divide-y`}>
+                    {filteredWorkHours.map(entry => {
+                      const linkedRequest = entry.request_id ? getLinkedRequest(entry.request_id) : null;
+                      const formatTime = (time) => {
+                        if (!time) return '';
+                        const [hours, minutes] = time.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        return `${displayHour}:${minutes} ${ampm}`;
+                      };
+
+                      return (
+                        <tr 
+                          key={entry.id}
+                          className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}
+                        >
+                          <td className={`px-4 py-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            <div className="font-medium">{entry.employee_name}</div>
+                          </td>
+                          <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <div className="max-w-xs">
                               {entry.task_description}
-                            </h3>
-                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {entry.employee_name} • {new Date(entry.work_date).toLocaleDateString('en-GB')}
-                              {entry.start_time && entry.end_time && (
-                                <span className="ml-2">
-                                  • {entry.start_time} - {entry.end_time}
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                          <span className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                            {entry.hours_worked}h
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3 mt-3">
-                          <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-                            Hours Logged
-                          </span>
-
-                          {linkedRequest && (
-                            <div className={`text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} px-3 py-1 rounded-full`}>
-                              <span className="font-mono">{entry.request_id}</span>
-                              {linkedRequest.customer?.name && (
-                                <span className="ml-2">{linkedRequest.customer.name}</span>
+                              {entry.notes && (
+                                <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'} italic`}>
+                                  {entry.notes}
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEditWorkHour(entry)}
-                          className={`p-2 rounded transition-colors ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-                          title="Edit"
-                        >
-                          <FiEdit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteWorkHour(entry.id)}
-                          className={`p-2 rounded transition-colors ${darkMode ? 'text-red-400 hover:text-red-300 hover:bg-gray-700' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
-                          title="Delete"
-                        >
-                          <FiTrash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {entry.start_date && entry.end_date ? (
+                              entry.start_date === entry.end_date ? (
+                                <div>{new Date(entry.start_date).toLocaleDateString('en-GB')}</div>
+                              ) : (
+                                <div>
+                                  {new Date(entry.start_date).toLocaleDateString('en-GB')}
+                                  <div className="text-xs">to {new Date(entry.end_date).toLocaleDateString('en-GB')}</div>
+                                </div>
+                              )
+                            ) : (
+                              <div>{new Date(entry.work_date).toLocaleDateString('en-GB')}</div>
+                            )}
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {entry.start_time && entry.end_time ? (
+                              <div className="whitespace-nowrap">
+                                {formatTime(entry.start_time)}
+                                <div className="text-xs">to {formatTime(entry.end_time)}</div>
+                              </div>
+                            ) : (
+                              <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold ${darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
+                              {entry.hours_worked}h
+                            </span>
+                          </td>
+                          <td className={`px-4 py-3 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {linkedRequest ? (
+                              <div>
+                                <div className="font-mono text-xs">{entry.request_id}</div>
+                                {linkedRequest.customer?.name && (
+                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {linkedRequest.customer.name}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleEditWorkHour(entry)}
+                                className={`p-2 rounded transition-colors ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                                title="Edit"
+                              >
+                                <FiEdit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteWorkHour(entry.id)}
+                                className={`p-2 rounded transition-colors ${darkMode ? 'text-red-400 hover:text-red-300 hover:bg-gray-600' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
+                                title="Delete"
+                              >
+                                <FiTrash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
