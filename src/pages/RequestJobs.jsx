@@ -579,6 +579,110 @@ const RequestJobs = () => {
     }
   };
 
+  const handleDeleteRequest = async (id, e) => {
+    e.stopPropagation();
+    
+    if (!isFactoryAdmin()) {
+      alert('Only factory admins can delete requests.');
+      return;
+    }
+
+    const target = requests.find(req => req.id === id || req.request_code === id);
+    if (!target) {
+      console.warn('Delete requested for missing job', id);
+      return;
+    }
+
+    // Confirm before deleting
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this request?\n\nCustomer: ${target.customer?.name || '—'}\nRequest Code: ${id}\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const requestCode = target.request_code || id;
+      const jobRequestLabel = target.jobRequest || target.job?.requestType || 'Wheelchair Lifter Installation';
+      const targetTable = getTableForJobRequest(jobRequestLabel);
+
+      if (!supabase) {
+        alert('Database connection not available');
+        return;
+      }
+
+      console.log(`🗑️ Deleting request ${requestCode} from ${targetTable}...`);
+
+      // Delete related records first (to avoid foreign key constraints)
+      // Delete work hours
+      const { error: workHoursError } = await supabase
+        .from('work_hours_log')
+        .delete()
+        .eq('request_id', requestCode);
+      
+      if (workHoursError) {
+        console.warn('Work hours deletion warning:', workHoursError);
+      }
+
+      // Delete QC inspections
+      const { error: qcError } = await supabase
+        .from('qc_inspections')
+        .delete()
+        .eq('request_code', requestCode);
+      
+      if (qcError) {
+        console.warn('QC inspection deletion warning:', qcError);
+      }
+
+      // Delete delivery notes
+      const { error: deliveryError } = await supabase
+        .from('delivery_notes')
+        .delete()
+        .eq('request_code', requestCode);
+      
+      if (deliveryError) {
+        console.warn('Delivery notes deletion warning:', deliveryError);
+      }
+
+      // Delete attachments from storage if any
+      if (target.requestAttachments && target.requestAttachments.length > 0) {
+        for (const attachment of target.requestAttachments) {
+          if (attachment.url) {
+            try {
+              const filePath = attachment.url.split('/').slice(-2).join('/');
+              await supabase.storage.from('request-attachments').remove([filePath]);
+            } catch (storageErr) {
+              console.warn('Storage deletion warning:', storageErr);
+            }
+          }
+        }
+      }
+
+      // Finally delete the main request
+      const { error } = await supabase
+        .from(targetTable)
+        .delete()
+        .eq('request_code', requestCode);
+
+      if (error) {
+        console.error(`❌ Delete failed for ${requestCode}`, error);
+        alert(`Failed to delete request: ${error.message}`);
+        return;
+      }
+
+      console.log(`✅ Request ${requestCode} and all related data deleted successfully`);
+
+      // Remove from local state
+      const updated = requests.filter(req => req.id !== id && req.request_code !== requestCode);
+      setRequests(updated);
+      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+
+      alert('Request and all related data deleted successfully.');
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert(`Error deleting request: ${err.message}`);
+    }
+  };
+
   const filteredRequests = visibleRequests
     .filter(req => {
       const searchLower = searchTerm.toLowerCase();
@@ -1101,6 +1205,14 @@ const RequestJobs = () => {
                         <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm">
                           View Details
                         </button>
+                        {isFactoryAdmin() && (
+                          <button
+                            onClick={(e) => handleDeleteRequest(req.id || req.request_code, e)}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm"
+                          >
+                            Delete Request
+                          </button>
+                        )}
                       </div>
 
                       {/* Resources/Attachments Button */}
@@ -1213,6 +1325,15 @@ const RequestJobs = () => {
                       )}
                     </div>
                     <div className="flex gap-2 items-center ml-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                      {isFactoryAdmin() && (
+                        <button
+                          onClick={(e) => handleDeleteRequest(req.id, e)}
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
+                          title="Delete this request"
+                        >
+                          Delete
+                        </button>
+                      )}
                       {isFactoryAdmin() ? (
                         <select
                           value={req.status}
