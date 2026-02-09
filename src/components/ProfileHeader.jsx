@@ -56,7 +56,7 @@ const ProfileHeader = () => {
         
         {/* Name & Email (hidden on small screens) */}
         <div className="hidden md:block text-left">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+          <p className="text-sm font-semibold text-black leading-tight">
             {displayName}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
