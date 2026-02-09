@@ -1205,14 +1205,6 @@ const RequestJobs = () => {
                         <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm">
                           View Details
                         </button>
-                        {isFactoryAdmin() && (
-                          <button
-                            onClick={(e) => handleDeleteRequest(req.id || req.request_code, e)}
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-md transition-colors text-sm"
-                          >
-                            Delete Request
-                          </button>
-                        )}
                       </div>
 
                       {/* Resources/Attachments Button */}
@@ -1332,17 +1324,8 @@ const RequestJobs = () => {
                           title="Delete this request"
                         >
                           Delete
-                        </button>
-                      )}
-                      {isFactoryAdmin() ? (
-                        <select
-                          value={req.status}
-                          onChange={(e) => handleStatusChange(req.id, e.target.value, e)}
-                          className={`text-xs font-bold px-3 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${colors.badge}`}
-                        >
-                          <option value="Requested to factory">Requested</option>
-                          <option value="In review">In Review</option>
-                          <option value="Approved">Approved</option>
+                    <div className="flex gap-2 items-center ml-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                      {isFactoryAdmin() ? (proved">Approved</option>
                           <option value="Ready for delivery">Ready for delivery</option>
                           <option value="Completed">Completed</option>
                         </select>
