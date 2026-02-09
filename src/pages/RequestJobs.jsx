@@ -336,7 +336,7 @@ const RequestJobs = () => {
   }, [isFactoryAdmin, userEmail]);
 
   useEffect(() => {
-    if (!supabase || !isFactoryAdmin()) return;
+    if (!supabase) return;
 
     const handlers = [
       { table: 'requests', label: 'Wheelchair Lifter Installation' },
@@ -345,11 +345,16 @@ const RequestJobs = () => {
       { table: 'turney_seat_requests', label: 'Turney Seat Installation' },
     ];
 
-    const channel = supabase.channel('factory-new-jobs');
+    const channel = supabase.channel(`requests-updates-${userEmail || 'factory'}`);
 
     handlers.forEach(({ table, label }) => {
-      // Listen for new inserts
+      // Listen for new inserts - only factory admin or own creations for sales
       channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload) => {
+        // Sales users should only see their own new requests
+        if (!isFactoryAdmin() && payload.new.created_by_email !== userEmail) {
+          return;
+        }
+        
         const mapped = mapSupabaseRowToRequest(payload.new, label);
 
         setRequests((prev) => {
@@ -360,11 +365,19 @@ const RequestJobs = () => {
           return next;
         });
 
-        setNewJobNotification({ requestCode: mapped.request_code, label });
+        // Only notify factory admin of new jobs from others, sales see their own
+        if (isFactoryAdmin() || payload.new.created_by_email === userEmail) {
+          setNewJobNotification({ requestCode: mapped.request_code, label });
+        }
       });
 
       // Listen for updates (status changes)
       channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table }, (payload) => {
+        // Sales users should only see updates to their own requests
+        if (!isFactoryAdmin() && payload.new.created_by_email !== userEmail) {
+          return;
+        }
+        
         setRequests((prev) => {
           const updated = prev.map((req) => {
             if (req.request_code === payload.new.request_code) {
@@ -389,7 +402,7 @@ const RequestJobs = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isFactoryAdmin]);
+  }, [isFactoryAdmin, userEmail]);
 
   // Filter requests based on user role
   const getVisibleRequests = () => {

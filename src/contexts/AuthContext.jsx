@@ -66,6 +66,20 @@ export const AuthProvider = ({ children }) => {
             'factory@gilanimobility.ae',
           ]);
 
+          // Sales emails (optional explicit list, but any email not in factoryEmails is sales)
+          const salesEmails = new Set([
+            'sales@gilanimobility.ae',
+            'sales3@gilanimobility.ae',
+            'sales4@gilanimobility.ae',
+            'sales5@gilanimobility.ae',
+            'sales6@gilanimobility.ae',
+            'sales7@gilanimobility.ae',
+            'sales8@gilanimobility.ae',
+            'sales9@gilanimobility.ae',
+            'sales10@gilanimobility.ae',
+            'sales11@gilanimobility.ae',
+          ]);
+
           const userData = {
             email: sessionUser.email,
             full_name: sessionUser.user_metadata?.full_name || sessionUser.email,
@@ -107,6 +121,20 @@ export const AuthProvider = ({ children }) => {
             'eng1@gilanimobility.ae',
             'eng2@gilanimobility.ae',
             'factory@gilanimobility.ae',
+          ]);
+
+          // Sales emails (optional explicit list, but any email not in factoryEmails is sales)
+          const salesEmails = new Set([
+            'sales@gilanimobility.ae',
+            'sales3@gilanimobility.ae',
+            'sales4@gilanimobility.ae',
+            'sales5@gilanimobility.ae',
+            'sales6@gilanimobility.ae',
+            'sales7@gilanimobility.ae',
+            'sales8@gilanimobility.ae',
+            'sales9@gilanimobility.ae',
+            'sales10@gilanimobility.ae',
+            'sales11@gilanimobility.ae',
           ]);
 
           const userData = {
@@ -197,14 +225,10 @@ export const AuthProvider = ({ children }) => {
   const isSales = () => userRole === 'sales';
   const isLoggedIn = () => !!user;
   
-  // Check if user has dashboard access (only specific emails allowed)
+  // Check if user has dashboard access (factory admin and sales users allowed)
   const hasDashboardAccess = () => {
-    const allowedEmails = new Set([
-      'it@gilanimobility.ae',
-      'eng@gilanimobility.ae',
-      'eng1@gilanimobility.ae'
-    ]);
-    return allowedEmails.has(userEmail);
+    // Allow factory admin and sales roles to access dashboard
+    return userRole === 'factory_admin' || userRole === 'sales';
   };
 
   return (

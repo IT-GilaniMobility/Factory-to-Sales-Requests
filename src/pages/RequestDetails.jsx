@@ -712,9 +712,10 @@ const normalizeRequest = (row, fallbackType, idHint) => {
 
 const RequestDetails = () => {
   const { id } = useParams();
-  const { isFactoryAdmin } = useAuth();
+  const { isFactoryAdmin, userEmail } = useAuth();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [showQCModal, setShowQCModal] = useState(false);
   const [showQCSelector, setShowQCSelector] = useState(false);
   const [selectedQCType, setSelectedQCType] = useState('Hand Control (Push/Pull)');
@@ -912,8 +913,10 @@ const RequestDetails = () => {
   useEffect(() => {
     const loadRequest = async () => {
       setLoading(true);
+      setAccessDenied(false);
       try {
         let found = null;
+        let createdByEmail = null;
 
         if (supabase) {
           const tables = [
@@ -925,7 +928,7 @@ const RequestDetails = () => {
 
           for (const table of tables) {
             // Explicitly select DB fields for turney_seat_requests
-            let selectFields = 'request_code, status, created_at, payload, request_attachments, customer_filled_data';
+            let selectFields = 'request_code, status, created_at, created_by_email, payload, request_attachments, customer_filled_data';
             if (table.name === 'turney_seat_requests') {
               selectFields += ', turney_model, side_highlight, side_location';
             }
@@ -936,6 +939,15 @@ const RequestDetails = () => {
               .limit(1);
 
             if (!error && data && data.length > 0) {
+              createdByEmail = data[0].created_by_email;
+              
+              // Access control: sales users can only view their own requests
+              if (!isFactoryAdmin() && createdByEmail !== userEmail) {
+                setAccessDenied(true);
+                setLoading(false);
+                return;
+              }
+              
               console.log('📎 Raw request data from Supabase:', data[0]);
               console.log('📎 request_attachments column:', data[0].request_attachments);
               console.log('🖊️ customer_filled_data column:', data[0].customer_filled_data);
@@ -955,6 +967,15 @@ const RequestDetails = () => {
               const parsed = JSON.parse(stored);
               const localHit = parsed.find(r => r.id === id || r.request_code === id);
               if (localHit) {
+                createdByEmail = localHit.createdBy;
+                
+                // Access control check for local data too
+                if (!isFactoryAdmin() && createdByEmail !== userEmail) {
+                  setAccessDenied(true);
+                  setLoading(false);
+                  return;
+                }
+                
                 found = normalizeRequest(localHit, localHit.jobRequest, id);
               }
             } catch (err) {
@@ -972,7 +993,7 @@ const RequestDetails = () => {
     };
 
     loadRequest();
-  }, [id]);
+  }, [id, isFactoryAdmin, userEmail]);
 
   // Subscribe to realtime updates for this specific request
   useEffect(() => {
@@ -1183,6 +1204,18 @@ const RequestDetails = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
         Loading request...
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-700 p-6">
+        <div className="text-center max-w-md">
+          <p className="mb-4 text-lg font-semibold text-red-600">Access Denied</p>
+          <p className="mb-6 text-gray-600">You do not have permission to view this request.</p>
+          <Link to="/requests" className="text-blue-600 hover:underline font-medium">Back to your requests</Link>
+        </div>
       </div>
     );
   }
