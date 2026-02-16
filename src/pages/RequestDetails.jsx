@@ -1305,6 +1305,7 @@ const RequestDetails = () => {
                   <option value="Requested to factory">Requested to factory</option>
                   <option value="In review">In review</option>
                   <option value="Approved">Approved</option>
+                  <option value="Work in progress">Work in progress</option>
                   <option value="Ready for delivery">Ready for delivery</option>
                   <option value="Completed">Completed</option>
                 </select>

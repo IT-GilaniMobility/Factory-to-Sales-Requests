@@ -15,11 +15,13 @@ import { FiDownload } from 'react-icons/fi';
 const initialState = {
     // Section 1
     salespersonName: '',
+    salespersonNameOther: '',
     customerName: '',
     customerAddress: '',
     customerMobile: '', // Will prepend +971 visually or logic
     quoteRef: '',
     jobRequest: '',
+    jobRequestOther: '',
 
     // Section 2
     vehicleMake: '',
@@ -207,8 +209,7 @@ const Customer = () => {
 
     if (isNew) {
       localStorage.removeItem('wheelchair_lifter_form_v1');
-      const prefillName = params.get('name') || '';
-      setFormData({ ...initialState, customerName: prefillName });
+      setFormData(initialState);
       setSignatureData(null);
       return;
     }
@@ -567,6 +568,7 @@ const Customer = () => {
         quoteRef: formData.quoteRef
       },
       salespersonName: formData.salespersonName,
+      salespersonNameOther: formData.salespersonName === 'Others' ? formData.salespersonNameOther : '',
       job: {
         requestType: formData.jobRequest,
         vehicle: {
@@ -823,13 +825,7 @@ const Customer = () => {
   const isUltimateG24 = formData.jobRequest === 'The Ultimate G24';
   const isDivingSolution = formData.jobRequest === 'Diving Solution Installation';
   const isTurneySeat = formData.jobRequest === 'Turney Seat Installation';
-  const section2Valid = formData.vehicleMake && formData.vehicleModel && formData.vehicleYear;
-  const section3Valid = section2Valid && formData.userWeight && formData.wheelchairWeight && formData.wheelchairType;
-  const section4Valid = section3Valid && formData.measureD && formData.measureH && formData.floorToGround;
-  const divingSolutionValid = section2Valid && formData.deviceModel && formData.installationLocation && formData.driverSeatPosition && formData.steeringWheelPosition;
-  const turneySeatSection3Valid = section2Valid && formData.userWeight && formData.userHeight1 && formData.userHeight2 && formData.userSituation;
-  const turneySeatSection4Valid = turneySeatSection3Valid && formData.misuaA && formData.misuaB && formData.misuaC && formData.misuaD && formData.misuaE;
-  const formTitle = `${formData.jobRequest || 'Wheelchair Lifter Installation'} Form`;
+  const formTitle = formData.jobRequest ? `${formData.jobRequest} Form` : 'Job Request Form';
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -857,7 +853,52 @@ const Customer = () => {
         {/* SECTION 1: Customer Details */}
         <Section title="1. Customer Details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Salesperson Name" name="salespersonName" type="text" required value={formData.salespersonName || ''} onChange={handleChange} error={errors.salespersonName} />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Salesperson Name <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="salespersonName"
+                value={formData.salespersonName}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select...</option>
+                <option value="Mr Ray">Mr Ray</option>
+                <option value="Ahmed">Ahmed</option>
+                <option value="Hazem">Hazem</option>
+                <option value="Mohammad">Mohammad</option>
+                <option value="Hassan">Hassan</option>
+                <option value="Sittman">Sittman</option>
+                <option value="Aziz">Aziz</option>
+                <option value="KD">KD</option>
+                <option value="Hadeel">Hadeel</option>
+                <option value="Samir">Samir</option>
+                <option value="Dia">Dia</option>
+                <option value="Hosam">Hosam</option>
+                <option value="Abdellatif">Abdellatif</option>
+                <option value="Awad">Awad</option>
+                <option value="Khogali">Khogali</option>
+                <option value="Blessing">Blessing</option>
+                <option value="Myra">Myra</option>
+                <option value="Shaira">Shaira</option>
+                <option value="Others">Others</option>
+              </select>
+              <ErrorMsg field="salespersonName" />
+              {formData.salespersonName === 'Others' && (
+                <div className="mt-2">
+                  <InputField
+                    label="Please specify"
+                    name="salespersonNameOther"
+                    type="text"
+                    required
+                    value={formData.salespersonNameOther || ''}
+                    onChange={handleChange}
+                    error={errors.salespersonNameOther}
+                  />
+                </div>
+              )}
+            </div>
             <InputField label="Customer Name" name="customerName" type="text" required value={formData.customerName || ''} onChange={handleChange} error={errors.customerName} />
             <InputField label="Mobile" name="customerMobile" type="text" placeholder="+971 50 123 4567" required value={formData.customerMobile || ''} onChange={handleChange} error={errors.customerMobile} />
             <div className="md:col-span-2">
@@ -879,8 +920,22 @@ const Customer = () => {
                 <option value="The Ultimate G24">The Ultimate G24</option>
                 <option value="Diving Solution Installation">Diving Solution Installation</option>
                 <option value="Turney Seat Installation">Turney Seat Installation</option>
+                <option value="Others">Others</option>
               </select>
               <ErrorMsg field="jobRequest" />
+              {formData.jobRequest === 'Others' && (
+                <div className="mt-2">
+                  <InputField
+                    label="Please specify job request"
+                    name="jobRequestOther"
+                    type="text"
+                    required
+                    value={formData.jobRequestOther || ''}
+                    onChange={handleChange}
+                    error={errors.jobRequestOther}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </Section>
@@ -896,9 +951,7 @@ const Customer = () => {
               </div>
             </Section>
 
-            {section2Valid && (
-              <>
-                {/* SECTION 3: User Information */}
+            {/* SECTION 3: User Information */}
                 <Section title="3. User Information">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -951,9 +1004,7 @@ const Customer = () => {
                   </div>
                 </Section>
 
-                {section3Valid && (
-                  <>
-                    {/* SECTION 4: Vehicle Measurements */}
+                {/* SECTION 4: Vehicle Measurements */}
                     <Section title="4. Vehicle Measurements">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -976,9 +1027,7 @@ const Customer = () => {
                       </div>
                     </Section>
 
-                    {section4Valid && (
-                      <>
-                        {/* SECTION 5: Product Model */}
+                    {/* SECTION 5: Product Model */}
                         <Section title="5. Product Model">
                           <div className="mb-4">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Select Model *</label>
@@ -1286,12 +1335,6 @@ const Customer = () => {
                           </div>
                           <ErrorMsg field="signature" />
                         </Section>
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
           </>
         )}
 
@@ -1306,9 +1349,7 @@ const Customer = () => {
               </div>
             </Section>
 
-            {section2Valid && (
-              <>
-                {/* SECTION 3: G24 Vehicle Layout Image */}
+            {/* SECTION 3: G24 Vehicle Layout Image */}
                 <Section title="3. G24 Vehicle Layout">
                   <div className="mb-6">
                     <p className="text-gray-700 text-sm leading-relaxed mb-4">
@@ -1493,8 +1534,6 @@ const Customer = () => {
                     </ul>
                   </div>
                 </Section>
-              </>
-            )}
           </>
         )}
 
@@ -1509,14 +1548,47 @@ const Customer = () => {
               </div>
             </Section>
 
-            {section2Valid && (
-              <>
-                {/* SECTION 3: Installation Specifications */}
+            {/* SECTION 3: Installation Specifications */}
                 <Section title="3. Installation Specifications">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <InputField label="Device Model" name="deviceModel" type="text" required value={formData.deviceModel || ''} onChange={handleChange} error={errors.deviceModel} />
-                      <InputField label="Installation Location" name="installationLocation" type="text" required value={formData.installationLocation || ''} onChange={handleChange} error={errors.installationLocation} />
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Device Model *</label>
+                        <select 
+                          name="deviceModel" 
+                          value={formData.deviceModel || ''} 
+                          onChange={handleChange} 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        >
+                          <option value="">Select Device Model...</option>
+                          <option value="Cardiwave">Cardiwave</option>
+                          <option value="MobileDriver">MobileDriver</option>
+                          <option value="DriverControl">DriverControl</option>
+                          <option value="AutoDrive">AutoDrive</option>
+                          <option value="SmartControl">SmartControl</option>
+                        </select>
+                        {errors.deviceModel && <p className="text-red-600 text-xs mt-1">{errors.deviceModel}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Installation Location *</label>
+                        <select 
+                          name="installationLocation" 
+                          value={formData.installationLocation || ''} 
+                          onChange={handleChange} 
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        >
+                          <option value="">Select Location...</option>
+                          <option value="Dashboard">Dashboard</option>
+                          <option value="Steering Column">Steering Column</option>
+                          <option value="Pedal">Pedal</option>
+                          <option value="Center Console">Center Console</option>
+                          <option value="Door Panel">Door Panel</option>
+                          <option value="Custom">Custom</option>
+                        </select>
+                        {errors.installationLocation && <p className="text-red-600 text-xs mt-1">{errors.installationLocation}</p>}
+                      </div>
                       <InputField label="Driver Seat Position" name="driverSeatPosition" type="text" required value={formData.driverSeatPosition || ''} onChange={handleChange} error={errors.driverSeatPosition} />
                       <InputField label="Steering Wheel Position" name="steeringWheelPosition" type="text" required value={formData.steeringWheelPosition || ''} onChange={handleChange} error={errors.steeringWheelPosition} />
                     </div>
@@ -1534,120 +1606,114 @@ const Customer = () => {
                   </div>
                 </Section>
 
-                {divingSolutionValid && (
-                  <>
-                    {/* SECTION 4: Notes */}
-                    <Section title="4. Important Notes">
-                      <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded space-y-4">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900 mb-2">Steering Column Mounted:</p>
-                          <p className="text-sm text-gray-700">If steering column mounted, steering wheel location will be locked. Has the steering wheel and seat been adjusted to the customer's preferred driving position?</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900 mb-2">Customer Training:</p>
-                          <p className="text-sm text-gray-700">Customer must know and have received full training with all questions answered on safe usage satisfactory.</p>
-                        </div>
-                      </div>
-                    </Section>
+            {/* SECTION 4: Notes */}
+            <Section title="4. Important Notes">
+              <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">Steering Column Mounted:</p>
+                  <p className="text-sm text-gray-700">If steering column mounted, steering wheel location will be locked. Has the steering wheel and seat been adjusted to the customer's preferred driving position?</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">Customer Training:</p>
+                  <p className="text-sm text-gray-700">Customer must know and have received full training with all questions answered on safe usage satisfactory.</p>
+                </div>
+              </div>
+            </Section>
 
-                    {/* SECTION 4.5: File Attachments - Diving Solution */}
-                    <Section title="4.5. Attach Files (Optional)">
-                      <p className="text-sm text-gray-600 mb-4">
-                        You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
-                      </p>
-                      <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-                        <span>📄 Supported:</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
-                      </div>
-                      
-                      {/* Upload Button */}
-                      <label className="cursor-pointer inline-block mb-4">
-                        <input
-                          type="file"
-                          multiple
-                          onChange={handleAttachmentUpload}
-                          className="hidden"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
-                        />
-                        <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
-                          <span>📎</span>
-                          Upload Files (PDF, Images, Documents)
-                        </div>
-                      </label>
+            {/* SECTION 4.5: File Attachments - Diving Solution */}
+            <Section title="4.5. Attach Files (Optional)">
+              <p className="text-sm text-gray-600 mb-4">
+                You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
+              </p>
+              <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                <span>📄 Supported:</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+              </div>
+              
+              {/* Upload Button */}
+              <label className="cursor-pointer inline-block mb-4">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentUpload}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
+                />
+                <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                  <span>📎</span>
+                  Upload Files (PDF, Images, Documents)
+                </div>
+              </label>
 
-                      {/* Attachments List */}
-                      {formData.requestAttachments && formData.requestAttachments.length > 0 && (
-                        <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-                          <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
-                          <div className="space-y-2">
-                            {formData.requestAttachments.map((attachment, index) => (
-                              <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
-                                  <div>
-                                    <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                                    <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <a
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
-                                  >
-                                    View
-                                  </a>
-                                  <button
-                                    onClick={() => handleRemoveAttachment(index, attachment)}
-                                    className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+              {/* Attachments List */}
+              {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                  <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                  <div className="space-y-2">
+                    {formData.requestAttachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                          <div>
+                            <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                            <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
                           </div>
                         </div>
-                      )}
-                    </Section>
+                        <div className="flex gap-2">
+                          <a
+                            href={attachment.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                          >
+                            View
+                          </a>
+                          <button
+                            onClick={() => handleRemoveAttachment(index, attachment)}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Section>
 
-                    {/* SECTION 5: Customer Signature */}
-                    <Section title="5. Customer Signature">
-                      <div className="border border-gray-300 rounded bg-white">
-                        <canvas
-                          ref={canvasRef}
-                          width={500}
-                          height={200}
-                          className="w-full h-48 cursor-crosshair block touch-none"
-                          onMouseDown={startDrawing}
-                          onMouseMove={draw}
-                          onMouseUp={stopDrawing}
-                          onMouseLeave={stopDrawing}
-                          onTouchStart={startDrawing}
-                          onTouchMove={draw}
-                          onTouchEnd={stopDrawing}
-                        />
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
-                        <button
-                          type="button"
-                          onClick={clearSignature}
-                          className="text-sm text-red-600 hover:text-red-800 underline"
-                        >
-                          Clear Signature
-                        </button>
-                      </div>
-                      <ErrorMsg field="signature" />
-                    </Section>
-                  </>
-                )}
-              </>
-            )}
+            {/* SECTION 5: Customer Signature */}
+            <Section title="5. Customer Signature">
+              <div className="border border-gray-300 rounded bg-white">
+                <canvas
+                  ref={canvasRef}
+                  width={500}
+                  height={200}
+                  className="w-full h-48 cursor-crosshair block touch-none"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+              </div>
+              <div className="mt-2 flex justify-between items-center">
+                <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className="text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  Clear Signature
+                </button>
+              </div>
+              <ErrorMsg field="signature" />
+            </Section>
           </>
         )}
 
@@ -1662,10 +1728,8 @@ const Customer = () => {
               </div>
             </Section>
 
-            {section2Valid && (
-              <>
-                {/* SECTION 3: User Information with Height Images */}
-                <Section title="3. User Information">
+            {/* SECTION 3: User Information with Height Images */}
+            <Section title="3. User Information">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                       <InputField label="User Weight (kg)" name="userWeight" type="number" required value={formData.userWeight || ''} onChange={handleChange} error={errors.userWeight} />
@@ -1696,12 +1760,10 @@ const Customer = () => {
                       </div>
                     </div>
                   </div>
-                </Section>
+            </Section>
 
-                {turneySeatSection3Valid && (
-                  <>
-                    {/* SECTION 4: Vehicle Measurements for Turney Seat */}
-                    <Section title="4. Vehicle Measurements">
+            {/* SECTION 4: Vehicle Measurements for Turney Seat */}
+            <Section title="4. Vehicle Measurements">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                           <InputField label="Misura A (Min. 970mm)" name="misuaA" type="number" required value={formData.misuaA || ''} onChange={handleChange} error={errors.misuaA} />
@@ -1745,11 +1807,11 @@ const Customer = () => {
                             <img src={require('../assets/Swivel.png')} alt="Swivel" className="w-full max-w-md h-auto rounded border border-gray-300 mt-4" />
                           </div>
                         </div>
-                      </div>
-                    </Section>
+              </div>
+            </Section>
 
-                    {/* Side Section with LR.png and highlight logic */}
-                    <Section title="Side">
+            {/* Side Section with LR.png and highlight logic */}
+            <Section title="Side">
                       <div className="flex flex-col items-center gap-4">
                         <div className="flex gap-6 mb-2">
                           <label className="flex items-center gap-2 cursor-pointer">
@@ -1783,11 +1845,11 @@ const Customer = () => {
                             <div className="absolute top-0 right-0 h-full w-1/2 pointer-events-none" style={{ background: 'rgba(59,130,246,0.25)' }} />
                           )}
                         </div>
-                      </div>
-                    </Section>
+              </div>
+            </Section>
 
-                    {/* Model Section with C400 and EC400/480 image select */}
-                    <Section title="Model">
+            {/* Model Section with C400 and EC400/480 image select */}
+            <Section title="Model">
                       <div className="grid grid-cols-2 gap-6">
                         {[
                           { src: require('../assets/C400.png'), value: 'C400', label: 'C400' },
@@ -1808,10 +1870,10 @@ const Customer = () => {
                             />
                           </div>
                         ))}
-                      </div>
-                    </Section>
+              </div>
+            </Section>
 
-                    <Section title="Side Selection">
+            <Section title="Side Selection">
                       <div className="grid grid-cols-2 gap-6">
                         {[
                           { src: require('../assets/LR.png'), value: 'Left', label: 'Left' },
@@ -1846,132 +1908,154 @@ const Customer = () => {
                             />
                           </div>
                         ))}
+              </div>
+            </Section>
+
+            {/* SECTION 5: Product & Configuration */}
+            <Section title="5. Product & Configuration">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Product" name="productModel" type="text" required value={formData.productModel || ''} onChange={handleChange} error={errors.productModel} />
+                <InputField label="Special Request (such seat colour)" name="specialRequest" type="text" value={formData.specialRequest || ''} onChange={handleChange} error={errors.specialRequest} />
+                <InputField label="Optional Extra Add-ons" name="optionalExtraAddOns" type="text" value={formData.optionalExtraAddOns || ''} onChange={handleChange} error={errors.optionalExtraAddOns} />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Product Location <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="productLocation"
+                    value={formData.productLocation}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Floor mounted, left">Floor mounted, left</option>
+                    <option value="Floor mounted, right">Floor mounted, right</option>
+                    <option value="Under steering wheel, left">Under steering wheel, left</option>
+                    <option value="Under steering wheel, right">Under steering wheel, right</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <ErrorMsg field="productLocation" />
+                  {formData.productLocation === 'Other' && (
+                    <div className="mt-2">
+                      <InputField
+                        label="Please specify location"
+                        name="productLocationOther"
+                        type="text"
+                        required
+                        value={formData.productLocationOther || ''}
+                        onChange={handleChange}
+                        error={errors.productLocationOther}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Section>
+
+            {/* SECTION 6: Training Acknowledgement */}
+            <Section title="6. Training Acknowledgement">
+              <p className="mb-4 text-sm text-gray-600">Customer must know and have received full training which will include:</p>
+              <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
+                <li>Fully operate the device</li>
+                <li>Emergency Procedure</li>
+                <li>Locate the main fuse</li>
+              </ul>
+            </Section>
+
+            {/* SECTION 6.5: File Attachments - Turney Seat */}
+            <Section title="6.5. Attach Files (Optional)">
+              <p className="text-sm text-gray-600 mb-4">
+                You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
+              </p>
+              <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                <span>📄 Supported:</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
+                <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
+              </div>
+              
+              {/* Upload Button */}
+              <label className="cursor-pointer inline-block mb-4">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentUpload}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
+                />
+                <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                  <span>📎</span>
+                  Upload Files (PDF, Images, Documents)
+                </div>
+              </label>
+
+              {/* Attachments List */}
+              {formData.requestAttachments && formData.requestAttachments.length > 0 && (
+                <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                  <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
+                  <div className="space-y-2">
+                    {formData.requestAttachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
+                          <div>
+                            <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
+                            <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <a
+                            href={attachment.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
+                          >
+                            View
+                          </a>
+                          <button
+                            onClick={() => handleRemoveAttachment(index, attachment)}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                    </Section>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Section>
 
-                    {turneySeatSection4Valid && (
-                      <>
-
-                        {/* SECTION 5: Product & Configuration */}
-                        <Section title="5. Product & Configuration">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputField label="Product" name="productModel" type="text" required value={formData.productModel || ''} onChange={handleChange} error={errors.productModel} />
-                            <InputField label="Special Request (such seat colour)" name="specialRequest" type="text" value={formData.specialRequest || ''} onChange={handleChange} error={errors.specialRequest} />
-                            <InputField label="Optional Extra Add-ons" name="optionalExtraAddOns" type="text" value={formData.optionalExtraAddOns || ''} onChange={handleChange} error={errors.optionalExtraAddOns} />
-                            <InputField label="Product Location" name="productLocation" type="text" required value={formData.productLocation || ''} onChange={handleChange} error={errors.productLocation} />
-                          </div>
-                        </Section>
-
-                        {/* SECTION 6: Training Acknowledgement */}
-                        <Section title="6. Training Acknowledgement">
-                          <p className="mb-4 text-sm text-gray-600">Customer must know and have received full training which will include:</p>
-                          <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
-                            <li>Fully operate the device</li>
-                            <li>Emergency Procedure</li>
-                            <li>Locate the main fuse</li>
-                          </ul>
-                        </Section>
-
-                        {/* SECTION 6.5: File Attachments - Turney Seat */}
-                        <Section title="6.5. Attach Files (Optional)">
-                          <p className="text-sm text-gray-600 mb-4">
-                            You can attach additional documents, images, or files to this request (e.g., PDFs, specifications, photos, drawings, Word docs, Excel sheets, etc.)
-                          </p>
-                          <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-                            <span>📄 Supported:</span>
-                            <span className="px-2 py-1 bg-gray-100 rounded">PDF</span>
-                            <span className="px-2 py-1 bg-gray-100 rounded">Images</span>
-                            <span className="px-2 py-1 bg-gray-100 rounded">Word/Excel</span>
-                            <span className="px-2 py-1 bg-gray-100 rounded">All Files</span>
-                          </div>
-                          
-                          {/* Upload Button */}
-                          <label className="cursor-pointer inline-block mb-4">
-                            <input
-                              type="file"
-                              multiple
-                              onChange={handleAttachmentUpload}
-                              className="hidden"
-                              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.dwg,.dxf,*/*"
-                            />
-                            <div className="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
-                              <span>📎</span>
-                              Upload Files (PDF, Images, Documents)
-                            </div>
-                          </label>
-
-                          {/* Attachments List */}
-                          {formData.requestAttachments && formData.requestAttachments.length > 0 && (
-                            <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-                              <h3 className="font-semibold text-gray-800 mb-3">Attached Files ({formData.requestAttachments.length})</h3>
-                              <div className="space-y-2">
-                                {formData.requestAttachments.map((attachment, index) => (
-                                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
-                                    <div className="flex items-center gap-3 flex-1">
-                                      <span className="text-2xl">{getFileIcon(attachment.filename)}</span>
-                                      <div>
-                                        <p className="font-medium text-gray-700 text-sm">{attachment.filename}</p>
-                                        <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(2)} KB</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <a
-                                        href={attachment.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 underline"
-                                      >
-                                        View
-                                      </a>
-                                      <button
-                                        onClick={() => handleRemoveAttachment(index, attachment)}
-                                        className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
-                                      >
-                                        Remove
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </Section>
-
-                        {/* SECTION 7: Customer Signature */}
-                        <Section title="7. Customer Signature">
-                          <div className="border border-gray-300 rounded bg-white">
-                            <canvas
-                              ref={canvasRef}
-                              width={500}
-                              height={200}
-                              className="w-full h-48 cursor-crosshair block touch-none"
-                              onMouseDown={startDrawing}
-                              onMouseMove={draw}
-                              onMouseUp={stopDrawing}
-                              onMouseLeave={stopDrawing}
-                              onTouchStart={startDrawing}
-                              onTouchMove={draw}
-                              onTouchEnd={stopDrawing}
-                            />
-                          </div>
-                          <div className="mt-2 flex justify-between items-center">
-                            <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
-                            <button
-                              type="button"
-                              onClick={clearSignature}
-                              className="text-sm text-red-600 hover:text-red-800 underline"
-                            >
-                              Clear Signature
-                            </button>
-                          </div>
-                          <ErrorMsg field="signature" />
-                        </Section>
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
+            {/* SECTION 7: Customer Signature */}
+            <Section title="7. Customer Signature">
+              <div className="border border-gray-300 rounded bg-white">
+                <canvas
+                  ref={canvasRef}
+                  width={500}
+                  height={200}
+                  className="w-full h-48 cursor-crosshair block touch-none"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+              </div>
+              <div className="mt-2 flex justify-between items-center">
+                <p className="text-xs text-gray-500">Sign above using mouse or touch.</p>
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className="text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  Clear Signature
+                </button>
+              </div>
+              <ErrorMsg field="signature" />
+            </Section>
           </>
         )}
       </div>
