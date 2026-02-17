@@ -74,6 +74,7 @@ const initialState = {
     // Diving Solution Installation sections
     deviceModel: '',
     installationLocation: '',
+    installationLocationOther: '',
     driverSeatPosition: '',
     steeringWheelPosition: '',
 
@@ -454,6 +455,9 @@ const Customer = () => {
       required('vehicleYear', 'Year');
       required('deviceModel', 'Device Model');
       required('installationLocation', 'Installation Location');
+      if (formData.installationLocation === 'Others' && !formData.installationLocationOther) {
+        newErrors['installationLocationOther'] = 'Please specify other installation location';
+      }
       required('driverSeatPosition', 'Driver Seat Position');
       required('steeringWheelPosition', 'Steering Wheel Position');
       
@@ -625,6 +629,7 @@ const Customer = () => {
       divingSolution: {
         deviceModel: formData.deviceModel,
         installationLocation: formData.installationLocation,
+        installationLocationOther: formData.installationLocationOther,
         driverSeatPosition: formData.driverSeatPosition,
         steeringWheelPosition: formData.steeringWheelPosition
       },
@@ -853,7 +858,7 @@ const Customer = () => {
         {/* SECTION 1: Customer Details */}
         <Section title="1. Customer Details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="mb-4">
+            <div className="mb-4 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Salesperson Name <span className="text-red-500">*</span>
               </label>
@@ -1580,15 +1585,25 @@ const Customer = () => {
                           required
                         >
                           <option value="">Select Location...</option>
-                          <option value="Dashboard">Dashboard</option>
-                          <option value="Steering Column">Steering Column</option>
-                          <option value="Pedal">Pedal</option>
-                          <option value="Center Console">Center Console</option>
-                          <option value="Door Panel">Door Panel</option>
-                          <option value="Custom">Custom</option>
+                          <option value="Floor mounted, left">Floor mounted, left</option>
+                          <option value="Floor mounted, right">Floor mounted, right</option>
+                          <option value="Under steering wheel, left">Under steering wheel, left</option>
+                          <option value="Under steering wheel, right">Under steering wheel, right</option>
+                          <option value="Others">Others</option>
                         </select>
                         {errors.installationLocation && <p className="text-red-600 text-xs mt-1">{errors.installationLocation}</p>}
                       </div>
+                      {formData.installationLocation === 'Others' && (
+                        <InputField
+                          label="Specify Other Installation Location"
+                          name="installationLocationOther"
+                          type="text"
+                          required
+                          value={formData.installationLocationOther || ''}
+                          onChange={handleChange}
+                          error={errors.installationLocationOther}
+                        />
+                      )}
                       <InputField label="Driver Seat Position" name="driverSeatPosition" type="text" required value={formData.driverSeatPosition || ''} onChange={handleChange} error={errors.driverSeatPosition} />
                       <InputField label="Steering Wheel Position" name="steeringWheelPosition" type="text" required value={formData.steeringWheelPosition || ''} onChange={handleChange} error={errors.steeringWheelPosition} />
                     </div>
