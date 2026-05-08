@@ -24,14 +24,6 @@ const formatFileSize = (bytes) => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 };
 
-// Helper to display salesperson name - show the "Other" field if "Others" is selected
-const getSalespersonName = (req) => {
-  if (req.salespersonName === 'Others' && req.salespersonNameOther) {
-    return req.salespersonNameOther;
-  }
-  return req.salespersonName || '—';
-};
-
 const RequestJobs = () => {
   const navigate = useNavigate();
   const { logout, isFactoryAdmin, userEmail } = useAuth();
@@ -40,7 +32,9 @@ const RequestJobs = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortOrder, setSortOrder] = useState('newest');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [newRequestCustomerName, setNewRequestCustomerName] = useState('');
   const [dateRangeStart, setDateRangeStart] = useState('');
   const [dateRangeEnd, setDateRangeEnd] = useState('');
   const [darkMode, setDarkMode] = useState(() => {
@@ -585,6 +579,110 @@ const RequestJobs = () => {
     }
   };
 
+  const handleDeleteRequest = async (id, e) => {
+    e.stopPropagation();
+    
+    if (!isFactoryAdmin()) {
+      alert('Only factory admins can delete requests.');
+      return;
+    }
+
+    const target = requests.find(req => req.id === id || req.request_code === id);
+    if (!target) {
+      console.warn('Delete requested for missing job', id);
+      return;
+    }
+
+    // Confirm before deleting
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this request?\n\nCustomer: ${target.customer?.name || '—'}\nRequest Code: ${id}\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const requestCode = target.request_code || id;
+      const jobRequestLabel = target.jobRequest || target.job?.requestType || 'Wheelchair Lifter Installation';
+      const targetTable = getTableForJobRequest(jobRequestLabel);
+
+      if (!supabase) {
+        alert('Database connection not available');
+        return;
+      }
+
+      console.log(`🗑️ Deleting request ${requestCode} from ${targetTable}...`);
+
+      // Delete related records first (to avoid foreign key constraints)
+      // Delete work hours
+      const { error: workHoursError } = await supabase
+        .from('work_hours_log')
+        .delete()
+        .eq('request_id', requestCode);
+      
+      if (workHoursError) {
+        console.warn('Work hours deletion warning:', workHoursError);
+      }
+
+      // Delete QC inspections
+      const { error: qcError } = await supabase
+        .from('qc_inspections')
+        .delete()
+        .eq('request_code', requestCode);
+      
+      if (qcError) {
+        console.warn('QC inspection deletion warning:', qcError);
+      }
+
+      // Delete delivery notes
+      const { error: deliveryError } = await supabase
+        .from('delivery_notes')
+        .delete()
+        .eq('request_code', requestCode);
+      
+      if (deliveryError) {
+        console.warn('Delivery notes deletion warning:', deliveryError);
+      }
+
+      // Delete attachments from storage if any
+      if (target.requestAttachments && target.requestAttachments.length > 0) {
+        for (const attachment of target.requestAttachments) {
+          if (attachment.url) {
+            try {
+              const filePath = attachment.url.split('/').slice(-2).join('/');
+              await supabase.storage.from('request-attachments').remove([filePath]);
+            } catch (storageErr) {
+              console.warn('Storage deletion warning:', storageErr);
+            }
+          }
+        }
+      }
+
+      // Finally delete the main request
+      const { error } = await supabase
+        .from(targetTable)
+        .delete()
+        .eq('request_code', requestCode);
+
+      if (error) {
+        console.error(`❌ Delete failed for ${requestCode}`, error);
+        alert(`Failed to delete request: ${error.message}`);
+        return;
+      }
+
+      console.log(`✅ Request ${requestCode} and all related data deleted successfully`);
+
+      // Remove from local state
+      const updated = requests.filter(req => req.id !== id && req.request_code !== requestCode);
+      setRequests(updated);
+      localStorage.setItem('wheelchair_lifter_requests_v1', JSON.stringify(updated));
+
+      alert('Request and all related data deleted successfully.');
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert(`Error deleting request: ${err.message}`);
+    }
+  };
+
   const filteredRequests = visibleRequests
     .filter(req => {
       const searchLower = searchTerm.toLowerCase();
@@ -662,7 +760,7 @@ const RequestJobs = () => {
         <>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
-            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{getSalespersonName(req)}</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
@@ -683,7 +781,7 @@ const RequestJobs = () => {
         <>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
-            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{getSalespersonName(req)}</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
@@ -704,7 +802,7 @@ const RequestJobs = () => {
         <>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
-            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{getSalespersonName(req)}</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
@@ -722,7 +820,7 @@ const RequestJobs = () => {
         <>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Salesperson Name:</span>
-            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{getSalespersonName(req)}</span>
+            <span className={`font-medium ${darkMode ? 'text-black' : 'text-gray-900'}`}>{req.salespersonName || '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-black' : 'text-gray-600'}>Vehicle:</span>
@@ -897,7 +995,7 @@ const RequestJobs = () => {
 
         <div className={`p-4 space-y-2.5 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
           <button
-            onClick={() => navigate('/customer?new=1')}
+            onClick={() => setShowNewRequestModal(true)}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-3 rounded-md transition-colors text-sm flex items-center justify-center gap-2 shadow-sm"
           >
             <FiPlus size={18} />
@@ -1024,7 +1122,7 @@ const RequestJobs = () => {
                 {!isFactoryAdmin() ? 'No requests created yet' : 'No requests found'}
               </p>
               <button
-                onClick={() => navigate('/customer?new=1')}
+                onClick={() => setShowNewRequestModal(true)}
                 className="text-blue-600 hover:underline text-sm font-medium"
               >
                 {!isFactoryAdmin() ? 'Create your first request' : 'Create a new request'}
@@ -1249,6 +1347,43 @@ const RequestJobs = () => {
           )}
         </div>
       </div>
+
+      {/* New Request Modal */}
+      {showNewRequestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+              <h2 className="text-2xl font-bold text-gray-900">Create New Request</h2>
+              <button
+                onClick={() => setShowNewRequestModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">Optionally enter a customer name to prefill.</p>
+              <input
+                type="text"
+                value={newRequestCustomerName}
+                onChange={(e) => setNewRequestCustomerName(e.target.value)}
+                placeholder="Customer Name"
+                className="w-full px-4 py-2 border rounded-md mb-4"
+              />
+              <button
+                onClick={() => {
+                  setShowNewRequestModal(false);
+                  const param = newRequestCustomerName ? `&name=${encodeURIComponent(newRequestCustomerName)}` : '';
+                  window.location.href = `/customer?new=1${param}`;
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+              >
+                Go to Form
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Customer form creation and customer PDF attach features have been removed */}
 

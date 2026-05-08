@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
       // Map email back to hardcoded user data
       const userMap = {
         'factory@gilanimobility.ae': { email: 'factory@gilanimobility.ae', full_name: 'Factory Admin', role: 'factory_admin', is_active: true },
+        'admin@gilanimobility.ae': { email: 'admin@gilanimobility.ae', full_name: 'Admin', role: 'factory_admin', is_active: true },
         'sales@gilanimobility.ae': { email: 'sales@gilanimobility.ae', full_name: 'Sales Team', role: 'sales', is_active: true }
       };
 
@@ -63,6 +64,7 @@ export const AuthProvider = ({ children }) => {
             'eng@gilanimobility.ae',
             'eng1@gilanimobility.ae',
             'eng2@gilanimobility.ae',
+            'admin@gilanimobility.ae',
             'factory@gilanimobility.ae',
           ]);
 
@@ -120,6 +122,7 @@ export const AuthProvider = ({ children }) => {
             'eng@gilanimobility.ae',
             'eng1@gilanimobility.ae',
             'eng2@gilanimobility.ae',
+            'admin@gilanimobility.ae',
             'factory@gilanimobility.ae',
           ]);
 
@@ -166,6 +169,7 @@ export const AuthProvider = ({ children }) => {
       // Hardcoded credentials for factory and sales
       const credentials = {
         factory: { password: 'gilanifactory@2026', role: 'factory_admin', email: 'factory@gilanimobility.ae', full_name: 'Factory Admin' },
+        admin: { password: 'admin@2026', role: 'factory_admin', email: 'admin@gilanimobility.ae', full_name: 'Admin' },
         sales: { password: 'gilanisales@2026', role: 'sales', email: 'sales@gilanimobility.ae', full_name: 'Sales Team' }
       };
 
