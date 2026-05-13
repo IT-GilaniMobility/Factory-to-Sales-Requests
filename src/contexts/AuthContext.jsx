@@ -15,6 +15,9 @@ export const AuthProvider = ({ children }) => {
       const userMap = {
         'factory@gilanimobility.ae': { email: 'factory@gilanimobility.ae', full_name: 'Factory Admin', role: 'factory_admin', is_active: true },
         'admin@gilanimobility.ae': { email: 'admin@gilanimobility.ae', full_name: 'Admin', role: 'factory_admin', is_active: true },
+        'eng1@gilanimobility.ae': { email: 'eng1@gilanimobility.ae', full_name: 'Engineering 1', role: 'factory_admin', is_active: true },
+        'info@gilanimobility.ae': { email: 'info@gilanimobility.ae', full_name: 'Info', role: 'factory_admin', is_active: true },
+        'info@gilanimobility': { email: 'info@gilanimobility', full_name: 'Info', role: 'factory_admin', is_active: true },
         'sales@gilanimobility.ae': { email: 'sales@gilanimobility.ae', full_name: 'Sales Team', role: 'sales', is_active: true }
       };
 
@@ -64,6 +67,8 @@ export const AuthProvider = ({ children }) => {
             'eng@gilanimobility.ae',
             'eng1@gilanimobility.ae',
             'eng2@gilanimobility.ae',
+            'info@gilanimobility.ae',
+            'info@gilanimobility',
             'admin@gilanimobility.ae',
             'factory@gilanimobility.ae',
           ]);
@@ -122,6 +127,8 @@ export const AuthProvider = ({ children }) => {
             'eng@gilanimobility.ae',
             'eng1@gilanimobility.ae',
             'eng2@gilanimobility.ae',
+            'info@gilanimobility.ae',
+            'info@gilanimobility',
             'admin@gilanimobility.ae',
             'factory@gilanimobility.ae',
           ]);
